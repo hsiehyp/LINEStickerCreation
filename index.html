@@ -1,0 +1,3862 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LINE 動態貼圖自動化助手</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/upng-js@2.1.0/UPNG.js"></script>
+<style>
+/* ===== Reset & Base ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'Noto Sans TC',-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;background:#1a1e29;color:#fff;line-height:1.55;min-height:100vh;overflow-x:hidden}
+button{font-family:inherit;cursor:pointer;border:none;color:inherit;background:none}
+input,textarea,select{font-family:inherit;color:inherit}
+.mono{font-family:'JetBrains Mono','SF Mono','Courier New',monospace}
+:root{
+  --c-primary:#f95f8e; --c-primary-hover:#ff7aa3; --c-primary-dim:#c44a72;
+  --c-secondary:#2c3344; --c-secondary-hover:#3a4257;
+  --c-bg:#1a1e29; --c-panel:#222736; --c-panel-2:#2a3043;
+  --c-border:#363c4f; --c-text:#fff; --c-text-dim:#9ba3b8; --c-text-faint:#6b7488;
+  --c-success:#4ade80; --c-warn:#fbbf24; --c-danger:#ef4444;
+  --c-accent2:#60a5fa;
+  --c-line:#06C755; --c-line-hover:#0adb61; --c-line-dim:#048c3c;
+  --r-sm:6px; --r-md:10px; --r-lg:14px; --r-xl:20px;
+  --shadow:0 4px 16px rgba(0,0,0,.3);
+}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:#1a1e29}
+::-webkit-scrollbar-thumb{background:#363c4f;border-radius:5px}
+::-webkit-scrollbar-thumb:hover{background:#4a5070}
+
+/* ===== Layout ===== */
+.app{display:flex;flex-direction:column;min-height:100vh}
+.topbar{position:sticky;top:0;z-index:100;background:rgba(26,30,41,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--c-border);padding:12px 24px;display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px}
+.brand-logo{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#06C755 0%,#06C755 50%,#f95f8e 50%,#f95f8e 100%);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 8px rgba(6,199,85,.25)}
+.line-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;background:rgba(6,199,85,.15);border:1px solid rgba(6,199,85,.4);color:var(--c-line);font-size:11px;font-weight:600;letter-spacing:.3px;line-height:1.2}
+.line-badge::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--c-line);box-shadow:0 0 8px rgba(6,199,85,.6)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;flex:1}
+.tab-btn{padding:8px 16px;border-radius:var(--r-md);background:var(--c-secondary);color:var(--c-text-dim);font-size:14px;font-weight:500;transition:all .15s;white-space:nowrap}
+.tab-btn:hover{background:var(--c-secondary-hover);color:#fff}
+.tab-btn.active{background:var(--c-primary);color:#fff}
+.main{flex:1;padding:20px 24px 40px;max-width:1600px;margin:0 auto;width:100%}
+.panel{display:none}
+.panel.active{display:block;animation:fadeIn .25s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* ===== Common UI ===== */
+.card{background:var(--c-panel);border:1px solid var(--c-border);border-radius:var(--r-lg);padding:20px;margin-bottom:16px}
+.card-title{font-size:16px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.card-title .num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;background:var(--c-primary);color:#fff;border-radius:50%;font-size:12px;font-weight:700}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 16px;border-radius:var(--r-md);background:var(--c-secondary);color:var(--c-text);font-size:13px;font-weight:500;transition:all .15s;border:1px solid transparent}
+.btn:hover{background:var(--c-secondary-hover)}
+.btn.primary{background:var(--c-primary);color:#fff}
+.btn.primary:hover{background:var(--c-primary-hover)}
+.btn.line{background:var(--c-line);color:#fff;box-shadow:0 2px 8px rgba(6,199,85,.25)}
+.btn.line:hover{background:var(--c-line-hover);box-shadow:0 4px 12px rgba(6,199,85,.4)}
+.btn.success{background:var(--c-success);color:#0b1320}
+.btn.danger{background:var(--c-danger);color:#fff}
+.btn.outline{background:transparent;border-color:var(--c-border)}
+.btn.outline:hover{background:var(--c-secondary)}
+.btn.disabled,.btn[disabled]{opacity:.4;cursor:not-allowed;pointer-events:none}
+.btn.sel{background:var(--c-primary);color:#fff}
+.btn-group{display:flex;flex-wrap:wrap;gap:8px}
+.input,.select,textarea.input{width:100%;padding:9px 12px;border-radius:var(--r-sm);background:#171b25;border:1px solid var(--c-border);color:#fff;font-size:13px;outline:none;transition:border-color .15s}
+.input:focus,.select:focus,textarea.input:focus{border-color:var(--c-primary)}
+textarea.input{resize:vertical;min-height:80px;line-height:1.5}
+.label{font-size:12px;color:var(--c-text-dim);margin-bottom:6px;display:block;font-weight:500}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.row > *{min-width:0}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.flex-1{flex:1}
+.muted{color:var(--c-text-dim);font-size:12px}
+.divider{height:1px;background:var(--c-border);margin:14px 0}
+.tag{display:inline-block;padding:3px 8px;border-radius:6px;font-size:11px;background:var(--c-panel-2);color:var(--c-text-dim);margin-right:6px}
+.tag.primary{background:var(--c-primary);color:#fff}
+.tag.success{background:rgba(6,199,85,.15);color:var(--c-line);border:1px solid rgba(6,199,85,.4)}
+.tag.line{background:rgba(6,199,85,.15);color:var(--c-line);border:1px solid rgba(6,199,85,.4)}
+.tag.warn{background:#3b2f17;color:var(--c-warn)}
+.tag.danger{background:#3b1717;color:var(--c-danger)}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(26,30,41,.95);backdrop-filter:blur(12px);border:1px solid var(--c-border);padding:10px 18px;border-radius:var(--r-md);z-index:9999;font-size:14px;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+.toast.success{border-color:var(--c-success);color:var(--c-success)}
+.toast.error{border-color:var(--c-danger);color:var(--c-danger)}
+
+/* slider */
+.slider{-webkit-appearance:none;width:100%;height:5px;border-radius:3px;background:var(--c-border);outline:none}
+.slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;background:var(--c-primary);cursor:pointer;border:2px solid #fff;box-shadow:0 0 0 2px var(--c-primary-dim)}
+.slider::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--c-primary);cursor:pointer;border:2px solid #fff}
+
+/* switch */
+.switch{position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0}
+.switch input{opacity:0;width:0;height:0}
+.switch .slot{position:absolute;cursor:pointer;inset:0;background:var(--c-secondary);border-radius:12px;transition:.2s}
+.switch .slot:before{position:absolute;content:"";height:18px;width:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+.switch input:checked + .slot{background:var(--c-primary)}
+.switch input:checked + .slot:before{transform:translateX(20px)}
+
+/* ===== Tab 1: Prompt Master ===== */
+.prompt-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:1100px){.prompt-grid{grid-template-columns:1fr}}
+.opt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
+.opt-grid .btn{width:100%;padding:10px 8px;font-size:12.5px}
+.prompt-output{background:#0e1119;border:1px solid var(--c-border);border-radius:var(--r-md);padding:14px;font-family:'JetBrains Mono','SF Mono',monospace;font-size:12px;line-height:1.6;white-space:pre-wrap;word-break:break-word;max-height:560px;overflow-y:auto;color:#d8dde8}
+.prompt-output .sect{color:#7dd3fc;font-weight:600}
+.prompt-output .key{color:#fbbf24}
+.prompt-lang-toggle{display:inline-flex;background:var(--c-panel-2);border-radius:8px;padding:3px;gap:2px}
+.prompt-lang-toggle button{padding:6px 12px;border-radius:6px;font-size:12px;color:var(--c-text-dim);font-weight:500;cursor:pointer;border:none;background:transparent;font-family:inherit}
+.prompt-lang-toggle button.active{background:var(--c-primary);color:#fff}
+
+/* Keyword multi-select chips */
+.kw-selected-bar{padding:10px 12px;background:#0e1119;border:1px solid var(--c-border);border-radius:8px;min-height:46px;margin-bottom:12px;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.kw-selected-empty{color:var(--c-text-faint);font-size:12px;font-style:italic}
+.kw-selected-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 6px 5px 10px;background:var(--c-primary);color:#fff;border-radius:999px;font-size:12.5px;font-weight:500}
+.kw-selected-chip .idx{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;background:rgba(255,255,255,.25);border-radius:50%;font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace}
+.kw-selected-chip button{background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:11px;line-height:1;padding:0;transition:background .15s}
+.kw-selected-chip button:hover{background:rgba(255,255,255,.45)}
+.kw-counter{margin-left:auto;font-size:12px;color:var(--c-text-dim);font-family:'JetBrains Mono',monospace}
+.kw-counter b{color:var(--c-primary);font-weight:700}
+.kw-counter.full b{color:var(--c-line)}
+.kw-cat{margin-bottom:14px}
+.kw-cat-head{display:flex;justify-content:space-between;align-items:center;cursor:pointer;padding:6px 0;user-select:none}
+.kw-cat-head span.title{font-size:12.5px;color:var(--c-text-dim);font-weight:600;letter-spacing:.3px}
+.kw-cat-head span.title b{color:#fff}
+.kw-cat-head .arrow{transition:transform .2s;color:var(--c-text-faint);font-size:10px}
+.kw-cat.collapsed .arrow{transform:rotate(-90deg)}
+.kw-cat-body{display:flex;flex-wrap:wrap;gap:5px;padding:4px 0}
+.kw-cat.collapsed .kw-cat-body{display:none}
+.kw-chip{padding:5px 11px;border-radius:999px;background:var(--c-secondary);color:var(--c-text-dim);font-size:12.5px;cursor:pointer;transition:all .15s;border:1px solid transparent;font-family:inherit}
+.kw-chip:hover{background:var(--c-secondary-hover);color:#fff}
+.kw-chip.selected{background:var(--c-primary);color:#fff;border-color:var(--c-primary-hover);box-shadow:0 0 0 2px rgba(249,95,142,.2)}
+.kw-chip.selected:hover{background:var(--c-primary-hover)}
+.kw-chip.disabled{opacity:.4;cursor:not-allowed;pointer-events:none}
+
+/* ===== Tab 2: Watermark ===== */
+.wm-bg{position:relative;background:radial-gradient(circle at 20% 0%,rgba(249,95,142,.08),transparent 40%),radial-gradient(circle at 80% 100%,rgba(96,165,250,.08),transparent 40%),#1a1e29}
+.wm-bg::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);background-size:32px 32px;pointer-events:none;z-index:0}
+.wm-grid{display:grid;grid-template-columns:1fr 340px;gap:20px;position:relative;z-index:1}
+@media(max-width:1100px){.wm-grid{grid-template-columns:1fr}}
+.glass{background:rgba(20,20,28,.72);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.08);border-radius:var(--r-lg)}
+.wm-canvas-area{padding:16px;display:flex;flex-direction:column;min-height:480px}
+.wm-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:12px;flex-wrap:wrap}
+.view-toggle{display:flex;background:var(--c-panel-2);border-radius:8px;padding:3px;gap:2px}
+.view-toggle button{padding:7px 14px;border-radius:6px;font-size:12.5px;color:var(--c-text-dim);font-weight:500}
+.view-toggle button.active{background:var(--c-primary);color:#fff}
+.status-pill{display:flex;align-items:center;gap:8px;padding:6px 12px;background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.3);border-radius:999px;font-size:11px;color:var(--c-success);font-weight:600;letter-spacing:.5px}
+.status-pill .dot{width:7px;height:7px;background:var(--c-success);border-radius:50%;box-shadow:0 0 0 0 var(--c-success);animation:pulse 1.5s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(74,222,128,.5)}70%{box-shadow:0 0 0 6px rgba(74,222,128,0)}100%{box-shadow:0 0 0 0 rgba(74,222,128,0)}}
+.wm-canvas-wrap{flex:1;display:flex;align-items:center;justify-content:center;background:#0e1119;border-radius:10px;border:1px solid var(--c-border);overflow:auto;position:relative;min-height:380px;padding:12px}
+#wmCanvasContainer{position:relative;display:inline-block;line-height:0}
+#wmCanvas{display:block;max-width:100%;height:auto;border-radius:6px}
+#wmBox{position:absolute;border:2px dashed #ef4444;background:rgba(239,68,68,.06);cursor:move;box-shadow:0 0 0 1px rgba(255,255,255,.1);pointer-events:auto}
+.wm-status-bar{margin-top:12px;display:flex;flex-wrap:wrap;gap:12px;font-size:11px;color:var(--c-text-dim);padding:8px 12px;background:rgba(0,0,0,.25);border-radius:6px;font-family:'JetBrains Mono',monospace}
+.wm-status-bar span{display:flex;gap:4px}
+.wm-status-bar b{color:#fff;font-weight:500}
+.wm-uploader{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;border:2px dashed rgba(249,95,142,.4);border-radius:14px;padding:60px 20px;text-align:center;cursor:pointer;transition:all .2s;min-height:380px}
+.wm-uploader:hover,.wm-uploader.dragging{border-color:var(--c-primary);background:rgba(249,95,142,.05)}
+.wm-uploader .icon{font-size:48px;margin-bottom:12px}
+.wm-uploader h3{font-size:18px;margin-bottom:6px}
+.wm-uploader p{color:var(--c-text-dim);font-size:13px}
+.wm-side{padding:18px;display:flex;flex-direction:column;gap:18px}
+.wm-side h4{font-size:11px;letter-spacing:1.5px;color:var(--c-text-faint);font-weight:600;margin-bottom:8px;text-transform:uppercase}
+.wm-side .wm-disabled{opacity:.4;pointer-events:none;filter:grayscale(.5)}
+.wm-info-table{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--c-text-dim)}
+.wm-info-table div{display:flex;justify-content:space-between;padding:4px 0}
+.wm-info-table b{color:#fff;font-weight:500}
+.kv-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.kv-row .label{margin-bottom:0;flex:1}
+.kv-row .input{width:80px;text-align:right;font-family:'JetBrains Mono',monospace}
+
+/* ===== Tab 3: Split ===== */
+.split-uploader{border:2px dashed rgba(249,95,142,.35);border-radius:14px;padding:40px 20px;text-align:center;cursor:pointer;transition:all .2s}
+.split-uploader:hover,.split-uploader.dragging{border-color:var(--c-primary);background:rgba(249,95,142,.05)}
+.split-canvas-wrap{position:relative;background:#0e1119;border-radius:10px;border:1px solid var(--c-border);padding:8px;overflow:auto;max-height:600px}
+.split-canvas-wrap canvas{display:block;max-width:100%;height:auto;margin:0 auto;touch-action:none;-webkit-user-select:none;user-select:none}
+.split-canvas-wrap canvas.cursor-ew{cursor:ew-resize}
+.split-canvas-wrap canvas.cursor-ns{cursor:ns-resize}
+.split-editor-grid{display:grid;grid-template-columns:1fr 280px;align-items:start;gap:16px}
+@media(max-width:820px){.split-editor-grid{grid-template-columns:1fr}}
+.frames-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+@media(max-width:600px){.frames-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:420px){.frames-grid{grid-template-columns:repeat(2,1fr)}}
+.frame-cell{background:var(--c-panel-2);border:2px solid var(--c-border);border-radius:8px;overflow:hidden;position:relative;aspect-ratio:1;display:flex;flex-direction:column;cursor:pointer;transition:border .15s}
+.frame-cell.selected{border-color:var(--c-primary)}
+.frame-cell .img-area{flex:1;display:flex;align-items:center;justify-content:center;background-image:linear-gradient(45deg,#33394e 25%,transparent 25%),linear-gradient(-45deg,#33394e 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#33394e 75%),linear-gradient(-45deg,transparent 75%,#33394e 75%);background-size:12px 12px;background-position:0 0,0 6px,6px -6px,-6px 0;overflow:hidden}
+.frame-cell .img-area img{width:100%;height:100%;object-fit:contain}
+.frame-cell .label{margin:0;padding:3px 4px;font-size:10px;text-align:center;background:rgba(0,0,0,.4);font-family:'JetBrains Mono',monospace}
+.frame-cell input[type=checkbox]{position:absolute;top:3px;right:3px;cursor:pointer;width:14px;height:14px;accent-color:var(--c-primary);z-index:3}
+
+/* ===== Tab 4: Compose ===== */
+.compose-grid{display:grid;grid-template-columns:1fr 360px;gap:20px}
+@media(max-width:1200px){.compose-grid{grid-template-columns:1fr}}
+.compose-side{position:sticky;top:80px;align-self:start}
+.preview-canvas-wrap{background:url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><rect width="10" height="10" fill="%2333394e"/><rect x="10" y="10" width="10" height="10" fill="%2333394e"/></svg>');border-radius:10px;display:flex;align-items:center;justify-content:center;min-height:280px;border:1px solid var(--c-border);position:relative;padding:16px}
+#previewCanvas{display:block;max-width:100%;max-height:280px;height:auto}
+.frame-grid-compose{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
+.compose-cell{aspect-ratio:320/270;background:var(--c-panel-2);border:2px solid var(--c-border);border-radius:8px;position:relative;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-direction:column;overflow:hidden;transition:all .15s;background-image:linear-gradient(45deg,#33394e 25%,transparent 25%),linear-gradient(-45deg,#33394e 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#33394e 75%),linear-gradient(-45deg,transparent 75%,#33394e 75%);background-size:12px 12px;background-position:0 0,0 6px,6px -6px,-6px 0}
+.compose-cell:hover{border-color:#5b6378}
+.compose-cell.selected{border-color:#ef4444;box-shadow:0 0 0 2px rgba(239,68,68,.3)}
+.compose-cell.hidden-frame{opacity:.4}
+.compose-cell .num{position:absolute;top:4px;left:6px;background:rgba(0,0,0,.6);font-size:11px;padding:2px 7px;border-radius:4px;font-family:'JetBrains Mono',monospace;z-index:2}
+.compose-cell img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain}
+.compose-cell .empty-icon{font-size:24px;color:var(--c-text-faint)}
+.compose-cell .empty-text{font-size:10px;color:var(--c-text-faint);margin-top:2px}
+
+.compliance{padding:14px;border-radius:10px;margin-top:14px}
+.compliance.ok{background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);color:var(--c-success)}
+.compliance.bad{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--c-danger)}
+.export-btn-big{display:block;width:100%;padding:14px;border-radius:10px;font-weight:700;font-size:14px;margin-top:12px}
+.export-btn-big[disabled]{background:var(--c-secondary)!important;color:var(--c-text-faint)!important;cursor:not-allowed}
+.line-market-link{display:flex;align-items:center;gap:10px;margin-top:10px;padding:11px 14px;border-radius:10px;background:linear-gradient(135deg,rgba(6,199,85,.12),rgba(6,199,85,.04));border:1px solid rgba(6,199,85,.4);color:#fff;text-decoration:none;transition:all .2s}
+.line-market-link:hover{background:linear-gradient(135deg,rgba(6,199,85,.22),rgba(6,199,85,.1));border-color:var(--c-line);transform:translateY(-1px);box-shadow:0 4px 12px rgba(6,199,85,.2)}
+.line-market-link .lm-icon{font-size:22px;flex-shrink:0}
+.line-market-link .lm-text{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+.line-market-link .lm-text b{color:var(--c-line);font-size:13px;font-weight:700}
+.line-market-link .lm-text .lm-sub{font-size:11px;color:var(--c-text-dim)}
+.line-market-link .lm-arrow{color:var(--c-line);font-size:16px;flex-shrink:0;transition:transform .2s}
+.line-market-link:hover .lm-arrow{transform:translate(2px,-2px)}
+.params-list{font-size:12px;color:var(--c-text-dim);font-family:'JetBrains Mono',monospace;line-height:2;padding:10px;background:#0e1119;border-radius:6px;margin-top:10px}
+.params-list b{color:#fff}
+
+/* ===== Editor Modal ===== */
+.editor-modal{position:fixed;inset:0;background:rgba(10,12,18,.96);z-index:1000;display:none;flex-direction:column}
+.editor-modal.active{display:flex}
+.editor-topbar{height:56px;padding:0 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--c-border);background:var(--c-panel);flex-shrink:0}
+.editor-body{flex:1;display:flex;overflow:hidden;min-height:0}
+.editor-canvas-area{flex:1;display:flex;align-items:center;justify-content:center;padding:24px;background:#0e1119;overflow:auto;position:relative;min-height:0}
+@media(max-width:820px){
+  .editor-body{flex-direction:column}
+  .editor-canvas-area{flex:0 0 auto;max-height:50vh;padding:12px}
+  .editor-side{width:100%!important;border-left:none;border-top:1px solid var(--c-border);flex:1;min-height:0;padding:14px 14px 80px}
+}
+.editor-topbar h3{font-size:16px;font-weight:600}
+#editorCanvas{background:url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><rect width="10" height="10" fill="%23232938"/><rect x="10" y="10" width="10" height="10" fill="%23232938"/></svg>') #1a1e29;border-radius:8px;cursor:default;box-shadow:0 8px 32px rgba(0,0,0,.5)}
+.editor-side{width:340px;background:var(--c-panel);border-left:1px solid var(--c-border);overflow-y:auto;padding:18px 18px 80px;display:flex;flex-direction:column;gap:14px;scroll-behavior:smooth;scroll-padding-block:16px}
+.editor-side::-webkit-scrollbar{width:8px}
+.editor-side::-webkit-scrollbar-thumb{background:var(--c-primary);border-radius:4px}
+.editor-section{background:var(--c-panel-2);border-radius:10px;border:1px solid var(--c-border);overflow:hidden}
+.editor-section-head{padding:11px 14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-size:13px;font-weight:600}
+.editor-section-head .arrow{transition:transform .2s}
+.editor-section.collapsed .arrow{transform:rotate(-90deg)}
+.editor-section-body{padding:0 14px 14px;display:block}
+.editor-section.collapsed .editor-section-body{display:none}
+.deco-tabs{display:flex;gap:4px;padding:4px;background:var(--c-bg);border-radius:8px;margin-bottom:10px}
+.deco-tab{flex:1;padding:7px 6px;font-size:11.5px;background:transparent;border:none;color:var(--c-text-dim);border-radius:5px;cursor:pointer;font-family:inherit;font-weight:500;transition:all .15s;white-space:nowrap}
+.deco-tab:hover{color:#fff;background:rgba(255,255,255,.05)}
+.deco-tab.active{background:var(--c-primary);color:#fff;font-weight:600;box-shadow:0 2px 6px rgba(249,95,142,.25)}
+.deco-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+.deco-btn{aspect-ratio:1;background:#171b25;border:1px solid var(--c-border);border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;padding:6px}
+.deco-btn:hover{border-color:var(--c-primary);background:#1f2531;transform:scale(1.05)}
+.deco-btn svg{width:100%;height:100%;display:block}
+.color-row{display:flex;gap:6px;align-items:center}
+.color-row input[type=color]{width:34px;height:30px;padding:0;border:1px solid var(--c-border);border-radius:6px;cursor:pointer;background:transparent}
+.color-row .picker-btn{padding:4px 8px;border-radius:6px;background:#171b25;border:1px solid var(--c-border);font-size:11px;cursor:pointer}
+.color-row .picker-btn.active{background:var(--c-primary);color:#fff;border-color:var(--c-primary)}
+
+/* ===== Compliance section ===== */
+.spec-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;padding:12px;background:linear-gradient(135deg,rgba(6,199,85,.04),#0e1119 60%);border-radius:8px;font-size:12px;color:var(--c-text-dim);border:1px solid rgba(6,199,85,.15)}
+.spec-list div{display:flex;justify-content:space-between;border-bottom:1px solid var(--c-border);padding:6px 0}
+.spec-list b{color:var(--c-line)}
+
+.error-list{padding:10px 14px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:8px;margin-top:10px}
+.error-list-title{color:var(--c-danger);font-size:13px;font-weight:600;margin-bottom:6px}
+.error-list ul{list-style:none;padding-left:0;margin:0;font-size:12px;color:var(--c-text-dim)}
+.error-list li{padding:2px 0;display:flex;gap:6px}
+.error-list li::before{content:"•";color:var(--c-danger)}
+
+/* checkerboard for empty image previews */
+.checker-bg{background-image:linear-gradient(45deg,#33394e 25%,transparent 25%),linear-gradient(-45deg,#33394e 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#33394e 75%),linear-gradient(-45deg,transparent 75%,#33394e 75%);background-size:14px 14px;background-position:0 0,0 7px,7px -7px,-7px 0}
+
+/* hidden file input */
+.file-hidden{display:none}
+
+/* iframe-safe confirm modal (browser confirm() is silently blocked in iframes) */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .15s}
+.modal-dialog{background:var(--c-panel);border:1px solid var(--c-border);border-radius:14px;padding:26px 26px 20px;max-width:420px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5);animation:modalUp .2s}
+.modal-icon{font-size:38px;margin-bottom:10px;line-height:1}
+.modal-title{color:var(--c-text);font-size:16px;font-weight:700;margin-bottom:8px}
+.modal-message{color:var(--c-text-dim);font-size:13.5px;line-height:1.6;margin-bottom:20px;white-space:pre-line}
+.modal-actions{display:flex;gap:10px;justify-content:center}
+.modal-actions .btn{min-width:110px;padding:10px 18px}
+@keyframes modalUp{from{opacity:0;transform:translateY(16px) scale(.96)}to{opacity:1;transform:none}}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-logo">🎨</div>
+      <div>LINE 動態貼圖自動化助手</div>
+      <span class="line-badge">LINE Ready</span>
+    </div>
+    <nav class="tabs" id="tabsNav"></nav>
+  </header>
+  <main class="main">
+
+    <!-- ===== TAB 1: PROMPT ===== -->
+    <section class="panel" id="panel-tab-prompt">
+      <div class="prompt-grid">
+        <div>
+          <div class="card">
+            <div class="card-title"><span class="num">1</span>模式設定 (固定)</div>
+            <div class="row">
+              <button class="btn primary" disabled>連續動作 (無文字)</button>
+              <span class="muted">已鎖定為連續動作模式以避免 AI 文字干擾</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title"><span class="num">2</span>角色來源</div>
+            <div class="btn-group" id="charSourceGroup">
+              <button class="btn sel" data-source="ref">📸 參考上傳圖</button>
+              <button class="btn" data-source="custom">✏️ 自訂角色</button>
+            </div>
+            <div id="refUploadArea" style="margin-top:12px">
+              <p class="muted" style="font-size:12px;line-height:1.6">送出 Prompt 到 AI 平台時，請直接於該平台介面上傳參考圖；本工具會在 Prompt 中加入「使用附加參考圖作為主角」的指示。</p>
+            </div>
+            <div id="customCharArea" style="display:none;margin-top:12px">
+              <label class="label">自訂角色描述（英文或中文皆可，將直接放入 Prompt）</label>
+              <textarea class="input" id="charCustomText" placeholder="例：a cute robot wearing a spacesuit drinking bubble tea / 一隻穿著太空衣喝珍奶的機器人"></textarea>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title"><span class="num">3</span>動作主題（最多選 5 個關鍵動作）</div>
+            <div class="kw-selected-bar" id="kwSelectedBar"></div>
+            <div id="kwCategories"></div>
+            <div style="margin-top:14px">
+              <label class="label">✏️ 自訂動作（選填，填寫後將覆蓋上方選取）</label>
+              <textarea class="input" id="customActions" rows="2" placeholder="例：抱貓咪、彈吉他、打電動、追公車、煮泡麵、噴嚏  ←  以「、」分隔，建議 5 個動作"></textarea>
+              <p class="muted" style="margin-top:6px;font-size:11px">提示：動作主題分類僅是分類用，實際的 Prompt 會以你選的關鍵動作（或自訂內容）為主。</p>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title"><span class="num">4</span>畫風選擇</div>
+            <div class="opt-grid" id="styleGrid"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-title"><span class="num">5</span>邊框設定</div>
+            <div class="row">
+              <label class="switch"><input type="checkbox" id="borderSwitch" /><span class="slot"></span></label>
+              <span>為角色加入白色貼圖邊框 (Add white sticker border)</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card" style="position:sticky;top:80px">
+            <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:10px">
+              <div class="card-title" style="margin-bottom:0">📋 動態貼圖 Prompt（即時預覽）</div>
+              <div class="prompt-lang-toggle" id="promptLangToggle">
+                <button class="active" data-lang="en">🇺🇸 English（標準）</button>
+                <button data-lang="zh">🇹🇼 完全中文</button>
+              </div>
+            </div>
+            <div id="promptOutput" class="prompt-output"></div>
+            <div class="row" style="margin-top:12px;gap:8px">
+              <button class="btn primary flex-1" id="copyPromptBtn">📑 複製 Prompt</button>
+              <button class="btn line flex-1" id="goGeminiBtn">✨ 前往 Gemini</button>
+              <button class="btn line flex-1" id="goChatGPTBtn">🤖 前往 ChatGPT</button>
+            </div>
+            <p class="muted" style="margin-top:8px">已強制加入 <b>純綠幕背景</b> 與 <b>禁止格線</b> 指令以利後續去背。中文版適合丟給 ChatGPT 等中文友善模型。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== TAB 2: WATERMARK ===== -->
+    <section class="panel wm-bg" id="panel-tab-watermark">
+      <h2 style="margin-bottom:6px;font-size:20px">🌟 去除星星浮水印</h2>
+      <p class="muted" style="margin-bottom:16px">基於 Alpha Unmix + 雙線性插值演算法，精準還原 Gemini AI 生成圖底色</p>
+      <div class="wm-grid">
+        <div class="glass wm-canvas-area">
+          <div class="wm-toolbar">
+            <div class="view-toggle" id="wmViewToggle">
+              <button class="active" data-view="processed">處理結果</button>
+              <button data-view="original">原始圖片</button>
+            </div>
+            <div class="status-pill" id="wmStatusPill" style="display:none"><span class="dot"></span>PROCESSED</div>
+          </div>
+          <div class="wm-canvas-wrap" id="wmCanvasWrap">
+            <div class="wm-uploader" id="wmUploader">
+              <div class="icon">🖼️</div>
+              <h3>拖曳圖片到此 / 點擊選擇</h3>
+              <p>支援 PNG / JPG，自動移除右下角 Gemini 星星浮水印</p>
+              <input type="file" id="wmFile" accept="image/*" class="file-hidden" />
+            </div>
+            <div id="wmCanvasContainer" style="display:none">
+              <canvas id="wmCanvas"></canvas>
+              <div id="wmBox"></div>
+            </div>
+          </div>
+          <div class="wm-status-bar mono" id="wmStatusBar" style="display:none">
+            <span>解析度: <b id="wmRes">-</b></span>
+            <span>位置: <b id="wmPos">right 60px · bottom 60px</b></span>
+            <span>大小: <b id="wmSize">100 x 100 px</b></span>
+            <span>α 峰值 0.60 · FG=white(255,255,255)</span>
+          </div>
+        </div>
+
+        <div class="glass wm-side">
+          <div>
+            <h4>浮水印去除</h4>
+            <div class="row" style="justify-content:space-between;padding:10px 12px;background:rgba(249,95,142,.08);border-radius:8px;border:1px solid rgba(249,95,142,.25)">
+              <span style="font-size:13px;font-weight:600">✨ 啟用浮水印去除</span>
+              <label class="switch"><input type="checkbox" id="wmEnable" checked /><span class="slot"></span></label>
+            </div>
+            <p class="muted" style="margin-top:6px;font-size:11px">關閉後將直接使用「原始圖片」作為下載/複製到分頁 3 的結果，不執行 Alpha Unmix 演算法。</p>
+          </div>
+          <div>
+            <h4>影像資訊</h4>
+            <div class="wm-info-table">
+              <div>尺寸<b id="wmSizeInfo">-</b></div>
+              <div>浮水印<b>100 x 100</b></div>
+            </div>
+          </div>
+          <div id="wmAdjustGroup">
+            <h4>浮水印位置</h4>
+            <div class="row" style="justify-content:space-between;margin-bottom:8px;padding:6px 8px;background:rgba(239,68,68,.06);border-radius:6px;border:1px solid rgba(239,68,68,.2)">
+              <span style="font-size:12px;display:flex;align-items:center;gap:6px"><span style="width:14px;height:8px;border:1.5px dashed #ef4444;display:inline-block"></span>顯示紅色定位框</span>
+              <label class="switch"><input type="checkbox" id="wmBoxVisible" checked /><span class="slot"></span></label>
+            </div>
+            <p class="muted" style="margin-bottom:8px;font-size:11px">拖曳紅色框或於此輸入像素值（兩者連動）。下載 PNG 不會包含紅框。</p>
+            <div class="kv-row">
+              <span class="label mono">距右邊界 (PX)</span>
+              <input type="number" class="input mono" id="wmRightInput" value="60" min="0" />
+            </div>
+            <div class="kv-row">
+              <span class="label mono">距下邊界 (PX)</span>
+              <input type="number" class="input mono" id="wmBottomInput" value="60" min="0" />
+            </div>
+            <button class="btn outline" id="wmResetPosBtn" style="width:100%">↻ 重設為預設值 (60, 60)</button>
+          </div>
+          <div id="wmParamGroup">
+            <h4>參數微調</h4>
+            <div style="margin-bottom:10px">
+              <div class="row" style="justify-content:space-between"><span class="label">移除強度 (Alpha Multiplier)</span><span class="mono" id="wmAlphaVal">1.00</span></div>
+              <input type="range" class="slider" id="wmAlphaSlider" min="0.5" max="1.5" step="0.01" value="1.0" />
+            </div>
+            <div>
+              <div class="row" style="justify-content:space-between"><span class="label">區域縮放 (Scale)</span><span class="mono" id="wmScaleVal">100%</span></div>
+              <input type="range" class="slider" id="wmScaleSlider" min="50" max="200" step="1" value="100" />
+            </div>
+          </div>
+          <div>
+            <h4>匯出與操作</h4>
+            <button class="btn primary" id="wmDownloadBtn" style="width:100%;margin-bottom:8px">⬇️ 下載 PNG</button>
+            <button class="btn outline" id="wmResetBtn" style="width:100%">📁 選擇其他圖片</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== TAB 3: SPLIT ===== -->
+    <section class="panel" id="panel-tab-split">
+      <div class="card">
+        <div class="card-title"><span class="num">1</span>上傳網格圖</div>
+        <div class="muted" style="margin-bottom:12px">
+          ⚠ 圖檔規格：<b>5 欄 × 4 列，共 20 張，總尺寸 2560 × 1664 px</b>（其他尺寸亦可使用，但建議遵循以保證最佳效果）。
+        </div>
+        <div class="row" style="margin-bottom:12px">
+          <button class="btn outline" id="copyFromStep2Btn" disabled>📋 從「去除浮水印」分頁載入處理過的圖片</button>
+          <span class="muted">需先在分頁 2 載入並處理圖片</span>
+        </div>
+        <input type="file" id="splitFile" accept="image/*" class="file-hidden" />
+        <div class="split-uploader" id="splitUploader">
+          <div style="font-size:38px">📤</div>
+          <h3 style="margin-top:6px">拖曳網格圖到此 / 點擊上傳</h3>
+          <p class="muted">支援 PNG / JPG，建議 2560 × 1664</p>
+        </div>
+        <div id="splitEditor" style="display:none">
+          <div class="row" style="justify-content:space-between;margin:12px 0">
+            <div class="muted mono" id="splitImgInfo">-</div>
+            <div class="row">
+              <button class="btn outline" id="splitChangeBtn">📁 更換圖片</button>
+              <button class="btn primary" id="splitConfirmBtn">✂️ 確認切割（產生 20 張影格）</button>
+            </div>
+          </div>
+          <div class="split-editor-grid">
+            <div class="split-canvas-wrap">
+              <canvas id="splitCanvas"></canvas>
+            </div>
+            <div class="card" style="margin-bottom:0">
+              <h4 style="margin-bottom:10px;font-size:13px">圖片對齊微調</h4>
+              <div style="margin-bottom:10px">
+                <div class="row" style="justify-content:space-between"><span class="label">水平平移 X</span><span class="mono" id="splitXVal">0 px</span></div>
+                <input type="range" class="slider" id="splitX" min="-200" max="200" step="1" value="0" />
+              </div>
+              <div style="margin-bottom:10px">
+                <div class="row" style="justify-content:space-between"><span class="label">垂直平移 Y</span><span class="mono" id="splitYVal">0 px</span></div>
+                <input type="range" class="slider" id="splitY" min="-200" max="200" step="1" value="0" />
+              </div>
+              <div style="margin-bottom:14px">
+                <div class="row" style="justify-content:space-between"><span class="label">縮放尺寸</span><span class="mono" id="splitScaleVal">100%</span></div>
+                <input type="range" class="slider" id="splitScale" min="50" max="200" step="1" value="100" />
+              </div>
+              <div style="padding:10px;background:#0e1119;border-radius:6px;border:1px solid var(--c-border)">
+                <h4 style="margin-bottom:8px;font-size:13px">分割線調整</h4>
+                <p class="muted" style="margin-bottom:8px;font-size:11px">將滑鼠移到任一條粉紅虛線（接近時變實線），按住可拖曳調整位置。</p>
+                <button class="btn outline" id="splitResetLinesBtn" style="width:100%">↻ 重設為平均 5×4 格線</button>
+              </div>
+              <p class="muted" style="margin-top:10px;font-size:11px">提示：先用滑桿粗調整體位置/縮放，再用拖曳分割線精準對齊每張角色。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" id="splitResultsCard" style="display:none">
+        <div class="card-title"><span class="num">2</span>切割結果 / 智慧去背</div>
+
+        <div class="row" style="margin-bottom:14px;gap:14px;flex-wrap:wrap;padding:12px;background:#0e1119;border-radius:8px">
+          <div class="row">
+            <label class="switch"><input type="checkbox" id="bgRmEnable" checked /><span class="slot"></span></label>
+            <span>啟用智能去背</span>
+          </div>
+          <select class="select" id="bgRmMode" style="width:auto">
+            <option value="standard">標準模式（綠幕去背）</option>
+          </select>
+          <button class="btn primary" id="runBgRmBtn">⚡ 執行去背處理</button>
+          <span class="tag" id="bgRmStatusTag">尚未去背</span>
+        </div>
+
+        <div class="row" style="margin-bottom:12px;gap:14px;flex-wrap:wrap">
+          <div class="row" style="gap:6px">
+            <span class="label" style="margin-bottom:0">起始編號（組）</span>
+            <input type="number" class="input mono" id="zipStartNum" value="1" min="1" style="width:70px" />
+          </div>
+          <button class="btn line" id="downloadZipBtn">📦 下載完整 ZIP（20 張）</button>
+          <span style="width:1px;height:24px;background:var(--c-border)"></span>
+          <button class="btn outline" id="selectAllFramesBtn">☑ 全選</button>
+          <button class="btn outline" id="deselectAllFramesBtn">☐ 全不選</button>
+          <button class="btn primary" id="copyToTab4Btn">📌 複製選取至「動態貼圖製作」</button>
+          <span class="muted" id="selectedCountInfo">已選 0 張</span>
+        </div>
+        <p class="muted" style="margin-bottom:8px;font-size:12px">提示：勾選需要的影格後可單獨複製到分頁 4；或直接「下載完整 ZIP」取得全部 20 張。</p>
+
+        <div class="frames-grid" id="splitFramesGrid"></div>
+      </div>
+    </section>
+
+    <!-- ===== TAB 4: COMPOSE ===== -->
+    <section class="panel" id="panel-tab-compose">
+      <div class="compose-grid">
+        <div>
+          <div class="card">
+            <div class="row" style="justify-content:space-between">
+              <div class="card-title" style="margin-bottom:0"><span class="num">1</span>批次上傳圖片</div>
+              <div class="row">
+                <button class="btn outline" id="composeClearAll">🗑 全部清除</button>
+                <input type="file" id="composeBatchFile" accept="image/*" multiple class="file-hidden" />
+                <button class="btn primary" id="composeBatchBtn">📤 批次上傳</button>
+              </div>
+            </div>
+            <p class="muted" style="margin-top:8px">支援 PNG / JPG，目前格式：<b id="composeFmtInfo">320×270px (APNG)</b></p>
+          </div>
+
+          <div class="card">
+            <div class="card-title"><span class="num">2</span>調整影格與編輯</div>
+            <div class="btn-group" style="margin-bottom:12px">
+              <button class="btn" id="tbEditText"><b>T</b> 新增/編輯文字</button>
+              <button class="btn" id="tbCopy">📋 複製</button>
+              <button class="btn" id="tbHide">👁 隱藏</button>
+              <button class="btn danger" id="tbDelete">🗑 刪除</button>
+              <button class="btn" id="tbLeft">‹ 左移</button>
+              <button class="btn" id="tbRight">› 右移</button>
+              <button class="btn" id="tbReplace">🔄 替換圖片</button>
+              <button class="btn danger" id="tbClearAll">🗑 清空全部影格</button>
+              <input type="file" id="composeReplaceFile" accept="image/*" class="file-hidden" />
+              <input type="file" id="composeSingleFile" accept="image/*" class="file-hidden" />
+            </div>
+            <div class="frame-grid-compose" id="frameGridCompose"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-title"><span class="num">3</span>圖片類型與尺寸</div>
+            <div class="btn-group" id="formatBtnGroup">
+              <button class="btn sel" data-fmt="anim">動態貼圖 (320×270)</button>
+              <button class="btn" data-fmt="main">主要圖片 (240×240)</button>
+              <button class="btn" data-fmt="tab">聊天室標籤 (96×74)</button>
+            </div>
+          </div>
+
+          <div class="card" id="animSettingsCard">
+            <div class="card-title"><span class="num">4</span>動畫設定</div>
+            <div style="margin-bottom:14px">
+              <span class="label">單次循環時長</span>
+              <div class="btn-group" id="totalSecBtnGroup">
+                <button class="btn sel" data-sec="1">1 秒</button>
+                <button class="btn" data-sec="2">2 秒</button>
+                <button class="btn" data-sec="3">3 秒</button>
+                <button class="btn" data-sec="4">4 秒</button>
+              </div>
+            </div>
+            <div>
+              <div class="row" style="justify-content:space-between;margin-bottom:6px">
+                <span class="label" style="margin-bottom:0">循環次數</span>
+                <span class="muted" style="font-size:11px" id="loopHint">最多 4 次</span>
+              </div>
+              <div class="btn-group" id="loopBtnGroup">
+                <button class="btn sel" data-loop="1">1 次</button>
+                <button class="btn" data-loop="2">2 次</button>
+                <button class="btn" data-loop="3">3 次</button>
+                <button class="btn" data-loop="4">4 次</button>
+              </div>
+            </div>
+            <div style="margin-top:12px;padding:10px;background:#0e1119;border-radius:6px;font-size:12px;font-family:'JetBrains Mono',monospace;line-height:1.7">
+              <div>每格停留：<b id="msPerFrame">- ms</b></div>
+              <div>總播放時間：<b id="totalPlayInfo">- 秒</b></div>
+            </div>
+            <p class="muted" style="margin-top:8px;font-size:11px">🔒 LINE 規範：總播放時間 ≤ 4 秒；選擇單次循環時長後，循環次數會自動鎖定可用範圍。</p>
+          </div>
+          <div class="card" id="tabFmtNotice" style="display:none;background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.3)">
+            <div style="color:var(--c-danger);font-weight:600">⚠ 聊天室標籤為靜態圖片，不適用動畫設定</div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">📋 LINE 動態貼圖製作規範</div>
+            <div class="spec-list">
+              <div>主要圖片<b>240 × 240 px (APNG)</b></div>
+              <div>動態貼圖<b>320 × 270 px (APNG)</b></div>
+              <div>聊天室標籤<b>96 × 74 px (PNG)</b></div>
+              <div>動畫時間<b>≤ 4 秒</b></div>
+              <div>畫格數<b>5 ~ 20 格</b></div>
+              <div>單檔大小<b>&lt; 1 MB</b></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="compose-side">
+          <div class="card">
+            <div class="row" style="justify-content:space-between;margin-bottom:8px">
+              <div class="card-title" style="margin-bottom:0">▶ 預覽動畫</div>
+              <span class="mono muted" id="previewTimeLabel">0 ms</span>
+            </div>
+            <div class="preview-canvas-wrap">
+              <canvas id="previewCanvas"></canvas>
+            </div>
+            <div class="row" style="margin-top:10px;justify-content:center">
+              <button class="btn primary" id="previewPlayBtn">▶ Play</button>
+              <button class="btn outline" id="previewStopBtn">■ Stop</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">🎯 輸出與合規</div>
+            <button class="btn primary export-btn-big" id="exportBtn" disabled>未符合規範</button>
+            <a href="https://creator.line.me/zh-hant/" target="_blank" rel="noopener" class="line-market-link">
+              <span class="lm-icon">📤</span>
+              <span class="lm-text">
+                <b>前往 LINE Creators Market</b>
+                <span class="lm-sub">上架你的動態貼圖到 LINE 商店 →</span>
+              </span>
+              <span class="lm-arrow">↗</span>
+            </a>
+            <div class="params-list">
+              <div>圖片類型：<b id="paramFmt">動態貼圖 (320×270px)</b></div>
+              <div>總播放：<b id="paramPlay">1 秒 (1×0格)</b></div>
+              <div>每格：<b id="paramMs">0 ms</b></div>
+              <div>檔案大小：<b id="paramSize">尚未估算</b> <button class="btn outline" id="estimateSizeBtn" style="padding:2px 8px;font-size:11px;margin-left:4px">📏 估算</button></div>
+            </div>
+            <div class="error-list" id="errorList" style="display:none">
+              <div class="error-list-title">⚠ 請修正錯誤</div>
+              <ul id="errorUL"></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Editor Modal -->
+<div class="editor-modal" id="editorModal">
+  <div class="editor-topbar">
+    <div class="row">
+      <button class="btn outline" id="editorClose">← 返回</button>
+      <h3>影格編輯（#<span id="editorFrameNum">-</span>）</h3>
+      <span class="tag line" id="editorEditedBadge" style="display:none">已有保存編輯</span>
+    </div>
+    <div class="row">
+      <button class="btn outline" id="editorCancel">取消</button>
+      <button class="btn success" id="editorSave">💾 儲存</button>
+    </div>
+  </div>
+  <div class="editor-body">
+    <div class="editor-canvas-area" id="editorCanvasArea">
+      <canvas id="editorCanvas"></canvas>
+    </div>
+    <div class="editor-side">
+      <div class="editor-section">
+        <div class="editor-section-head"><span>🖼 底圖調整</span><span class="arrow">▼</span></div>
+        <div class="editor-section-body">
+          <div class="muted" style="margin-bottom:6px;font-size:11px">直接拖曳底圖移動位置或使用滑桿縮放</div>
+          <div style="margin-bottom:8px">
+            <div class="row" style="justify-content:space-between"><span class="label">底圖縮放</span><span class="mono" id="bgScaleVal">100%</span></div>
+            <input type="range" class="slider" id="bgScaleSlider" min="10" max="200" step="1" value="100" />
+          </div>
+          <button class="btn outline" id="bgResetBtn" style="width:100%">↻ 重設位置/縮放</button>
+        </div>
+      </div>
+
+      <div class="editor-section">
+        <div class="editor-section-head"><span>📝 新增文字</span><span class="arrow">▼</span></div>
+        <div class="editor-section-body">
+          <button class="btn primary" id="addTextBtn" style="width:100%;margin-bottom:8px">＋ 新增文字</button>
+          <div id="textProps" style="display:none">
+            <span class="label">文字內容</span>
+            <input type="text" class="input" id="txtContent" value="文字" style="margin-bottom:8px" />
+            <span class="label">字型</span>
+            <select class="select" id="txtFont" style="margin-bottom:8px">
+              <option value="'Noto Sans TC',sans-serif">黑體 (Noto Sans TC)</option>
+              <option value="'Noto Serif TC',serif">明體 (Noto Serif TC)</option>
+              <option value="cursive">手寫體</option>
+              <option value="fantasy">裝飾體</option>
+              <option value="monospace">等寬字</option>
+            </select>
+            <div style="margin-bottom:8px">
+              <div class="row" style="justify-content:space-between"><span class="label">文字大小</span><span class="mono" id="txtSizeVal">32px</span></div>
+              <input type="range" class="slider" id="txtSize" min="10" max="200" step="1" value="32" />
+            </div>
+            <span class="label">文字方向</span>
+            <div class="btn-group" style="margin-bottom:8px">
+              <button class="btn sel" id="dirH">橫書</button>
+              <button class="btn" id="dirV">直書</button>
+            </div>
+            <span class="label">文字顏色</span>
+            <div class="color-row" style="margin-bottom:8px">
+              <input type="color" id="txtColor" value="#ffffff" />
+              <button class="picker-btn" id="txtColorPicker">🔍 吸色</button>
+              <span class="mono muted" id="txtColorVal">#ffffff</span>
+            </div>
+            <span class="label">外框顏色</span>
+            <div class="color-row" style="margin-bottom:8px">
+              <input type="color" id="txtStroke" value="#000000" />
+              <button class="picker-btn" id="txtStrokePicker">🔍 吸色</button>
+              <span class="mono muted" id="txtStrokeVal">#000000</span>
+            </div>
+            <div style="margin-bottom:8px">
+              <div class="row" style="justify-content:space-between"><span class="label">外框粗細</span><span class="mono" id="txtStrokeWVal">2px</span></div>
+              <input type="range" class="slider" id="txtStrokeW" min="0" max="20" step="0.5" value="2" />
+            </div>
+            <div style="margin-bottom:8px">
+              <div class="row" style="justify-content:space-between"><span class="label">旋轉角度</span><span class="mono" id="txtRotVal">0°</span></div>
+              <input type="range" class="slider" id="txtRot" min="-180" max="180" step="1" value="0" />
+              <p class="muted" style="margin-top:4px;font-size:11px">💡 也可在畫面上直接拖曳綠色圓圈控制點旋轉（按住 Shift 以 15° 吸附）</p>
+            </div>
+            <button class="btn danger" id="txtDelete" style="width:100%">🗑 刪除文字</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="editor-section collapsed">
+        <div class="editor-section-head"><span>✨ 點綴物件</span><span class="arrow">▼</span></div>
+        <div class="editor-section-body" id="decoBody">
+          <!-- populated by JS -->
+        </div>
+      </div>
+
+      <div class="editor-section" id="objStyleSection" style="display:none">
+        <div class="editor-section-head"><span>🎨 物件樣式</span><span class="arrow">▼</span></div>
+        <div class="editor-section-body">
+          <span class="label">填滿顏色</span>
+          <div class="color-row" style="margin-bottom:8px">
+            <input type="color" id="objFill" value="#f95f8e" />
+            <button class="picker-btn" id="objFillPicker">🔍 吸色</button>
+            <label class="row" style="gap:4px;font-size:11px"><input type="checkbox" id="objFillNone" />無填滿</label>
+          </div>
+          <span class="label">外框顏色</span>
+          <div class="color-row" style="margin-bottom:8px">
+            <input type="color" id="objStroke" value="#000000" />
+            <button class="picker-btn" id="objStrokePicker">🔍 吸色</button>
+          </div>
+          <div style="margin-bottom:8px">
+            <div class="row" style="justify-content:space-between"><span class="label">外框粗細</span><span class="mono" id="objStrokeWVal">3px</span></div>
+            <input type="range" class="slider" id="objStrokeW" min="0" max="20" step="0.5" value="3" />
+          </div>
+          <div style="margin-bottom:8px">
+            <div class="row" style="justify-content:space-between"><span class="label">旋轉角度</span><span class="mono" id="objRotVal">0°</span></div>
+            <input type="range" class="slider" id="objRot" min="-180" max="180" step="1" value="0" />
+            <p class="muted" style="margin-top:4px;font-size:11px">💡 也可在畫面上直接拖曳綠色圓圈控制點旋轉（按住 Shift 以 15° 吸附）</p>
+          </div>
+          <button class="btn danger" id="objDelete" style="width:100%">🗑 刪除物件</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<textarea id="hiddenCopy" style="position:fixed;left:-9999px;top:-9999px"></textarea>
+
+<script>
+/* ===========================================================
+ * AppConfig - Central configuration
+ * =========================================================== */
+const AppConfig = {
+  colors: {
+    primary: "#f95f8e",
+    secondary: "#2c3344",
+    text: "#ffffff",
+    background: "#1a1e29",
+    panelBg: "#222736"
+  },
+  stickerSpecs: {
+    mainWidth: 240, mainHeight: 240,
+    animWidth: 320, animHeight: 270,
+    tabWidth: 96, tabHeight: 74,
+    maxFrames: 24,
+    minFrames: 5,
+    maxFramesLine: 20,
+    maxDuration: 4000,
+    maxFileKB: 300
+  },
+  tabs: [
+    { id: "tab-prompt", name: "1. 動態貼圖 Prompt 大師" },
+    { id: "tab-watermark", name: "2. 去除星星浮水印" },
+    { id: "tab-split", name: "3. 圖片分割 / 智慧去背" },
+    { id: "tab-compose", name: "4. 動態貼圖製作" }
+  ],
+  promptThemes: [
+    { id: "daily",  label: "日常動作", keywords: ["打哈欠","打瞌睡","睡覺","Say HI","捧碗","打招呼","揮手","鞠躬","拜託","握手","打呼","吹泡泡","起床","躲進被窩","點頭","比OK","搖頭","手比X","嘟嘴","眨眼","驚訝","疑惑","驚嚇","石化","僵硬","不解","抓頭","思考","尷尬","探頭","眼冒金星","疲倦"] },
+    { id: "happy",  label: "開心慶祝", keywords: ["歡呼","跳躍","鼓掌","撒花","比耶","握拳喝采","大笑","開心","狂笑","轉圈圈","加油","握拳","比大讚","唱歌"] },
+    { id: "sad",    label: "難過失落", keywords: ["垂頭喪氣","擦眼淚","蹲牆角","畫圈圈","掩面","嘆氣","哭泣","噴淚","大哭","淚奔","瀑布淚","難過","啜泣","咬手帕","躲牆角"] },
+    { id: "angry",  label: "生氣激動", keywords: ["跺腳","拍桌","指責","翻白眼","噴火","雙手抱胸","發火","氣炸","冒煙","臉紅脖子粗","鄙視","三條線","冷淡","撇頭"] },
+    { id: "work",   label: "工作情境", keywords: ["敲鍵盤","接電話","遞名片","開會討論","看手錶","伸懶腰","工作","學習","打字","寫字","打電腦","戰鬥"] },
+    { id: "love",   label: "戀愛撒嬌", keywords: ["送愛心","托腮臉紅","牽手","飛吻","依偎","眨眼電人","幸福","比心","眼冒愛心","抱抱","摸頭","撒嬌","害羞","臉紅"] },
+    { id: "sport",  label: "運動健身", keywords: ["舉啞鈴","擦汗","跑步","伸展","喝水補給","秀肌肉"] },
+    { id: "foodie", label: "吃貨日常", keywords: ["大口咬下","流口水","舔嘴唇","乾杯","捧肚子","幸福地嚼","大口吃"] },
+  ],
+  promptStyles: [
+    { id: "qcute",   label: "可愛 Q 版",  en: "cute chibi Q-version style, big head, soft pastel colors", zh: "可愛 Q 版風格，大頭身比例、柔和粉嫩配色" },
+    { id: "real",    label: "照片級寫實",  en: "photorealistic style, high detail, cinematic lighting", zh: "照片級寫實風格、高細節、電影級光影" },
+    { id: "3d",      label: "3D 公仔",     en: "3D figurine style, soft toy aesthetic, smooth shading, subsurface scattering", zh: "3D 公仔風格，絨毛玩具質感、平滑著色、次表面散射" },
+    { id: "flat",    label: "扁平插畫",    en: "flat illustration style, clean vector look, bold solid colors, no gradients", zh: "扁平插畫風格，乾淨向量感、大膽純色、無漸層" },
+    { id: "book",    label: "童書繪本",    en: "children's storybook illustration, warm watercolor textures, gentle outlines", zh: "童書繪本插畫風格，溫暖的水彩質感、柔和線條" },
+    { id: "doodle",  label: "童趣手繪",    en: "childlike doodle style, hand-drawn marker lines, playful and rough", zh: "童趣手繪塗鴉風格，手繪麥克筆線條、俏皮粗獷" },
+    { id: "chibi",   label: "日系 Chibi",  en: "Japanese chibi anime style, kawaii, glossy big eyes, bold outlines", zh: "日系 Chibi 動漫風格，kawaii 萌系、亮晶晶大眼睛、粗黑外框線" },
+    { id: "water",   label: "清新水彩",    en: "fresh watercolor style, translucent washes, paper texture, soft edges", zh: "清新水彩風格，半透明渲染、紙張質感、柔邊處理" },
+    { id: "ink",     label: "古風水墨",    en: "traditional Chinese ink painting style, sumi-e brush strokes, restrained palette", zh: "中式古風水墨畫風格、寫意毛筆筆觸、留白克制配色" },
+    { id: "pixel",   label: "復古像素",    en: "retro pixel art style, 16-bit aesthetic, dithering, limited palette", zh: "復古像素藝術風格，16-bit 美學、抖動效果、有限色盤" },
+    { id: "pastel",  label: "粉蠟筆",      en: "soft pastel crayon style, chalky waxy texture, visible grainy strokes, muted dreamy colors, slightly blurred edges like an oil pastel drawing on textured paper", zh: "粉蠟筆/油性蠟筆風格，粉末蠟質感、明顯顆粒筆觸、柔和夢幻配色、邊緣略帶模糊，像在有紋理的紙上作畫" },
+    { id: "bwline",  label: "黑白塗鴉線條風", en: "black-and-white scribble line art style, pure ink doodle on white, expressive uneven hand-drawn outlines, NO color fill or shading (line work only)", zh: "黑白塗鴉線條風格，純墨水塗鴉在白底上、生動不規則的手繪輪廓、不要任何上色或陰影（純線稿）" },
+    { id: "kaomoji", label: "浮誇顏藝風",  en: "extremely exaggerated kaomoji-style facial expressions (顔芸/gangimari/yandere face), wildly distorted eyes, screaming mouths, popping veins, dramatic anime over-the-top reactions, high-contrast bold linework, comedic intensity", zh: "極度浮誇的顏藝風格（顔芸/ガンギマリ/病嬌臉），扭曲變形的眼睛、咆哮張嘴、爆青筋、戲劇化動漫過激反應、高對比粗線條、爆笑強度" },
+    { id: "uscartoon", label: "美式卡通風", en: "American cartoon style (Cartoon Network / Nickelodeon / Disney TV aesthetic), bold thick black outlines, exaggerated rubber-hose proportions, snappy expressive poses, vibrant flat saturated colors with simple cel-shading, squash-and-stretch energy, like Adventure Time / Steven Universe / The Powerpuff Girls", zh: "美式卡通風格（Cartoon Network／Nickelodeon／Disney TV 動畫美學），粗黑外框線、誇張的橡皮管四肢比例、生動有張力的姿勢、鮮豔飽和的扁平上色搭配簡單賽璐珞陰影、壓縮拉伸的動畫能量，類似探險活寶／宇宙小子／飛天小女警" },
+  ],
+  decorations: [
+    // category, id, label, drawer-key
+    { cat: "emo", id: "lines3", label: "無言黑線" },
+    { cat: "emo", id: "speed",  label: "快跑速度線" },
+    { cat: "emo", id: "shock",  label: "震動音波" },
+    { cat: "emo", id: "diamond",label: "驚嚇眼白" },
+    { cat: "emo", id: "anger",  label: "生氣井字" },
+    { cat: "emo", id: "spiral", label: "困惑圈圈" },
+    { cat: "emo", id: "spark4", label: "閃亮星星" },
+    { cat: "emo", id: "zzz",    label: "沉睡 ZZZ" },
+    { cat: "emo", id: "drop",   label: "流汗水滴" },
+    { cat: "emo", id: "bulb",   label: "靈感燈泡" },
+    { cat: "emo", id: "crack",  label: "傷心裂痕" },
+    { cat: "emo", id: "smoke",  label: "冒煙火氣" },
+
+    { cat: "line",id: "hbar3",  label: "水平強調線" },
+    { cat: "line",id: "radial", label: "放射狀光芒" },
+    { cat: "line",id: "wave",   label: "波浪震動線" },
+    { cat: "line",id: "smile",  label: "微笑弧線" },
+    { cat: "line",id: "frown",  label: "失落弧線" },
+    { cat: "line",id: "trail",  label: "動態殘影線" },
+    { cat: "line",id: "focus",  label: "聚焦集中線" },
+    { cat: "line",id: "ecg",    label: "心跳起伏線" },
+    { cat: "line",id: "burst",  label: "爆炸齒輪線" },
+    { cat: "line",id: "underln",label: "重點底線" },
+    { cat: "line",id: "qcurl",  label: "疑問彈簧線" },
+    { cat: "line",id: "arc",    label: "跳躍拋物線" },
+
+    { cat: "geo", id: "star4",  label: "閃耀四芒星" },
+    { cat: "geo", id: "heart",  label: "愛心圖形" },
+    { cat: "geo", id: "ring2",  label: "同心圓圈" },
+    { cat: "geo", id: "speech", label: "對話氣泡" },
+    { cat: "geo", id: "thought",label: "思考氣泡" },
+    { cat: "geo", id: "excl",   label: "驚嘆號" },
+    { cat: "geo", id: "qmark",  label: "問號" },
+    { cat: "geo", id: "cross",  label: "打叉" },
+    { cat: "geo", id: "check",  label: "打勾" },
+    { cat: "geo", id: "music",  label: "音樂符號" },
+    { cat: "geo", id: "ban",    label: "禁止標誌" },
+    { cat: "geo", id: "bolt",   label: "閃電符號" },
+  ]
+};
+
+/* ===========================================================
+ * Cross-tab shared state
+ * =========================================================== */
+const AppState = {
+  watermark: { processedImage: null },        // ImageData of processed full image
+  split: {
+    sourceCanvas: null,
+    frames: [],          // [{canvas, label}]
+    bgRemoved: false,
+    selected: new Set(),
+    // Fractional positions (0..1) of split lines in source-canvas coordinates.
+    // Default = even 5×4 grid: vertical lines at 1/5, 2/5, 3/5, 4/5; horizontal at 1/4, 2/4, 3/4
+    vLines: [0.2, 0.4, 0.6, 0.8],   // 4 vertical lines (separating 5 columns)
+    hLines: [0.25, 0.5, 0.75],      // 3 horizontal lines (separating 4 rows)
+    startNum: 1                     // starting column number for labels (live)
+  },
+  compose: {
+    frames: [],          // [{img:HTMLImageElement|null, hidden:bool, modifiedDataURL:string|null}]
+    selectedIdx: -1,
+    format: "anim",      // anim/main/tab
+    loop: 1,
+    totalSec: 1
+  }
+};
+
+/* ===========================================================
+ * Utilities
+ * =========================================================== */
+const $ = (s, ctx = document) => ctx.querySelector(s);
+const $$ = (s, ctx = document) => Array.from(ctx.querySelectorAll(s));
+
+function toast(msg, type = "") {
+  const t = $("#toast"); t.textContent = msg; t.className = "toast show " + type;
+  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove("show"), 2200);
+}
+
+// iframe-safe copy via document.execCommand
+function copyText(text) {
+  const ta = $("#hiddenCopy");
+  ta.value = text;
+  ta.select();
+  ta.setSelectionRange(0, text.length);
+  let ok = false;
+  try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+  return ok;
+}
+
+/* iframe-safe confirm dialog.
+ * Browser window.confirm() is silently blocked in many iframe contexts (incl. claude.ai),
+ * so we render our own modal that returns a Promise<boolean>.
+ */
+function customConfirm(message, opts = {}) {
+  return new Promise(resolve => {
+    const overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+    const titleHtml = opts.title ? `<div class="modal-title">${opts.title}</div>` : "";
+    overlay.innerHTML = `
+      <div class="modal-dialog" role="dialog" aria-modal="true">
+        <div class="modal-icon">${opts.icon || "⚠️"}</div>
+        ${titleHtml}
+        <div class="modal-message">${message}</div>
+        <div class="modal-actions">
+          <button class="btn outline" data-act="cancel">${opts.cancelText || "取消"}</button>
+          <button class="btn ${opts.danger ? "danger" : "primary"}" data-act="confirm">${opts.confirmText || "確認"}</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    function cleanup(result) {
+      overlay.remove();
+      document.removeEventListener("keydown", onKey);
+      resolve(result);
+    }
+    function onKey(e) {
+      if (e.key === "Escape") { e.preventDefault(); cleanup(false); }
+      else if (e.key === "Enter") { e.preventDefault(); cleanup(true); }
+    }
+    overlay.addEventListener("click", e => {
+      if (e.target === overlay) cleanup(false);   // click outside dialog area
+    });
+    overlay.querySelectorAll("[data-act]").forEach(btn => {
+      btn.addEventListener("click", () => cleanup(btn.dataset.act === "confirm"));
+    });
+    document.addEventListener("keydown", onKey);
+    // Focus the cancel button by default for safety (avoid accidental Enter destroying data)
+    setTimeout(() => {
+      const cancelBtn = overlay.querySelector('[data-act="cancel"]');
+      if (cancelBtn) cancelBtn.focus();
+    }, 30);
+  });
+}
+
+function fileToImage(file) {
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); res(img); };
+    img.onerror = (e) => { URL.revokeObjectURL(url); rej(e); };
+    img.src = url;
+  });
+}
+
+function dataURLToImage(dataURL) {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => res(img);
+    img.onerror = rej;
+    img.src = dataURL;
+  });
+}
+
+function downloadBlob(blob, filename) {
+  const a = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+  a.href = url; a.download = filename; document.body.appendChild(a);
+  a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+
+function canvasToBlob(canvas, type = "image/png") {
+  return new Promise(res => canvas.toBlob(res, type));
+}
+
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+/* ===========================================================
+ * TAB 1 — Prompt Master
+ * =========================================================== */
+const PromptState = {
+  source: "ref",           // ref | custom
+  customText: "",
+  selectedActions: [],     // array of action keywords (max 5)
+  customActions: "",       // optional override (free text)
+  style: "qcute",
+  border: false,
+  lang: "en"               // "en" (English standard) | "zh" (full Chinese)
+};
+const MAX_ACTIONS = 5;
+
+function setupPromptTab() {
+  // keyword multi-select panel (categorized by theme)
+  buildKeywordPanel();
+  renderSelectedKeywordsBar();
+
+  // style buttons
+  const styleGrid = $("#styleGrid");
+  AppConfig.promptStyles.forEach(s => {
+    const b = document.createElement("button");
+    b.className = "btn" + (s.id === PromptState.style ? " sel" : "");
+    b.textContent = s.label; b.dataset.style = s.id;
+    b.addEventListener("click", () => {
+      PromptState.style = s.id;
+      $$("#styleGrid .btn").forEach(x => x.classList.toggle("sel", x.dataset.style === s.id));
+      renderPrompt();
+    });
+    styleGrid.appendChild(b);
+  });
+  // char source
+  $$("#charSourceGroup .btn").forEach(b => {
+    b.addEventListener("click", () => {
+      PromptState.source = b.dataset.source;
+      $$("#charSourceGroup .btn").forEach(x => x.classList.toggle("sel", x.dataset.source === PromptState.source));
+      $("#refUploadArea").style.display = PromptState.source === "ref" ? "block" : "none";
+      $("#customCharArea").style.display = PromptState.source === "custom" ? "block" : "none";
+      renderPrompt();
+    });
+  });
+  // ref upload
+  // custom text
+  $("#charCustomText").addEventListener("input", e => {
+    PromptState.customText = e.target.value; renderPrompt();
+  });
+  // custom actions (overrides theme keywords when filled)
+  $("#customActions").addEventListener("input", e => {
+    PromptState.customActions = e.target.value; renderPrompt();
+  });
+  // border switch
+  $("#borderSwitch").addEventListener("change", e => {
+    PromptState.border = e.target.checked; renderPrompt();
+  });
+  // copy / go
+  $("#copyPromptBtn").addEventListener("click", () => {
+    const text = $("#promptOutput").innerText;
+    if (copyText(text)) toast("✅ Prompt 已複製到剪貼簿", "success");
+    else toast("複製失敗，請手動選取", "error");
+  });
+  $("#goGeminiBtn").addEventListener("click", () => {
+    window.open("https://gemini.google.com/app", "_blank", "noopener");
+  });
+  $("#goChatGPTBtn").addEventListener("click", () => {
+    window.open("https://chat.openai.com/", "_blank", "noopener");
+  });
+  // Prompt language toggle (English standard / Full Chinese)
+  $$("#promptLangToggle button").forEach(b => {
+    b.addEventListener("click", () => {
+      PromptState.lang = b.dataset.lang;
+      $$("#promptLangToggle button").forEach(x => x.classList.toggle("active", x === b));
+      renderPrompt();
+    });
+  });
+  renderPrompt();
+}
+
+function buildKeywordPanel() {
+  const container = $("#kwCategories");
+  if (!container) return;
+  container.innerHTML = "";
+  AppConfig.promptThemes.forEach(theme => {
+    const cat = document.createElement("div");
+    cat.className = "kw-cat";
+    cat.innerHTML = `
+      <div class="kw-cat-head">
+        <span class="title"><b>${theme.label}</b> · ${theme.keywords.length} 個</span>
+        <span class="arrow">▼</span>
+      </div>
+      <div class="kw-cat-body"></div>`;
+    const body = cat.querySelector(".kw-cat-body");
+    theme.keywords.forEach(kw => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "kw-chip";
+      chip.textContent = kw;
+      chip.dataset.kw = kw;
+      chip.addEventListener("click", () => toggleKeyword(kw));
+      body.appendChild(chip);
+    });
+    cat.querySelector(".kw-cat-head").addEventListener("click", () => cat.classList.toggle("collapsed"));
+    container.appendChild(cat);
+  });
+  refreshChipStates();
+}
+
+function toggleKeyword(kw) {
+  const i = PromptState.selectedActions.indexOf(kw);
+  if (i >= 0) {
+    PromptState.selectedActions.splice(i, 1);
+  } else {
+    if (PromptState.selectedActions.length >= MAX_ACTIONS) {
+      toast(`最多只能選 ${MAX_ACTIONS} 個動作`, "error");
+      return;
+    }
+    PromptState.selectedActions.push(kw);
+  }
+  renderSelectedKeywordsBar();
+  refreshChipStates();
+  renderPrompt();
+}
+
+function renderSelectedKeywordsBar() {
+  const bar = $("#kwSelectedBar");
+  if (!bar) return;
+  const items = PromptState.selectedActions;
+  let html = "";
+  if (items.length === 0) {
+    html = `<span class="kw-selected-empty">尚未選取動作（請從下方分類點選 1–${MAX_ACTIONS} 個）</span>`;
+  } else {
+    html = items.map((kw, i) => `
+      <span class="kw-selected-chip">
+        <span class="idx">${i + 1}</span>
+        <span>${kw}</span>
+        <button type="button" data-kw="${kw}" aria-label="移除">×</button>
+      </span>`).join("");
+  }
+  const counterClass = items.length === MAX_ACTIONS ? "kw-counter full" : "kw-counter";
+  html += `<span class="${counterClass}">已選 <b>${items.length}</b>/${MAX_ACTIONS}</span>`;
+  bar.innerHTML = html;
+  bar.querySelectorAll(".kw-selected-chip button").forEach(btn => {
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      const kw = btn.dataset.kw;
+      const i = PromptState.selectedActions.indexOf(kw);
+      if (i >= 0) PromptState.selectedActions.splice(i, 1);
+      renderSelectedKeywordsBar();
+      refreshChipStates();
+      renderPrompt();
+    });
+  });
+}
+
+function refreshChipStates() {
+  const atMax = PromptState.selectedActions.length >= MAX_ACTIONS;
+  $$(".kw-chip").forEach(chip => {
+    const sel = PromptState.selectedActions.includes(chip.dataset.kw);
+    chip.classList.toggle("selected", sel);
+    chip.classList.toggle("disabled", !sel && atMax);
+  });
+}
+
+function renderPrompt() {
+  const out = PromptState.lang === "zh" ? buildPromptZH() : buildPromptEN();
+  $("#promptOutput").textContent = out;
+}
+
+function buildPromptEN() {
+  const style = AppConfig.promptStyles.find(s => s.id === PromptState.style);
+
+  let charLine;
+  if (PromptState.source === "ref") {
+    charLine = "Use the reference image attached as the main character. (Please attach the reference image in the AI platform's UI when sending this prompt.)";
+  } else {
+    charLine = PromptState.customText.trim()
+      ? "Character description: " + PromptState.customText.trim()
+      : "Character description: (please describe your character)";
+  }
+  const borderLine = PromptState.border
+    ? "Add a clear white die-cut sticker border around the character on every cell."
+    : "";
+
+  const customActs = PromptState.customActions.trim();
+  const selectedActs = PromptState.selectedActions;
+  let actionLine;
+  if (customActs) {
+    actionLine = `Use EXACTLY these user-specified actions across the 5 columns (one action per column, in order, depict in Chinese context): ${customActs}。`;
+  } else if (selectedActs.length === 5) {
+    actionLine = `Use EXACTLY these 5 user-selected actions, ONE per column in order (depict in Chinese context, each column = one continuous-action sequence of 4 frames showing that action): ${selectedActs.join("、")}。`;
+  } else if (selectedActs.length > 0) {
+    actionLine = `Distribute these ${selectedActs.length} user-selected action(s) meaningfully across the 5 columns; for any remaining columns, choose closely-related actions of similar emotional tone (depict in Chinese context): ${selectedActs.join("、")}。`;
+  } else {
+    actionLine = `(⚠ NOT YET SET — please select 1-5 action keywords or fill the custom-actions field in the UI before sending to Gemini.)`;
+  }
+
+  return `# Animated Sticker Prompt (Continuous-Action Mode, NO TEXT)
+
+[!!! CRITICAL — NO VISIBLE GRID LINES !!!]
+The "5×4 grid" is a LOGICAL LAYOUT CONCEPT for the AI to organize the composition.
+The output image MUST NOT contain any visible:
+  ✗ grid lines (white, black, or any color)
+  ✗ borders, frames, or boxes around individual cells
+  ✗ gutters, gaps, or separator strips between cells
+  ✗ panel dividers (like in a comic book or photo collage)
+  ✗ corner marks, crop marks, or registration marks
+The 20 sub-images must touch each other directly with NO visual separation.
+The viewer should NOT be able to tell where one cell ends and the next begins, except by the change in pose/character.
+A continuous green background fills the entire 2560×1664 canvas with NO interruption.
+
+[Layout Specification]
+- Canvas size: 2560 x 1664 px (single uninterrupted image)
+- Logical arrangement: 5 columns × 4 rows = 20 sub-images (each conceptually ~512 × 416 px)
+- Each VERTICAL COLUMN represents ONE continuous animation sequence (4 frames per column, top → bottom).
+- 5 distinct continuous-action sequences in total.
+- IMPORTANT: This grid structure is INVISIBLE — only the AI uses it for composition; the rendered output shows only characters on a uniform green background.
+
+[Core Rules]
+- ABSOLUTELY NO TEXT, words, letters, numbers, captions, watermarks, or signatures anywhere.
+- ABSOLUTELY NO GRID LINES of any kind — no white lines, no black lines, no thin strokes, no faint guides. The 20 sub-images blend seamlessly into ONE flat green canvas.
+- Composition: half-body or full-body depending on the action; full character must remain inside its conceptual cell area.
+- Background: SOLID GREEN SCREEN (#00C800), perfectly flat and uniform across the ENTIRE 2560×1664 canvas, for easy chroma keying.
+- Subtle, expressive variation between frames within a column to create smooth animation.
+
+[Creative Settings]
+- ${charLine}
+- ${actionLine}
+- Visual style: ${style.en}.
+${borderLine ? "- " + borderLine + "\n" : ""}- Lighting: clean, even, no harsh shadows that would interfere with chroma key.
+- Each column tells one micro-story (4 frames of a single motion). Different columns show different actions.
+
+[Hard Constraints]
+- Output exactly 5×4 sub-images, no more, no less.
+- Do not draw anything outside the conceptual cell boundaries.
+- The green background MUST be visible around the character on every sub-image (no edge-to-edge fill).
+- ZERO visible grid lines, borders, frames, or panel dividers anywhere in the output. If you are tempted to draw a thin line to separate cells — DO NOT. The cells separate themselves naturally through the green negative space around each character.
+`;
+}
+
+function buildPromptZH() {
+  const style = AppConfig.promptStyles.find(s => s.id === PromptState.style);
+  const styleZh = style.zh || style.en;
+
+  let charLine;
+  if (PromptState.source === "ref") {
+    charLine = "請以附加的參考圖作為主角。（送出時請於 AI 平台介面上傳參考圖）";
+  } else {
+    charLine = PromptState.customText.trim()
+      ? "角色描述：" + PromptState.customText.trim()
+      : "角色描述：（請填寫角色特徵）";
+  }
+  const borderLine = PromptState.border
+    ? "在每一格的角色周圍加上清晰的白色貼圖邊框（die-cut sticker style）。"
+    : "";
+
+  const customActs = PromptState.customActions.trim();
+  const selectedActs = PromptState.selectedActions;
+  let actionLine;
+  if (customActs) {
+    actionLine = `請使用以下使用者指定的動作，每一欄對應一個動作（依序排列）：${customActs}。`;
+  } else if (selectedActs.length === 5) {
+    actionLine = `請完全採用以下 5 個使用者指定的動作，每一欄一個動作、按順序排列（每一欄 = 一組由 4 格組成的連續動作）：${selectedActs.join("、")}。`;
+  } else if (selectedActs.length > 0) {
+    actionLine = `請將以下 ${selectedActs.length} 個使用者指定的動作有意義地分配到 5 欄中；剩餘欄位請自行選擇情緒風格相近的動作填補：${selectedActs.join("、")}。`;
+  } else {
+    actionLine = `（⚠ 尚未設定 — 請先在介面上選取 1-5 個動作關鍵字，或填寫自訂動作欄位。）`;
+  }
+
+  return `# 動態貼圖生成指令（連續動作模式・絕對不出現文字）
+
+【!!! 最重要規則 — 絕對不可有任何可見的格線 !!!】
+所謂「5×4 網格」只是 AI 內部用來組織構圖的「邏輯排版概念」。
+最終輸出的圖片絕對不能包含任何可見的：
+  ✗ 格線（不論白、黑、或任何顏色）
+  ✗ 包圍每一格的邊框、框線或矩形
+  ✗ 各格之間的留白條、間隙或分隔條
+  ✗ 漫畫式或拼貼式的面板分隔線
+  ✗ 對齊標記、裁切線或定位標記
+20 張子圖必須直接相鄰，彼此之間沒有任何視覺分隔。
+觀看者除了角色姿勢的變化外，不應分辨得出一格在哪裡結束、下一格從哪裡開始。
+整張 2560×1664 畫布應由連續、毫無中斷的純綠色背景填滿。
+
+【版面規格】
+- 畫布尺寸：2560 × 1664 px（單張不可中斷的完整圖）
+- 邏輯排版：5 欄 × 4 列 = 20 張子圖（每張概念上約 512 × 416 px）
+- 每一個垂直欄代表一組連續動畫（每欄 4 格，由上到下）
+- 共產生 5 組不同的連續動作序列
+- 重要：這個網格結構是「不可見的」—— 僅供 AI 用於構圖規劃，最終輸出只能看到角色和均勻綠色背景。
+
+【核心規則】
+- 絕對不可出現任何文字、字母、數字、標題、浮水印或簽名。
+- 絕對不可出現任何種類的格線 —— 不要白線、不要黑線、不要細線、不要淡淡的引導線。20 張子圖必須完美融合在同一張平坦綠色畫布上。
+- 構圖：依動作需求採半身或全身，完整角色須保持在其所屬概念格區域內。
+- 背景：純綠幕（#00C800），整張 2560×1664 畫布上必須完全平坦、均勻一致，以利後續去背。
+- 同一欄內 4 格之間應有細膩、生動的變化，以形成流暢動畫。
+
+【創意設定】
+- ${charLine}
+- ${actionLine}
+- 視覺風格：${styleZh}。
+${borderLine ? "- " + borderLine + "\n" : ""}- 光照：乾淨、均勻，避免會干擾去背的強烈陰影。
+- 每一欄都是一個小故事（同一動作的 4 格分鏡），不同欄展示不同動作。
+
+【硬性限制】
+- 輸出必須恰好為 5×4 = 20 張子圖，不可多也不可少。
+- 不可在概念格邊界外繪製任何元素。
+- 每一張子圖角色周圍都必須看得到綠色背景（不可貼齊填滿）。
+- 整張輸出不能有任何可見的格線、邊框、框線或面板分隔線。如果你（AI）想要畫一條細線來分隔格子 —— 請不要。每一格之間的分隔，應該透過角色周圍的綠色留白自然產生。
+`;
+}
+
+
+/* ===========================================================
+ * TAB 2 — Watermark Removal (Alpha Unmix + Bilinear)
+ * =========================================================== */
+// Real Gemini sparkle watermark (extracted from sample images)
+const TPL_B64 = "iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAALBklEQVR42u2d35McVRXHP90zmwiBzY8lsIQQQgw/DBJEMClFKSpotNSysLTKFx/9QyzffKDKJ33QJ/VdEUEq/ooiWCKUGNH4M6QgBpIYDGQTsjszfX3oc90zN/f2j5np6Z7d/lZNzez8vN3fe875nnPP7Y2MMZTANrlfAZaoD9cBDwF3yd/HgZ+yBhCXfP9bcluqedxdYK9MkG3A3cAN65GQpmAXsBmIhJx5YEdLSH24HdgAGKAPdID3toTUhzs8z93VElIPdoh1ACRys8dyW0vI9LFfxt0XMowK9Pe1hEwXm4B9Esz1zR7HPpHELSFTdFfXKCI66hhisZJbWkKmg3ngQRlznHE8B2fZSmaJkEjUlc09XHTWgvydJUIeUq6qp2KHvdngPgAebgmpFluBDznPdTPef798piWkIrzfcV2RSN6B876BQ0pLSAXYBdyjXJQlxBLQVzd7THOSk9zQEjJ53A8sqr+NunWdONJRhG0G7mwJmSwWleuJCrzfOPeHWV3DaQmZAA54LKMoKRYflwy/JWRM3M1kalP7gN0tIePjUxP8rkdaQsbDISl/6CAdOQoLjxQO3bYDn2sJGQ23iqvqZgRyTUxU8HvvYQbK800jZAvweVaLg8a5+YgpGuTngI/Kb7SEFCTjYckfJgUtgzuk5ZTPNFl1NYmQDwP3qgTPeOLDKNCfm5Nk8YMtIdn4AGm9aqOQMSmE4sxBGlrragIhu0SWzgXGZSZIjP2+jWKRu1tChrEdeEx8+3syMnITiA+mBCFGucONwI3Ap2lYp0qdhCwAXyStyNpKrslQUGZMC0k8x34j8Emx0nVNyALwJTkhFoMCktaUtAwXPeezMWnjxOGmkFIHIduFjAVFRDwBNZWFRImFviLcdqrc3BRSopLbEcbFTcAXJGZ0crLtqKAllCFQW2FXkWV/5zTptoaT64GQO0VN3eKc7GSEE1uWDCPvHchEGDgTwiXl58CJteyy7hMydma4pmSMTHwSr9vx7AAelSR1TVrIx4AHWO0CiZwAnSiLKRtDIufERjkWksgkTAK5jlFj+S/wCvAHeTzzhGwDPiuBMg5k4MY5CeOQkafO8gjR4sJa7AD4J3CEdBvfpaoJ6Vb0vfvEMrZn5BOR4zajEVxOGdfmK9mbgIjQTXh7SQufz0yDkElbyGbSDsMDTmzwqakyVpFnBUVcVuxYI56/E/XeyPPaC8CzVRIzKUI2ScA+xGrLjnURPkIiJ3uOxiQkzzJChFi1ZRxZ3GF4m4NRYz0NPC/xpZGEbJPywx5WdzbhmYl4SDE55ZJxCDEeRWk8yi72SPDYQ4g+lj7wMvDjJhGyVWLFIY/fNRkxIPIorSxXFJVwWVny3meNIYLIIESXYS4Df5bA/6+6CNnC6mLSJk8NqsvqzlgTOAFxCUKyVFbe4LW7SgootIRwQ4Uv3iRCyhlJJJ+fFiHzcn+QdI9fh+F170FAuSUBQqICWbp7wosIgKymiKSAiwutUvqOQR/zivy9BJwCnqyKkC3AtaTdf7tVLhEFyg4mUJIIzWaTcxLLEFJEGGRZVeJxq76E1ThB3k7AK+LGrgAXSK948dSkCNkllrBfBjLnKbUYj8Z3VYoJxBOjXEmeuxmlyGhK5jbG85kox5VqQuzr7zrWeEHuv1WWkJtI1yZuJ13bjp0fCw1OEwDDWwJcaWs8szHOiAc+VWQKnPw8AZB4JLC28k5AFJiA4uo61rTsuLMOcFEe/wc4L0QdB972EfKIWMJ1rLbH9AIy1TXdQYbl+IJ3GbUUF3RzRQhxx9wJzPi4gErzyXjtEQZCwOPy+lfVRF2Wc9uTuPNt3w/tlxLHpgyJ51MdifO46Fp4kWw7Lx/JcoOjVn/jgp/zfYfdODQIfK/Nz+YkJi/Ic1/JqmVFgRMaeWbhIOO95OQgWUE1zpGaZVVXyGJMQelcpltST9DH1ePlwGevcV77P3svA2dJS8wryl25M9aomVBE2UQBn5t34FGAWFNg5hb9fnIqCHnHFTkxVCfFXwt8rge8IyRcljjyHZ+FvAS8KrnGTtKm5Dm5udkqBU5c2QpsnlsqLFAKnMSQyyVDWZkC49/A6rVXfERYBXaRdHn4AvCXMrJ3p2Ti++XHOoGDjkqcOFPAivLKFaMWGaNAzBqnjqaV2Zx67jLwdeczjwE/nFRiOE+6trGHcusnRSSqb8blzWJTkgwK5iRRSXeXOK/15Lll4BtVl06sAjtM2qywwSMdo5IHmufCipQ7ykyIvDpZN3CifSuaRtWyEiVy3vLFhaqLi9tJm6Pfx9U7XKMRZqrJiClmQoTEGXW1LEJC+Ykloi8u6jWJC0frqPZa2J1ODxRUJ3luw5SUpJMgRE8CXQLpO+T4CFmRTPs54BgTwiQWqBaAj5C298clC4DG4wqqgEuI8dTTus4YEqc4qj+7DPwV+KWv/FE3IRYHhJh5J77kqatoTBdVlMwopxLR9SionkcynwJ+QUWNdFW0AT1KuoClW380Qf2MOlNIEJgSFd4yhEROEXBOxme4ep3HAC9KnLhckSVX1pe1F/iECAD3CnCJ40qyyvRRiRwkVGQMFQ0jz2/Z5uuBCtpWPR0lXa6tFFU2ym0VUu4g3SAzSuJYJgcpSkhonSVEyHFxUeeZAqpuJb2WtE/rXoZ311bRFGdyrMqnlnSRtOu8fk7U0zGxENYCIRYPkl4RbjGjXjSJLvhQATKWkz/niQsDDyGnSZviXmLKmOZ2hNtI9/QtBoJ5XkNEVnbfcb7DveCAfc52xMSOlei21jdI20ZPUgOmvWHnVtIG7B2empAJEFUEXSUQBsri+lzdQ2wC2XkCvAk8DbxOTYgDpZGq8DrwA3EJiZqhyRgxJArc97j6uoyuqtP1qFPAj+okow4LsVgkLUnfnOGiBhTbUGStSpfAe0qy2hxDy+/Euf+3WMYb1Iy6duG+CTwhlqIz5TiQwRcJ5gOPRUSe0oh73I0ho05CkBPwlOdElFnvMI4ocN2fbpruOHErkdziJ6RLq41AXS5LY4+ory2MvoHIXedOHAvZqGJHj3Q5dUms9DUahNijgqaNE6SbYJYY/gctowR2XzLoa5TrAT9rGhk+QlZqGscfgd+NkblHJZ5fJm0wOE4D4RJypsax/FaspVfSSuwGmsRxVW7F9l2JFa8Av6ah8AX1zTWO5wk5ce46RN5FMMHf6qmboPtCyFHq/z+MpQh5u8bxXBTl1aPcpZdijwy2scIG+iXS5daEBqOJVyX9h/j4XkFlFankT1uIlbq2NecEaZfmpZaQ8nharKXISqE+FlvVNSovWZbHTzIDaPKVrY8Q7qr3qTG3hK/d1/eYETSZkL+JIipKhg3s9pjsPoyzpItNLSETwK8INyXo0olOAHXnyDngu8wQmk7IeeA3BciwAb2rEtwrNKRguJYIAfiTnFw3liQeqdtX96ekAtASMmGcU6SE0HfUVU8+d6YlpBq8yPCC04DhVT9dJrEllOeYQcwKIWdJr+zmXj4JhrcE2PjxTWYUs/SfPl9wYocb3G0gX2KGMUuEvEPamqPlbcxw58gK8PeWkOnhWYYvVmAz8q4E8ovr1ULq+vfYr6rg7m4hsAH+9+uNkOtJW26uz3lfVesquhKsuxZjCf6sN0IuOvchVLWuckzclu5Qt3tOnlmPhMAULyzswUnSNQ2bAFrVdYk1gO6MjvskaWvPBnFbK4y5HbklZDyskG4riwK5SSt7HSxUPO4jEsMuSaw6t1YIaULn4jj4stx/vyWkRZupt4S0aAlZ7/gfgu7RhzSlc0AAAAAASUVORK5CYII=";
+
+const WMState = {
+  origImageData: null,    // ImageData (untouched original)
+  origCanvas: null,       // canvas with original
+  procCanvas: null,       // canvas with processed result
+  view: "processed",      // processed | original
+  enabled: true,          // master toggle - if false, processed = original (no removal)
+  rightOff: 60,
+  bottomOff: 60,
+  alphaMul: 1.0,
+  scalePct: 100,
+  maskAlpha: null,        // Float32Array(10000) for the 100x100 mask
+  maskReady: false,
+  imgW: 0, imgH: 0,
+  displayScale: 1,        // CSS scale of canvas vs natural pixels
+  drag: { active: false, ox: 0, oy: 0 }
+};
+
+function loadWatermarkMask() {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement("canvas");
+      c.width = c.height = 100;
+      const ctx = c.getContext("2d", { willReadFrequently: true });
+      ctx.drawImage(img, 0, 0);
+      const id = ctx.getImageData(0, 0, 100, 100);
+      const f = new Float32Array(10000);
+      for (let i = 0; i < 10000; i++) f[i] = id.data[i*4 + 3] / 255;
+      WMState.maskAlpha = f;
+      WMState.maskReady = true;
+      res();
+    };
+    img.onerror = rej;
+    img.src = "data:image/png;base64," + TPL_B64;
+  });
+}
+
+// Bilinear interpolation read from the 100x100 mask, scaled by scalePct
+// Returns alpha in [0, 0.985]
+function getMaskAlpha(localX, localY, scaleSize) {
+  // localX, localY are in scaled mask coordinates (0..scaleSize)
+  if (localX < 0 || localY < 0 || localX >= scaleSize || localY >= scaleSize) return 0;
+  const u = (localX / scaleSize) * 99; // 0..99
+  const v = (localY / scaleSize) * 99;
+  const x0 = Math.floor(u), y0 = Math.floor(v);
+  const x1 = Math.min(x0 + 1, 99), y1 = Math.min(y0 + 1, 99);
+  const fx = u - x0, fy = v - y0;
+  const M = WMState.maskAlpha;
+  const a00 = M[y0*100 + x0];
+  const a10 = M[y0*100 + x1];
+  const a01 = M[y1*100 + x0];
+  const a11 = M[y1*100 + x1];
+  let a = a00*(1-fx)*(1-fy) + a10*fx*(1-fy) + a01*(1-fx)*fy + a11*fx*fy;
+  a *= WMState.alphaMul;
+  if (a > 0.985) a = 0.985;
+  if (a < 0) a = 0;
+  return a;
+}
+
+function processWatermark() {
+  if (!WMState.origImageData || !WMState.maskReady) return;
+  const W = WMState.imgW, H = WMState.imgH;
+  const procCtx = WMState.procCanvas.getContext("2d", { willReadFrequently: true });
+
+  // If processing is disabled by user, just mirror the original (no Alpha Unmix).
+  if (!WMState.enabled) {
+    procCtx.drawImage(WMState.origCanvas, 0, 0);
+    AppState.watermark.processedImage = WMState.procCanvas;
+    updateCopyToSplitBtn();
+    $("#wmStatusPill").style.display = "flex";
+    $("#wmStatusPill").innerHTML = '<span class="dot"></span>ORIGINAL · 未去除';
+    $("#wmStatusPill").style.background = "rgba(251,191,36,.12)";
+    $("#wmStatusPill").style.borderColor = "rgba(251,191,36,.3)";
+    $("#wmStatusPill").style.color = "var(--c-warn)";
+    return;
+  }
+
+  const src = WMState.origImageData.data;
+  const out = new Uint8ClampedArray(src);
+  const scaleSize = 100 * (WMState.scalePct / 100);
+  const x0 = Math.round(W - WMState.rightOff - scaleSize);
+  const y0 = Math.round(H - WMState.bottomOff - scaleSize);
+
+  const xStart = Math.max(0, x0);
+  const yStart = Math.max(0, y0);
+  const xEnd = Math.min(W, x0 + Math.ceil(scaleSize) + 1);
+  const yEnd = Math.min(H, y0 + Math.ceil(scaleSize) + 1);
+
+  for (let y = yStart; y < yEnd; y++) {
+    for (let x = xStart; x < xEnd; x++) {
+      const a = getMaskAlpha(x - x0, y - y0, scaleSize);
+      if (a <= 0) continue;
+      const inv = 1 - a;
+      const idx = (y * W + x) * 4;
+      // bg = (obs - 255*a) / (1 - a), per channel
+      const r = (src[idx]   - 255*a) / inv;
+      const g = (src[idx+1] - 255*a) / inv;
+      const b = (src[idx+2] - 255*a) / inv;
+      out[idx]   = clamp(r, 0, 255);
+      out[idx+1] = clamp(g, 0, 255);
+      out[idx+2] = clamp(b, 0, 255);
+    }
+  }
+  procCtx.putImageData(new ImageData(out, W, H), 0, 0);
+  AppState.watermark.processedImage = WMState.procCanvas; // store ref for tab3 copy
+  updateCopyToSplitBtn();
+  $("#wmStatusPill").style.display = "flex";
+  $("#wmStatusPill").innerHTML = '<span class="dot"></span>PROCESSED';
+  $("#wmStatusPill").style.background = "";
+  $("#wmStatusPill").style.borderColor = "";
+  $("#wmStatusPill").style.color = "";
+}
+
+function applyWmEnabledUIState() {
+  // Apply visual disabled state to position and parameter sections
+  const dim = !WMState.enabled;
+  const pos = $("#wmAdjustGroup");
+  const par = $("#wmParamGroup");
+  if (pos) pos.classList.toggle("wm-disabled", dim);
+  if (par) par.classList.toggle("wm-disabled", dim);
+  // Also hide the red bounding box when disabled (no point showing it)
+  const box = $("#wmBox");
+  if (box) box.style.display = dim ? "none" : ($("#wmBoxVisible") && $("#wmBoxVisible").checked ? "" : "none");
+}
+
+function updateWmBoxFromState() {
+  const c = $("#wmCanvas");
+  if (!c) return;
+  const rect = c.getBoundingClientRect();
+  const dispW = rect.width;
+  const dispH = rect.height;
+  const scale = dispW / WMState.imgW;
+  WMState.displayScale = scale;
+  const sz = 100 * (WMState.scalePct / 100);
+  const left = (WMState.imgW - WMState.rightOff - sz) * scale;
+  const top = (WMState.imgH - WMState.bottomOff - sz) * scale;
+  const w = sz * scale;
+  const h = sz * scale;
+  const box = $("#wmBox");
+  box.style.left = left + "px"; box.style.top = top + "px";
+  box.style.width = w + "px"; box.style.height = h + "px";
+  $("#wmRightInput").value = WMState.rightOff;
+  $("#wmBottomInput").value = WMState.bottomOff;
+  $("#wmRes").textContent = WMState.imgW + " × " + WMState.imgH;
+  $("#wmPos").textContent = `right ${WMState.rightOff}px · bottom ${WMState.bottomOff}px`;
+  $("#wmSize").textContent = Math.round(sz) + " × " + Math.round(sz) + " px";
+  $("#wmSizeInfo").textContent = WMState.imgW + " × " + WMState.imgH;
+}
+
+function showWmCanvas() {
+  const c = $("#wmCanvas");
+  c.width = WMState.imgW; c.height = WMState.imgH;
+  const ctx = c.getContext("2d", { willReadFrequently: true });
+  if (WMState.view === "processed") ctx.drawImage(WMState.procCanvas, 0, 0);
+  else ctx.drawImage(WMState.origCanvas, 0, 0);
+  // CSS sizing — fit to wrap
+  const wrap = $("#wmCanvasWrap");
+  const padding = 24;
+  const maxW = wrap.clientWidth - padding;
+  const maxH = wrap.clientHeight - padding;
+  const r = Math.min(maxW / WMState.imgW, maxH / WMState.imgH, 1);
+  c.style.width = (WMState.imgW * r) + "px";
+  c.style.height = (WMState.imgH * r) + "px";
+  setTimeout(updateWmBoxFromState, 0);
+}
+
+async function loadWatermarkImage(file) {
+  const img = await fileToImage(file);
+  const W = img.naturalWidth, H = img.naturalHeight;
+  WMState.imgW = W; WMState.imgH = H;
+  // origCanvas
+  const oc = document.createElement("canvas"); oc.width = W; oc.height = H;
+  const octx = oc.getContext("2d", { willReadFrequently: true });
+  octx.drawImage(img, 0, 0);
+  WMState.origCanvas = oc;
+  WMState.origImageData = octx.getImageData(0, 0, W, H);
+  // procCanvas (initially same)
+  const pc = document.createElement("canvas"); pc.width = W; pc.height = H;
+  pc.getContext("2d", { willReadFrequently: true }).drawImage(oc, 0, 0);
+  WMState.procCanvas = pc;
+  // show editor
+  $("#wmUploader").style.display = "none";
+  $("#wmCanvasContainer").style.display = "inline-block";
+  $("#wmStatusBar").style.display = "flex";
+  // process & display
+  processWatermark();
+  showWmCanvas();
+}
+
+function setupWatermarkTab() {
+  // Click upload
+  $("#wmUploader").addEventListener("click", () => $("#wmFile").click());
+  $("#wmFile").addEventListener("change", e => {
+    const f = e.target.files[0]; if (f) loadWatermarkImage(f);
+  });
+  // drag
+  ["dragover","dragenter"].forEach(ev =>
+    $("#wmUploader").addEventListener(ev, e => { e.preventDefault(); $("#wmUploader").classList.add("dragging"); })
+  );
+  ["dragleave","drop"].forEach(ev =>
+    $("#wmUploader").addEventListener(ev, e => { e.preventDefault(); $("#wmUploader").classList.remove("dragging"); })
+  );
+  $("#wmUploader").addEventListener("drop", e => {
+    const f = e.dataTransfer.files[0]; if (f && f.type.startsWith("image/")) loadWatermarkImage(f);
+  });
+
+  // view toggle
+  $$("#wmViewToggle button").forEach(b => {
+    b.addEventListener("click", () => {
+      WMState.view = b.dataset.view;
+      $$("#wmViewToggle button").forEach(x => x.classList.toggle("active", x === b));
+      showWmCanvas();
+    });
+  });
+
+  // inputs (right/bottom)
+  $("#wmRightInput").addEventListener("input", () => {
+    const v = parseInt($("#wmRightInput").value) || 0;
+    WMState.rightOff = clamp(v, 0, WMState.imgW - 100);
+    processWatermark(); showWmCanvas();
+  });
+  $("#wmBottomInput").addEventListener("input", () => {
+    const v = parseInt($("#wmBottomInput").value) || 0;
+    WMState.bottomOff = clamp(v, 0, WMState.imgH - 100);
+    processWatermark(); showWmCanvas();
+  });
+  $("#wmResetPosBtn").addEventListener("click", () => {
+    WMState.rightOff = 60; WMState.bottomOff = 60;
+    processWatermark(); showWmCanvas();
+  });
+
+  // show/hide the red bounding box (UI only — does not affect the processed image)
+  $("#wmBoxVisible").addEventListener("change", e => {
+    $("#wmBox").style.display = e.target.checked ? "" : "none";
+  });
+
+  // master enable/disable for watermark removal
+  $("#wmEnable").addEventListener("change", e => {
+    WMState.enabled = e.target.checked;
+    applyWmEnabledUIState();
+    processWatermark();
+    showWmCanvas();
+    if (e.target.checked) toast("✅ 已啟用浮水印去除", "success");
+    else toast("⚠ 已取消浮水印去除（將使用原始圖片）", "");
+  });
+
+  // sliders
+  $("#wmAlphaSlider").addEventListener("input", e => {
+    WMState.alphaMul = parseFloat(e.target.value);
+    $("#wmAlphaVal").textContent = WMState.alphaMul.toFixed(2);
+    processWatermark(); showWmCanvas();
+  });
+  $("#wmScaleSlider").addEventListener("input", e => {
+    WMState.scalePct = parseInt(e.target.value);
+    $("#wmScaleVal").textContent = WMState.scalePct + "%";
+    processWatermark(); showWmCanvas();
+  });
+
+  // download
+  $("#wmDownloadBtn").addEventListener("click", async () => {
+    if (!WMState.procCanvas) { toast("請先上傳圖片", "error"); return; }
+    const blob = await canvasToBlob(WMState.procCanvas, "image/png");
+    downloadBlob(blob, "clean_" + Date.now() + ".png");
+    toast("✅ PNG 已下載", "success");
+  });
+  $("#wmResetBtn").addEventListener("click", () => $("#wmFile").click());
+
+  // drag the wmBox
+  const box = $("#wmBox");
+  box.addEventListener("mousedown", e => {
+    e.preventDefault();
+    WMState.drag.active = true;
+    WMState.drag.ox = e.clientX; WMState.drag.oy = e.clientY;
+    WMState.drag.startRight = WMState.rightOff;
+    WMState.drag.startBottom = WMState.bottomOff;
+  });
+  document.addEventListener("mousemove", e => {
+    if (!WMState.drag.active) return;
+    const dx = (e.clientX - WMState.drag.ox) / WMState.displayScale;
+    const dy = (e.clientY - WMState.drag.oy) / WMState.displayScale;
+    const sz = 100 * (WMState.scalePct / 100);
+    WMState.rightOff = clamp(WMState.drag.startRight - dx, 0, WMState.imgW - sz);
+    WMState.bottomOff = clamp(WMState.drag.startBottom - dy, 0, WMState.imgH - sz);
+    updateWmBoxFromState();
+  });
+  document.addEventListener("mouseup", () => {
+    if (WMState.drag.active) {
+      WMState.drag.active = false;
+      processWatermark(); showWmCanvas();
+    }
+  });
+
+  window.addEventListener("resize", () => { if (WMState.imgW) showWmCanvas(); });
+}
+
+function onWatermarkTabShow() {
+  if (WMState.imgW) showWmCanvas();
+}
+
+function updateCopyToSplitBtn() {
+  const has = !!AppState.watermark.processedImage;
+  const btn = $("#copyFromStep2Btn");
+  if (btn) btn.disabled = !has;
+}
+
+
+/* ===========================================================
+ * TAB 3 — Split & Background Removal
+ * =========================================================== */
+function setupSplitTab() {
+  const upl = $("#splitUploader");
+  upl.addEventListener("click", () => $("#splitFile").click());
+  $("#splitFile").addEventListener("change", e => { const f = e.target.files[0]; if (f) loadSplitImage(f); });
+  ["dragover","dragenter"].forEach(ev => upl.addEventListener(ev, e => { e.preventDefault(); upl.classList.add("dragging"); }));
+  ["dragleave","drop"].forEach(ev => upl.addEventListener(ev, e => { e.preventDefault(); upl.classList.remove("dragging"); }));
+  upl.addEventListener("drop", e => { const f = e.dataTransfer.files[0]; if (f) loadSplitImage(f); });
+
+  $("#splitChangeBtn").addEventListener("click", () => $("#splitFile").click());
+
+  $("#copyFromStep2Btn").addEventListener("click", () => {
+    const c = AppState.watermark.processedImage;
+    if (!c) { toast("分頁 2 尚未有處理過的圖片", "error"); return; }
+    AppState.split.sourceCanvas = c;
+    $("#splitResultsCard").style.display = "none";
+    AppState.split.frames = [];
+    AppState.split.selected.clear();
+    AppState.split.bgRemoved = false;
+    showSplitEditor();
+    toast("✅ 已從分頁 2 載入處理過的圖片", "success");
+  });
+
+  ["splitX","splitY","splitScale"].forEach(id => {
+    $("#" + id).addEventListener("input", e => {
+      const v = e.target.value;
+      const lblMap = { splitX: "splitXVal", splitY: "splitYVal", splitScale: "splitScaleVal" };
+      $("#" + lblMap[id]).textContent = id === "splitScale" ? v + "%" : v + " px";
+      drawSplitPreview();
+    });
+  });
+
+  $("#splitConfirmBtn").addEventListener("click", confirmSplit);
+  $("#splitResetLinesBtn").addEventListener("click", () => {
+    AppState.split.vLines = [0.2, 0.4, 0.6, 0.8];
+    AppState.split.hLines = [0.25, 0.5, 0.75];
+    drawSplitPreview();
+    toast("✅ 已重設為平均 5×4 格線", "success");
+  });
+
+  // Start number — live updates labels everywhere
+  $("#zipStartNum").addEventListener("input", e => {
+    const v = parseInt(e.target.value);
+    AppState.split.startNum = (isNaN(v) || v < 1) ? 1 : v;
+    drawSplitPreview();    // Re-render preview labels
+    relabelSplitFrames();  // Re-label already-cut frames + redraw results grid
+  });
+
+  $("#runBgRmBtn").addEventListener("click", runBackgroundRemoval);
+  $("#downloadZipBtn").addEventListener("click", downloadSplitZip);
+
+  $("#selectAllFramesBtn").addEventListener("click", () => {
+    AppState.split.frames.forEach((_, i) => AppState.split.selected.add(i));
+    renderSplitFramesGrid();
+  });
+  $("#deselectAllFramesBtn").addEventListener("click", () => {
+    AppState.split.selected.clear();
+    renderSplitFramesGrid();
+  });
+  $("#copyToTab4Btn").addEventListener("click", copyFramesToCompose);
+}
+
+// Recompute labels of already-cut frames using current startNum, then re-render the grid
+function relabelSplitFrames() {
+  if (!AppState.split.frames.length) return;
+  const start = AppState.split.startNum;
+  AppState.split.frames.forEach((f, idx) => {
+    const col = Math.floor(idx / 4);
+    const row = idx % 4;
+    f.label = `${col + start}-${row + 1}`;
+  });
+  renderSplitFramesGrid();
+}
+
+async function loadSplitImage(file) {
+  const img = await fileToImage(file);
+  const c = document.createElement("canvas");
+  c.width = img.naturalWidth; c.height = img.naturalHeight;
+  c.getContext("2d", { willReadFrequently: true }).drawImage(img, 0, 0);
+  AppState.split.sourceCanvas = c;
+  // Hide stale results from any previous split
+  $("#splitResultsCard").style.display = "none";
+  AppState.split.frames = [];
+  AppState.split.selected.clear();
+  AppState.split.bgRemoved = false;
+  showSplitEditor();
+}
+
+function showSplitEditor() {
+  const c = AppState.split.sourceCanvas;
+  $("#splitUploader").style.display = "none";
+  $("#splitEditor").style.display = "block";
+  $("#splitImgInfo").textContent = `來源尺寸：${c.width} × ${c.height} px ${(c.width === 2560 && c.height === 1664) ? "✅ 完全符合規格" : "⚠ 與建議 2560×1664 不同，仍可使用"}`;
+  // reset adjustments
+  $("#splitX").value = 0; $("#splitY").value = 0; $("#splitScale").value = 100;
+  $("#splitXVal").textContent = "0 px"; $("#splitYVal").textContent = "0 px"; $("#splitScaleVal").textContent = "100%";
+  // Reset split lines to even grid every time a new image is loaded
+  AppState.split.vLines = [0.2, 0.4, 0.6, 0.8];
+  AppState.split.hLines = [0.25, 0.5, 0.75];
+  drawSplitPreview();
+  setupSplitCanvasInteraction();
+}
+
+// Reusable: returns the source-canvas-coordinate boundaries (in px) for the 5x4 grid given current vLines/hLines.
+// boundaries.xs has 6 values: [0, vLine0, vLine1, vLine2, vLine3, W]
+// boundaries.ys has 5 values: [0, hLine0, hLine1, hLine2, H]
+function getSplitBoundaries(W, H) {
+  const xs = [0, ...AppState.split.vLines.map(p => p * W), W];
+  const ys = [0, ...AppState.split.hLines.map(p => p * H), H];
+  return { xs, ys };
+}
+
+function drawSplitPreview() {
+  const src = AppState.split.sourceCanvas;
+  if (!src) return;
+  const cv = $("#splitCanvas");
+  const W = src.width, H = src.height;
+  const scaleDisp = Math.min(800 / W, 1);
+  cv.width = Math.round(W * scaleDisp);
+  cv.height = Math.round(H * scaleDisp);
+  const ctx = cv.getContext("2d", { willReadFrequently: true });
+  ctx.imageSmoothingQuality = "high";
+
+  const x = parseInt($("#splitX").value);
+  const y = parseInt($("#splitY").value);
+  const sPct = parseInt($("#splitScale").value);
+  const s = sPct / 100;
+
+  // Draw scaled src with offset
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, cv.width, cv.height);
+  const dW = W * s, dH = H * s;
+  const dx = ((W - dW)/2 + x) * scaleDisp;
+  const dy = ((H - dH)/2 + y) * scaleDisp;
+  ctx.drawImage(src, dx, dy, dW * scaleDisp, dH * scaleDisp);
+
+  // Draw split lines using stored fractional positions
+  const hover = SplitInteract.hover;
+  const drag  = SplitInteract.drag;
+  ctx.lineCap = "butt";
+
+  AppState.split.vLines.forEach((p, i) => {
+    const xx = p * cv.width;
+    const isActive = (drag && drag.kind === "v" && drag.idx === i) || (!drag && hover && hover.kind === "v" && hover.idx === i);
+    drawSplitLine(ctx, xx, 0, xx, cv.height, isActive);
+  });
+  AppState.split.hLines.forEach((p, i) => {
+    const yy = p * cv.height;
+    const isActive = (drag && drag.kind === "h" && drag.idx === i) || (!drag && hover && hover.kind === "h" && hover.idx === i);
+    drawSplitLine(ctx, 0, yy, cv.width, yy, isActive);
+  });
+
+  // Draw row/column number labels for visual reference (use live startNum)
+  const { xs, ys } = getSplitBoundaries(cv.width, cv.height);
+  const startNum = AppState.split.startNum;
+  ctx.font = "bold 13px 'JetBrains Mono', monospace";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+  for (let c = 0; c < 5; c++) {
+    for (let r = 0; r < 4; r++) {
+      const cellX = xs[c], cellY = ys[r];
+      const label = `${startNum + c}-${r + 1}`;
+      const padX = 4, padY = 4;
+      const textW = ctx.measureText(label).width;
+      // Background pill
+      ctx.fillStyle = "rgba(0,0,0,0.6)";
+      ctx.fillRect(cellX + padX, cellY + padY, textW + 8, 16);
+      // Text
+      ctx.fillStyle = "#ffd54f";
+      ctx.fillText(label, cellX + padX + 4, cellY + padY + 2);
+    }
+  }
+}
+
+function drawSplitLine(ctx, x1, y1, x2, y2, active) {
+  ctx.beginPath();
+  if (active) {
+    // Solid bright line + glow when hovered/dragged
+    ctx.strokeStyle = "#ff7aa3";
+    ctx.lineWidth = 2.5;
+    ctx.shadowColor = "rgba(249,95,142,.8)";
+    ctx.shadowBlur = 8;
+    ctx.setLineDash([]);
+  } else {
+    ctx.strokeStyle = "#f95f8e";
+    ctx.lineWidth = 1.5;
+    ctx.shadowBlur = 0;
+    ctx.setLineDash([6, 4]);
+  }
+  ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  ctx.shadowBlur = 0;
+  ctx.setLineDash([]);
+}
+
+/* ----- Interactive line dragging ----- */
+const SplitInteract = {
+  hover: null,    // {kind: "v"|"h", idx} or null
+  drag: null,     // {kind, idx, dragging: bool}
+  HIT_PX: 8       // pixels around line to grab
+};
+
+function setupSplitCanvasInteraction() {
+  const cv = $("#splitCanvas");
+  if (!cv || cv._splitInteractInited) return;
+  cv._splitInteractInited = true;
+
+  function getCanvasCoord(e) {
+    const rect = cv.getBoundingClientRect();
+    const cx = e.clientX - rect.left;
+    const cy = e.clientY - rect.top;
+    const sx = cx * (cv.width / rect.width);
+    const sy = cy * (cv.height / rect.height);
+    return { x: sx, y: sy };
+  }
+
+  function findHit(x, y, hitPx) {
+    let best = null, bestDist = hitPx + 1;
+    AppState.split.vLines.forEach((p, i) => {
+      const lineX = p * cv.width;
+      const d = Math.abs(x - lineX);
+      if (d < bestDist) { bestDist = d; best = { kind: "v", idx: i }; }
+    });
+    AppState.split.hLines.forEach((p, i) => {
+      const lineY = p * cv.height;
+      const d = Math.abs(y - lineY);
+      if (d < bestDist) { bestDist = d; best = { kind: "h", idx: i }; }
+    });
+    return best;
+  }
+
+  // Use Pointer Events (covers mouse + touch + stylus on all modern browsers).
+  // Touch devices get a wider hit zone so fingers can grab thin lines.
+  cv.addEventListener("pointerdown", e => {
+    const isTouch = e.pointerType === "touch";
+    const hitPx = isTouch ? 20 : SplitInteract.HIT_PX;
+    const { x, y } = getCanvasCoord(e);
+    const hit = findHit(x, y, hitPx);
+    if (!hit) return;
+    e.preventDefault();
+    SplitInteract.drag = hit;
+    SplitInteract.hover = hit;
+    cv.setPointerCapture(e.pointerId);
+    drawSplitPreview();
+  });
+
+  cv.addEventListener("pointermove", e => {
+    if (SplitInteract.drag) {
+      const { x, y } = getCanvasCoord(e);
+      const drag = SplitInteract.drag;
+      const MIN_GAP = 0.02;
+      if (drag.kind === "v") {
+        const arr = AppState.split.vLines;
+        const lo = (drag.idx === 0 ? 0 : arr[drag.idx - 1]) + MIN_GAP;
+        const hi = (drag.idx === arr.length - 1 ? 1 : arr[drag.idx + 1]) - MIN_GAP;
+        arr[drag.idx] = clamp(x / cv.width, lo, hi);
+      } else {
+        const arr = AppState.split.hLines;
+        const lo = (drag.idx === 0 ? 0 : arr[drag.idx - 1]) + MIN_GAP;
+        const hi = (drag.idx === arr.length - 1 ? 1 : arr[drag.idx + 1]) - MIN_GAP;
+        arr[drag.idx] = clamp(y / cv.height, lo, hi);
+      }
+      drawSplitPreview();
+      return;
+    }
+    // Hover only meaningful for mouse devices
+    if (e.pointerType !== "touch") {
+      const { x, y } = getCanvasCoord(e);
+      const hit = findHit(x, y, SplitInteract.HIT_PX);
+      SplitInteract.hover = hit;
+      cv.classList.toggle("cursor-ew", hit && hit.kind === "v");
+      cv.classList.toggle("cursor-ns", hit && hit.kind === "h");
+      drawSplitPreview();
+    }
+  });
+
+  function endDrag(e) {
+    if (SplitInteract.drag) {
+      SplitInteract.drag = null;
+      try { cv.releasePointerCapture(e.pointerId); } catch (_) {}
+      drawSplitPreview();
+    }
+  }
+  cv.addEventListener("pointerup", endDrag);
+  cv.addEventListener("pointercancel", endDrag);
+
+  cv.addEventListener("pointerleave", e => {
+    if (!SplitInteract.drag && e.pointerType !== "touch") {
+      SplitInteract.hover = null;
+      cv.classList.remove("cursor-ew", "cursor-ns");
+      drawSplitPreview();
+    }
+  });
+}
+
+function confirmSplit() {
+  const src = AppState.split.sourceCanvas;
+  if (!src) { toast("請先上傳圖片", "error"); return; }
+  // Compose the adjusted canvas at full resolution
+  const W = src.width, H = src.height;
+  const x = parseInt($("#splitX").value);
+  const y = parseInt($("#splitY").value);
+  const sPct = parseInt($("#splitScale").value);
+  const s = sPct / 100;
+
+  const adjusted = document.createElement("canvas");
+  adjusted.width = W; adjusted.height = H;
+  const actx = adjusted.getContext("2d", { willReadFrequently: true });
+  actx.imageSmoothingQuality = "high";
+  const dW = W * s, dH = H * s;
+  const dx = (W - dW)/2 + x;
+  const dy = (H - dH)/2 + y;
+  actx.drawImage(src, dx, dy, dW, dH);
+
+  // Slice using user-defined line positions (in column-major order).
+  // boundaries.xs[c] / xs[c+1] form column c's left/right; ys[r]/ys[r+1] form row r's top/bottom
+  const { xs, ys } = getSplitBoundaries(W, H);
+  const frames = [];
+  for (let col = 0; col < 5; col++) {
+    for (let row = 0; row < 4; row++) {
+      const sx = Math.round(xs[col]);
+      const sy = Math.round(ys[row]);
+      const sw = Math.round(xs[col + 1] - xs[col]);
+      const sh = Math.round(ys[row + 1] - ys[row]);
+      const fc = document.createElement("canvas");
+      fc.width = sw; fc.height = sh;
+      const fctx = fc.getContext("2d", { willReadFrequently: true });
+      fctx.drawImage(adjusted, sx, sy, sw, sh, 0, 0, sw, sh);
+      // label uses live startNum (col+startNum)-(row+1)
+      frames.push({ canvas: fc, label: `${col + AppState.split.startNum}-${row + 1}` });
+    }
+  }
+  AppState.split.frames = frames;
+  AppState.split.bgRemoved = false;
+  AppState.split.selected.clear();
+  $("#splitResultsCard").style.display = "block";
+  $("#bgRmStatusTag").textContent = "尚未去背";
+  $("#bgRmStatusTag").className = "tag";
+  renderSplitFramesGrid();
+  toast(`✅ 已切割為 ${frames.length} 張影格`, "success");
+  // Smooth-scroll to results
+  setTimeout(() => $("#splitResultsCard").scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+}
+
+function renderSplitFramesGrid() {
+  const grid = $("#splitFramesGrid");
+  grid.innerHTML = "";
+  AppState.split.frames.forEach((f, idx) => {
+    const cell = document.createElement("div");
+    cell.className = "frame-cell";
+    if (AppState.split.selected.has(idx)) cell.classList.add("selected");
+    const url = f.canvas.toDataURL("image/png");
+    cell.innerHTML = `
+      <input type="checkbox" data-idx="${idx}" ${AppState.split.selected.has(idx) ? "checked" : ""} />
+      <div class="img-area"><img src="${url}" alt="${f.label}" /></div>
+      <div class="label">${f.label}</div>`;
+    const cb = cell.querySelector("input");
+    cb.addEventListener("change", e => {
+      e.stopPropagation();
+      if (cb.checked) AppState.split.selected.add(idx);
+      else AppState.split.selected.delete(idx);
+      cell.classList.toggle("selected", cb.checked);
+      $("#selectedCountInfo").textContent = "已選 " + AppState.split.selected.size + " 張";
+    });
+    // Click anywhere on the cell (except checkbox) toggles selection too
+    cell.addEventListener("click", e => {
+      if (e.target === cb) return;
+      cb.checked = !cb.checked;
+      cb.dispatchEvent(new Event("change"));
+    });
+    grid.appendChild(cell);
+  });
+  $("#selectedCountInfo").textContent = "已選 " + AppState.split.selected.size + " 張";
+}
+
+function runBackgroundRemoval() {
+  if (!AppState.split.frames.length) { toast("請先切割影格", "error"); return; }
+  if (!$("#bgRmEnable").checked) { toast("已停用智能去背，跳過", ""); return; }
+  AppState.split.frames.forEach(f => {
+    const ctx = f.canvas.getContext("2d", { willReadFrequently: true });
+    const id = ctx.getImageData(0, 0, f.canvas.width, f.canvas.height);
+    const d = id.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const r = d[i], g = d[i+1], b = d[i+2];
+      // Green dominance check
+      const gDom = g - Math.max(r, b);
+      if (g > 100 && gDom > 30 && b < 200) {
+        // Soft mask: stronger gDom -> more transparent
+        let alpha = 1 - clamp((gDom - 20) / 80, 0, 1);
+        d[i+3] = Math.round(d[i+3] * alpha);
+        // De-spill: shift green channel toward avg of r,b
+        if (alpha < 0.95) {
+          const target = (r + b) / 2;
+          d[i+1] = Math.round(g * 0.4 + target * 0.6);
+        }
+      }
+    }
+    ctx.putImageData(id, 0, 0);
+  });
+  AppState.split.bgRemoved = true;
+  $("#bgRmStatusTag").textContent = "✅ 已完成去背";
+  $("#bgRmStatusTag").className = "tag success";
+  renderSplitFramesGrid();
+  toast("✅ 已完成 20 張影格的綠幕去背", "success");
+}
+
+async function downloadSplitZip() {
+  if (!AppState.split.frames.length) { toast("尚未切割影格", "error"); return; }
+  if (typeof JSZip === "undefined") { toast("ZIP 工具尚未載入", "error"); return; }
+  const startNum = AppState.split.startNum;
+  const zip = new JSZip();
+  toast("⏳ 正在打包 ZIP...", "");
+  for (let i = 0; i < AppState.split.frames.length; i++) {
+    const f = AppState.split.frames[i];
+    // f.label already incorporates startNum (kept in sync by relabelSplitFrames)
+    const blob = await canvasToBlob(f.canvas, "image/png");
+    zip.file(`${f.label}.png`, blob);
+  }
+  const out = await zip.generateAsync({ type: "blob" });
+  downloadBlob(out, `stickers_${startNum}_${Date.now()}.zip`);
+  toast("✅ ZIP 已下載 (" + AppState.split.frames.length + " 張)", "success");
+}
+
+async function copyFramesToCompose() {
+  if (AppState.split.selected.size === 0) { toast("請先勾選要複製的影格", "error"); return; }
+  // Find empty slots and fill
+  const sel = Array.from(AppState.split.selected).sort((a,b)=>a-b);
+  let filled = 0, sIdx = 0;
+  for (let i = 0; i < AppState.compose.frames.length && sIdx < sel.length; i++) {
+    if (!AppState.compose.frames[i].img) {
+      const srcCanvas = AppState.split.frames[sel[sIdx]].canvas;
+      const url = srcCanvas.toDataURL("image/png");
+      const img = await dataURLToImage(url);
+      setFrameContent(i, img, url);
+      filled++; sIdx++;
+    }
+  }
+  // If still slots unfilled and selection remaining, append
+  while (sIdx < sel.length && AppState.compose.frames.length < AppConfig.stickerSpecs.maxFrames) {
+    const srcCanvas = AppState.split.frames[sel[sIdx]].canvas;
+    const url = srcCanvas.toDataURL("image/png");
+    const img = await dataURLToImage(url);
+    AppState.compose.frames.push({ img: null, dataURL: null, hidden: false });
+    setFrameContent(AppState.compose.frames.length - 1, img, url);
+    filled++; sIdx++;
+  }
+  AppState.split.selected.clear();
+  renderSplitFramesGrid();
+  composeRefreshAll();
+  toast(`✅ 已複製 ${filled} 張到「動態貼圖製作」`, "success");
+  // Switch to tab 4
+  setTimeout(() => { location.hash = "tab-compose"; }, 600);
+}
+
+
+/* ===========================================================
+ * TAB 4 — Compose / Animation / Export
+ * =========================================================== */
+const FormatSpec = {
+  anim: { w: 320, h: 270, label: "動態貼圖", apng: true },
+  main: { w: 240, h: 240, label: "主要圖片", apng: true },
+  tab:  { w: 96,  h: 74,  label: "聊天室標籤", apng: false }
+};
+
+function setupComposeTab() {
+  // initialize empty frames (start with 8 cells)
+  if (AppState.compose.frames.length === 0) {
+    for (let i = 0; i < 8; i++) AppState.compose.frames.push({ img: null, dataURL: null, hidden: false });
+  }
+  composeRenderGrid();
+  composeUpdateFmtBtns();
+  composeUpdateFmtInfo();
+
+  $("#composeBatchBtn").addEventListener("click", () => $("#composeBatchFile").click());
+  $("#composeBatchFile").addEventListener("change", composeOnBatchUpload);
+  $("#composeClearAll").addEventListener("click", composeClearAllFrames);
+
+  // toolbar
+  $("#tbEditText").addEventListener("click", () => openEditorForSelected());
+  $("#tbCopy").addEventListener("click", composeCopySelected);
+  $("#tbHide").addEventListener("click", composeToggleHide);
+  $("#tbDelete").addEventListener("click", composeDeleteSelected);
+  $("#tbLeft").addEventListener("click", () => composeMove(-1));
+  $("#tbRight").addEventListener("click", () => composeMove(1));
+  $("#tbReplace").addEventListener("click", () => $("#composeReplaceFile").click());
+  $("#tbClearAll").addEventListener("click", composeClearAllFrames);
+  $("#composeReplaceFile").addEventListener("change", composeOnReplace);
+  $("#composeSingleFile").addEventListener("change", composeOnSingleUpload);
+
+  // format
+  $$("#formatBtnGroup .btn").forEach(b => {
+    b.addEventListener("click", () => {
+      AppState.compose.format = b.dataset.fmt;
+      composeUpdateFmtBtns();
+      composeUpdateFmtInfo();
+      composeRedrawPreview();
+      composeUpdateValidation();
+    });
+  });
+
+  // loop / total sec — with smart locking (total play time ≤ 4 sec)
+  $$("#loopBtnGroup .btn").forEach(b => {
+    b.addEventListener("click", () => {
+      if (b.disabled) return;
+      AppState.compose.loop = parseInt(b.dataset.loop);
+      $$("#loopBtnGroup .btn").forEach(x => x.classList.toggle("sel", x === b));
+      composeUpdateValidation();
+    });
+  });
+  $$("#totalSecBtnGroup .btn").forEach(b => {
+    b.addEventListener("click", () => {
+      AppState.compose.totalSec = parseInt(b.dataset.sec);
+      $$("#totalSecBtnGroup .btn").forEach(x => x.classList.toggle("sel", x === b));
+      enforceLoopLockBySec();
+      composeUpdateValidation();
+    });
+  });
+  enforceLoopLockBySec();
+
+  // preview
+  $("#previewPlayBtn").addEventListener("click", previewStart);
+  $("#previewStopBtn").addEventListener("click", previewStop);
+
+  // export
+  $("#exportBtn").addEventListener("click", exportFinal);
+  $("#estimateSizeBtn").addEventListener("click", estimateFileSize);
+
+  composeUpdateValidation();
+}
+
+function composeRefreshAll() {
+  composeRenderGrid();
+  composeUpdateFmtInfo();
+  composeUpdateValidation();
+  composeRedrawPreview();
+}
+
+function composeRenderGrid() {
+  const grid = $("#frameGridCompose");
+  grid.innerHTML = "";
+  AppState.compose.frames.forEach((f, idx) => {
+    const cell = document.createElement("div");
+    cell.className = "compose-cell";
+    if (idx === AppState.compose.selectedIdx) cell.classList.add("selected");
+    if (f.hidden) cell.classList.add("hidden-frame");
+    cell.innerHTML = `<div class="num">#${idx + 1}</div>` +
+      (f.img
+        ? `<img src="${f.dataURL}" alt="frame${idx + 1}" />`
+        : `<div class="empty-icon">+</div><div class="empty-text">點擊上傳</div>`
+      );
+    cell.addEventListener("click", () => {
+      AppState.compose.selectedIdx = idx;
+      if (!f.img) {
+        // open single upload
+        const inp = $("#composeSingleFile");
+        inp.dataset.target = idx;
+        inp.click();
+      } else {
+        composeRenderGrid();
+      }
+    });
+    grid.appendChild(cell);
+  });
+  // add "+" cell to add more frames (up to maxFrames)
+  if (AppState.compose.frames.length < AppConfig.stickerSpecs.maxFrames) {
+    const add = document.createElement("div");
+    add.className = "compose-cell";
+    add.style.borderStyle = "dashed";
+    add.innerHTML = `<div class="empty-icon">＋</div><div class="empty-text">新增格子</div>`;
+    add.addEventListener("click", () => {
+      AppState.compose.frames.push({ img: null, dataURL: null, hidden: false });
+      composeRenderGrid();
+    });
+    grid.appendChild(add);
+  }
+}
+
+async function composeOnBatchUpload(e) {
+  const files = Array.from(e.target.files);
+  if (!files.length) return;
+  let idx = 0;
+  for (const file of files) {
+    const url = URL.createObjectURL(file);
+    const dataURL = await new Promise((res, rej) => {
+      const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(file);
+    });
+    URL.revokeObjectURL(url);
+    const img = await dataURLToImage(dataURL);
+    // Find next empty slot
+    while (idx < AppState.compose.frames.length && AppState.compose.frames[idx].img) idx++;
+    if (idx >= AppState.compose.frames.length) {
+      if (AppState.compose.frames.length >= AppConfig.stickerSpecs.maxFrames) break;
+      AppState.compose.frames.push({ img: null, dataURL: null, hidden: false });
+    }
+    setFrameContent(idx, img, dataURL);
+    idx++;
+  }
+  $("#composeBatchFile").value = "";
+  composeRefreshAll();
+  toast("✅ 已匯入 " + files.length + " 張圖片", "success");
+}
+
+async function composeOnSingleUpload(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const idx = parseInt(e.target.dataset.target);
+  const dataURL = await new Promise((res, rej) => {
+    const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(file);
+  });
+  const img = await dataURLToImage(dataURL);
+  setFrameContent(idx, img, dataURL);
+  AppState.compose.selectedIdx = idx;
+  e.target.value = "";
+  composeRefreshAll();
+}
+
+async function composeOnReplace(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const idx = AppState.compose.selectedIdx;
+  if (idx < 0) { toast("請先選取目標影格", "error"); return; }
+  const dataURL = await new Promise((res, rej) => {
+    const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(file);
+  });
+  const img = await dataURLToImage(dataURL);
+  setFrameContent(idx, img, dataURL);
+  e.target.value = "";
+  composeRefreshAll();
+}
+
+/**
+ * Replace a frame's content with a new image while resetting any prior editor state.
+ * After this, the editor will start fresh (no overlays) using the new image as bg.
+ */
+function setFrameContent(idx, img, dataURL) {
+  const f = AppState.compose.frames[idx];
+  f.img = img;
+  f.dataURL = dataURL;
+  f.origImg = img;          // pristine bg for the editor
+  f.origDataURL = dataURL;
+  f.editorState = null;     // no overlays yet
+}
+
+function composeCopySelected() {
+  const idx = AppState.compose.selectedIdx;
+  if (idx < 0 || !AppState.compose.frames[idx].img) { toast("請先選取已有圖片的影格", "error"); return; }
+  const src = AppState.compose.frames[idx];
+  const cloneFrameContent = () => ({
+    img: src.img,
+    dataURL: src.dataURL,
+    origImg: src.origImg || src.img,
+    origDataURL: src.origDataURL || src.dataURL,
+    editorState: src.editorState
+      ? { bgState: { ...src.editorState.bgState }, objects: src.editorState.objects.map(o => ({ ...o })) }
+      : null,
+    hidden: false
+  });
+  // Find next empty slot after selected
+  for (let i = idx + 1; i < AppState.compose.frames.length; i++) {
+    if (!AppState.compose.frames[i].img) {
+      Object.assign(AppState.compose.frames[i], cloneFrameContent());
+      composeRefreshAll();
+      toast("✅ 已複製到 #" + (i + 1), "success");
+      return;
+    }
+  }
+  // No empty slot — push new
+  if (AppState.compose.frames.length < AppConfig.stickerSpecs.maxFrames) {
+    AppState.compose.frames.push(cloneFrameContent());
+    composeRefreshAll();
+    toast("✅ 已複製到新增格子", "success");
+  } else {
+    toast("已達最大影格數", "error");
+  }
+}
+
+function composeToggleHide() {
+  const idx = AppState.compose.selectedIdx;
+  if (idx < 0) { toast("請先選取影格", "error"); return; }
+  AppState.compose.frames[idx].hidden = !AppState.compose.frames[idx].hidden;
+  composeRefreshAll();
+}
+
+function composeDeleteSelected() {
+  const idx = AppState.compose.selectedIdx;
+  if (idx < 0) { toast("請先選取影格", "error"); return; }
+  const f = AppState.compose.frames[idx];
+  f.img = null;
+  f.dataURL = null;
+  f.origImg = null;
+  f.origDataURL = null;
+  f.editorState = null;
+  f.hidden = false;
+  composeRefreshAll();
+}
+
+async function composeClearAllFrames() {
+  const filledCount = AppState.compose.frames.filter(f => f.img).length;
+  if (filledCount === 0) { toast("目前沒有任何已上傳的影格圖片", ""); return; }
+  const ok = await customConfirm(
+    `確定要清空所有 <b style="color:var(--c-danger)">${filledCount}</b> 張影格圖片？\n此動作無法復原。`,
+    { title: "清空全部影格", icon: "🗑️", danger: true, confirmText: "確認清空", cancelText: "取消" }
+  );
+  if (!ok) return;
+  AppState.compose.frames = [];
+  for (let i = 0; i < 8; i++) AppState.compose.frames.push({ img: null, dataURL: null, hidden: false });
+  AppState.compose.selectedIdx = -1;
+  composeRefreshAll();
+  toast(`✅ 已清空 ${filledCount} 張影格圖片`, "success");
+}
+
+function composeMove(dir) {
+  const idx = AppState.compose.selectedIdx;
+  if (idx < 0) { toast("請先選取影格", "error"); return; }
+  const ni = idx + dir;
+  if (ni < 0 || ni >= AppState.compose.frames.length) return;
+  const tmp = AppState.compose.frames[idx];
+  AppState.compose.frames[idx] = AppState.compose.frames[ni];
+  AppState.compose.frames[ni] = tmp;
+  AppState.compose.selectedIdx = ni;
+  composeRefreshAll();
+}
+
+function composeUpdateFmtBtns() {
+  $$("#formatBtnGroup .btn").forEach(b => b.classList.toggle("sel", b.dataset.fmt === AppState.compose.format));
+  if (AppState.compose.format === "tab") {
+    $("#animSettingsCard").style.display = "none";
+    $("#tabFmtNotice").style.display = "block";
+  } else {
+    $("#animSettingsCard").style.display = "block";
+    $("#tabFmtNotice").style.display = "none";
+  }
+}
+
+function composeUpdateFmtInfo() {
+  const f = FormatSpec[AppState.compose.format];
+  $("#composeFmtInfo").textContent = `${f.w}×${f.h}px (${f.apng ? "APNG" : "PNG"})`;
+  $("#paramFmt").textContent = `${f.label} (${f.w}×${f.h}px)`;
+}
+
+/* Smart lock: total play time (totalSec × loop) must be ≤ 4 sec.
+ * The single-loop duration is the "primary" knob — the loop count adapts.
+ * Disables loop buttons that would exceed the cap, and snaps the current loop down if needed.
+ */
+function enforceLoopLockBySec() {
+  const sec = AppState.compose.totalSec;
+  const maxLoops = Math.max(1, Math.floor(4 / sec));
+  $$("#loopBtnGroup .btn").forEach(b => {
+    const v = parseInt(b.dataset.loop);
+    if (v > maxLoops) {
+      b.disabled = true;
+      b.classList.add("disabled");
+      b.classList.remove("sel");
+      b.title = `${sec} 秒 × ${v} 次 = ${sec * v} 秒，超出 LINE 4 秒上限`;
+    } else {
+      b.disabled = false;
+      b.classList.remove("disabled");
+      b.title = "";
+    }
+  });
+  // Auto-snap current loop down to the highest valid value
+  if (AppState.compose.loop > maxLoops) {
+    AppState.compose.loop = maxLoops;
+    $$("#loopBtnGroup .btn").forEach(b => {
+      b.classList.toggle("sel", parseInt(b.dataset.loop) === maxLoops);
+    });
+  }
+  $("#loopHint").textContent = maxLoops === 4 ? "最多 4 次" : `最多 ${maxLoops} 次（${sec} 秒 × ${maxLoops} = ${sec * maxLoops} 秒）`;
+}
+
+function composeUpdateValidation() {
+  const f = FormatSpec[AppState.compose.format];
+  const visibleFrames = AppState.compose.frames.filter(fr => fr.img && !fr.hidden);
+  const errors = [];
+  let okStatic = false;
+  if (AppState.compose.format === "tab") {
+    if (visibleFrames.length === 0) errors.push("請至少上傳 1 張圖片或新增文字");
+    else if (visibleFrames.length > 1) errors.push("聊天室標籤為靜態圖片，請僅保留 1 張可見影格（其他可隱藏）");
+    else okStatic = true;
+    $("#paramPlay").textContent = "靜態";
+    $("#paramMs").textContent = "—";
+    $("#msPerFrame").textContent = "—";
+    $("#totalPlayInfo").textContent = "—";
+  } else {
+    if (visibleFrames.length === 0) errors.push("請至少上傳 1 張圖片或新增文字");
+    if (visibleFrames.length > 0 && visibleFrames.length < AppConfig.stickerSpecs.minFrames)
+      errors.push(`動畫至少需 ${AppConfig.stickerSpecs.minFrames} 格，目前僅 ${visibleFrames.length} 格`);
+    if (visibleFrames.length > AppConfig.stickerSpecs.maxFramesLine)
+      errors.push(`動畫至多 ${AppConfig.stickerSpecs.maxFramesLine} 格，目前 ${visibleFrames.length} 格`);
+    // Each frame's exact rational duration: (totalSec / N) seconds
+    const sec = AppState.compose.totalSec;
+    const N = visibleFrames.length;
+    const ms = N > 0 ? Math.round(sec * 1000 / N) : 0;
+    const totalPlay = sec * AppState.compose.loop;
+    $("#paramPlay").textContent = `${sec} 秒 × ${AppState.compose.loop} 次 = ${totalPlay} 秒（${N} 格）`;
+    $("#paramMs").textContent = ms + " ms";
+    $("#msPerFrame").textContent = N > 0 ? `${sec}/${N} 秒 ≈ ${ms} ms（精確分數）` : "—";
+    $("#totalPlayInfo").textContent = `${sec} × ${AppState.compose.loop} = ${totalPlay} 秒`;
+  }
+  const ok = errors.length === 0;
+  const btn = $("#exportBtn");
+  if (ok) {
+    btn.disabled = false;
+    btn.textContent = `📥 下載 ${AppState.compose.format === "tab" ? "PNG" : "APNG"}（符合 LINE 規範）`;
+    btn.classList.remove("disabled", "primary"); btn.classList.add("line");
+  } else {
+    btn.disabled = true;
+    btn.textContent = "未符合規範";
+    btn.classList.remove("line"); btn.classList.add("primary");
+  }
+  if (errors.length === 0) { $("#errorList").style.display = "none"; }
+  else {
+    $("#errorList").style.display = "block";
+    $("#errorUL").innerHTML = errors.map(e => `<li>${e}</li>`).join("");
+  }
+  // Invalidate previously-shown size estimate (any change makes the prior estimate stale)
+  setSizeDisplay(null);
+}
+
+/* ----- Preview animation ----- */
+let previewTimer = null, previewStart_ms = 0;
+function composeRedrawPreview(frameIdx) {
+  const f = FormatSpec[AppState.compose.format];
+  const cv = $("#previewCanvas");
+  cv.width = f.w; cv.height = f.h;
+  // Display sizing
+  const maxDisp = 280;
+  const r = Math.min(maxDisp / f.w, maxDisp / f.h, 1);
+  cv.style.width = (f.w * r) + "px";
+  cv.style.height = (f.h * r) + "px";
+  const ctx = cv.getContext("2d", { willReadFrequently: true });
+  ctx.clearRect(0, 0, f.w, f.h);
+  const visible = AppState.compose.frames.filter(x => x.img && !x.hidden);
+  if (visible.length === 0) return;
+  const idx = (typeof frameIdx === "number") ? (frameIdx % visible.length) : 0;
+  const fr = visible[idx];
+  drawFitImage(ctx, fr.img, 0, 0, f.w, f.h);
+}
+
+function drawFitImage(ctx, img, x, y, W, H) {
+  const iw = img.naturalWidth, ih = img.naturalHeight;
+  const r = Math.min(W / iw, H / ih);
+  const dw = iw * r, dh = ih * r;
+  const dx = x + (W - dw) / 2, dy = y + (H - dh) / 2;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(img, dx, dy, dw, dh);
+}
+
+function previewStart() {
+  previewStop();
+  if (AppState.compose.format === "tab") { composeRedrawPreview(0); return; }
+  const visible = AppState.compose.frames.filter(x => x.img && !x.hidden);
+  if (visible.length === 0) return;
+  const totalMs = AppState.compose.totalSec * 1000;
+  const perMs = totalMs / visible.length;
+  const loops = AppState.compose.loop;
+  const fullDurMs = totalMs * loops;
+  previewStart_ms = performance.now();
+  function tick() {
+    const elapsed = performance.now() - previewStart_ms;
+    if (elapsed >= fullDurMs) { previewStop(); composeRedrawPreview(0); return; }
+    const i = Math.floor((elapsed % totalMs) / perMs) % visible.length;
+    composeRedrawPreview(i);
+    $("#previewTimeLabel").textContent = Math.round(elapsed) + " ms";
+    previewTimer = requestAnimationFrame(tick);
+  }
+  tick();
+}
+function previewStop() {
+  if (previewTimer) cancelAnimationFrame(previewTimer);
+  previewTimer = null;
+  $("#previewTimeLabel").textContent = "0 ms";
+}
+
+/* ----- Export final APNG / PNG ----- */
+/* ----- APNG loop-count patching -----
+ * UPNG.js encodes APNG with num_plays = 0 (infinite) by default.
+ * LINE requires num_plays ∈ {1,2,3,4} AND total play time per loop ∈ {1,2,3,4} sec.
+ * Frame-duplication would make total time = totalSec × loops (e.g., 8s) → rejected.
+ * Correct approach: encode once at totalSec, then patch the acTL chunk's num_plays.
+ */
+const PNG_CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    t[n] = c >>> 0;
+  }
+  return t;
+})();
+function pngCrc32(bytes, start, len) {
+  let c = 0xFFFFFFFF;
+  for (let i = 0; i < len; i++) c = PNG_CRC_TABLE[(c ^ bytes[start + i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+function patchAPNGNumPlays(arrayBuffer, numPlays) {
+  const bytes = new Uint8Array(arrayBuffer);
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  let i = 8; // skip 8-byte PNG signature
+  while (i + 12 <= bytes.length) {
+    const len = view.getUint32(i);
+    const type = String.fromCharCode(bytes[i+4], bytes[i+5], bytes[i+6], bytes[i+7]);
+    if (type === "acTL") {
+      // acTL data layout: num_frames (uint32, big-endian) + num_plays (uint32, big-endian)
+      // num_plays sits at i+8 (data start) + 4 = i+12
+      view.setUint32(i + 12, numPlays >>> 0);
+      // Recompute CRC over chunk type + data (4 + len bytes starting at i+4)
+      const crc = pngCrc32(bytes, i + 4, 4 + len);
+      view.setUint32(i + 8 + len, crc);
+      return arrayBuffer;
+    }
+    i += 8 + len + 4; // length(4) + type(4) + data(len) + CRC(4)
+  }
+  return arrayBuffer; // no acTL found (e.g., static PNG) — return unchanged
+}
+
+/* Patch every fcTL chunk's delay_num/delay_den to express exact rational seconds.
+ * UPNG.js encodes delays as integer ms with delay_den=1000, which can have rounding errors:
+ * e.g. 1 sec / 6 frames = 166.67 ms each → UPNG rounds to 167 → total = 1002 ms ≠ 1.000 s.
+ * LINE rejects animations whose total duration isn't exactly an integer second.
+ * By writing the same fraction (num/den) to every fcTL, we guarantee N × (num/den) = num × N/den
+ * which we choose so the sum is exactly the requested number of seconds (mathematically perfect).
+ *
+ * fcTL chunk layout (26 bytes data):
+ *   sequence_number (uint32) | width (uint32) | height (uint32) |
+ *   x_offset (uint32) | y_offset (uint32) |
+ *   delay_num (uint16) | delay_den (uint16) |  ← we patch these
+ *   dispose_op (uint8) | blend_op (uint8)
+ * delay_num at offset i+8+20 = i+28; delay_den at i+30.
+ */
+function patchAPNGFrameDelays(arrayBuffer, num, den) {
+  const bytes = new Uint8Array(arrayBuffer);
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  let i = 8;
+  let patched = 0;
+  while (i + 12 <= bytes.length) {
+    const len = view.getUint32(i);
+    const type = String.fromCharCode(bytes[i+4], bytes[i+5], bytes[i+6], bytes[i+7]);
+    if (type === "fcTL") {
+      view.setUint16(i + 28, num & 0xFFFF);
+      view.setUint16(i + 30, den & 0xFFFF);
+      const crc = pngCrc32(bytes, i + 4, 4 + len);
+      view.setUint32(i + 8 + len, crc);
+      patched++;
+    }
+    i += 8 + len + 4;
+  }
+  return arrayBuffer;
+}
+
+async function encodeForExport() {
+  // Builds the final blob (PNG for tab format, APNG for others) without triggering a download.
+  // Returns { blob, name } or throws on error.
+  const fmt = FormatSpec[AppState.compose.format];
+  const visible = AppState.compose.frames.filter(x => x.img && !x.hidden);
+  if (visible.length === 0) throw new Error("無可用影格");
+
+  if (AppState.compose.format === "tab") {
+    const c = document.createElement("canvas");
+    c.width = fmt.w; c.height = fmt.h;
+    const ctx = c.getContext("2d", { willReadFrequently: true });
+    drawFitImage(ctx, visible[0].img, 0, 0, fmt.w, fmt.h);
+    const blob = await canvasToBlob(c, "image/png");
+    return { blob, name: `tab_${fmt.w}x${fmt.h}_${Date.now()}.png` };
+  }
+
+  if (typeof UPNG === "undefined") throw new Error("APNG 編碼器尚未載入");
+  const totalSec = AppState.compose.totalSec;     // 1, 2, 3, or 4
+  const N = visible.length;                       // frame count
+  const loops = AppState.compose.loop;            // 1, 2, 3, or 4
+
+  const buffers = [];
+  const delaysMs = [];
+  const perMs = totalSec * 1000 / N;              // approx ms (UPNG uses these initially)
+  for (let i = 0; i < N; i++) {
+    const c = document.createElement("canvas");
+    c.width = fmt.w; c.height = fmt.h;
+    const ctx = c.getContext("2d", { willReadFrequently: true });
+    drawFitImage(ctx, visible[i].img, 0, 0, fmt.w, fmt.h);
+    const id = ctx.getImageData(0, 0, fmt.w, fmt.h);
+    buffers.push(id.data.buffer);
+    delaysMs.push(Math.round(perMs));             // placeholder, will be overwritten by fcTL patch
+  }
+  await new Promise(r => setTimeout(r, 20));      // yield to UI
+
+  // Encode ONCE with the actual frame count + per-loop duration (NOT replicated).
+  let arr = UPNG.encode(buffers, fmt.w, fmt.h, 0, delaysMs);
+
+  // === Binary patches for mathematically exact LINE compliance ===
+  // 1. acTL.num_plays = loops (UPNG defaults to 0 = infinite loop, which LINE rejects)
+  arr = patchAPNGNumPlays(arr, loops);
+  // 2. fcTL.delay_num = totalSec, delay_den = N for every frame.
+  //    Each frame's duration becomes EXACTLY totalSec / N seconds.
+  //    Sum of N frames = N × (totalSec / N) = totalSec seconds (rational, no rounding).
+  arr = patchAPNGFrameDelays(arr, totalSec, N);
+
+  const blob = new Blob([arr], { type: "image/png" });
+  return { blob, name: `${AppState.compose.format}_${fmt.w}x${fmt.h}_${Date.now()}.png` };
+}
+
+function setSizeDisplay(bytes, opts = {}) {
+  const el = $("#paramSize");
+  if (bytes == null) {
+    el.textContent = opts.text || "尚未估算";
+    el.style.color = "";
+    return;
+  }
+  const kb = bytes / 1024;
+  let txt = kb >= 1024 ? (kb / 1024).toFixed(2) + " MB" : kb.toFixed(1) + " KB";
+  if (opts.suffix) txt += " " + opts.suffix;
+  el.textContent = txt;
+  // Color hint based on LINE thresholds (300 KB recommended, 1 MB hard limit)
+  if (kb < 300) el.style.color = "var(--c-success)";
+  else if (kb < 1024) el.style.color = "var(--c-warn)";
+  else el.style.color = "var(--c-danger)";
+}
+
+async function estimateFileSize() {
+  const btn = $("#estimateSizeBtn");
+  if (btn.disabled) return;
+  const visible = AppState.compose.frames.filter(x => x.img && !x.hidden);
+  if (visible.length === 0) { toast("尚無可用影格", "error"); return; }
+  if (AppState.compose.format === "tab" && visible.length > 1) {
+    toast("聊天室標籤僅可有 1 張可見影格", "error"); return;
+  }
+  const origText = btn.textContent;
+  btn.disabled = true; btn.textContent = "⏳ 計算中…";
+  setSizeDisplay(null, { text: "計算中…" });
+  try {
+    const { blob } = await encodeForExport();
+    setSizeDisplay(blob.size);
+    const kb = blob.size / 1024;
+    if (kb < 300) toast(`📏 估算 ${kb.toFixed(1)} KB（符合 300KB 建議）`, "success");
+    else if (kb < 1024) toast(`📏 估算 ${kb.toFixed(1)} KB（超過 300KB 建議，但仍 < 1MB）`, "");
+    else toast(`📏 估算 ${(kb/1024).toFixed(2)} MB（超過 LINE 1MB 上限）`, "error");
+  } catch (e) {
+    setSizeDisplay(null, { text: "估算失敗" });
+    toast("估算失敗：" + e.message, "error");
+    console.error(e);
+  } finally {
+    btn.disabled = false; btn.textContent = origText;
+  }
+}
+
+async function exportFinal() {
+  const visible = AppState.compose.frames.filter(x => x.img && !x.hidden);
+  if (visible.length === 0) { toast("無可用影格", "error"); return; }
+
+  toast("⏳ 正在編碼…", "");
+  let blob, name;
+  try {
+    const r = await encodeForExport();
+    blob = r.blob; name = r.name;
+  } catch (e) {
+    toast("匯出失敗：" + e.message, "error"); console.error(e); return;
+  }
+  downloadBlob(blob, name);
+  setSizeDisplay(blob.size, { suffix: "✅" });
+  const kb = blob.size / 1024;
+  const fileType = AppState.compose.format === "tab" ? "PNG" : "APNG";
+  if (kb < 300) toast(`✅ ${fileType} 已下載（${kb.toFixed(1)} KB）`, "success");
+  else if (kb < 1024) toast(`✅ ${fileType} 已下載（${kb.toFixed(1)} KB）⚠ 超出 300KB 建議值`, "");
+  else toast(`✅ ${fileType} 已下載（${(kb/1024).toFixed(2)} MB）⚠ 超過 LINE 1MB 上限`, "error");
+}
+
+function openEditorForSelected() {
+  const idx = AppState.compose.selectedIdx;
+  if (idx < 0) { toast("請先選取影格", "error"); return; }
+  Editor.open(idx);
+}
+
+
+/* ===========================================================
+ * Decoration drawing functions
+ * Each function draws within ~80px bounding box centered at origin (0,0)
+ * Caller has already applied translate, rotate, scale to ctx
+ * =========================================================== */
+
+function defaultFillFor(id) {
+  const fills = {
+    spark4: "#ffd54f", star4: "#ffd54f", anger: "#e53935", drop: "#42a5f5",
+    bulb: "#ffd54f", crack: "#e53935", smoke: "#9e9e9e", heart: "#f95f8e",
+    speech: "#ffffff", thought: "#ffffff", excl: "#e53935", qmark: "#42a5f5",
+    cross: "#e53935", check: "#43a047", music: "#7e57c2", ban: "#e53935",
+    bolt: "#ffd54f", diamond: "#ffffff", spiral: "#ffd54f"
+  };
+  return fills[id] || "#f95f8e";
+}
+function defaultStrokeFor(id) {
+  return "#000000";
+}
+function defaultStrokeWFor(id) {
+  const w = {
+    lines3: 4, speed: 4, shock: 3, hbar3: 4, radial: 3, wave: 3,
+    smile: 4, frown: 4, trail: 3, focus: 3, ecg: 3, burst: 3,
+    underln: 5, qcurl: 3, arc: 3, ring2: 4, zzz: 3, music: 3
+  };
+  return w[id] !== undefined ? w[id] : 3;
+}
+function defaultNoFill(id) {
+  const noFillIds = new Set(["lines3","speed","shock","hbar3","radial","wave","smile","frown","trail","focus","ecg","underln","qcurl","arc","ring2","zzz","burst"]);
+  return noFillIds.has(id);
+}
+
+/* SVG icon for the picker button (small preview).
+   We use a simplified version drawn into a 24x24 viewBox. */
+function decoSVGIcon(id) {
+  const C = "#f95f8e", L = "#ffffff", Y = "#ffd54f", B = "#42a5f5";
+  // We re-use draws via a tiny inline SVG library
+  switch (id) {
+    case "lines3":  return `<svg viewBox="-12 -12 24 24"><g stroke="${L}" stroke-width="2.5" stroke-linecap="round"><line x1="-6" y1="-8" x2="-6" y2="8"/><line x1="0" y1="-8" x2="0" y2="8"/><line x1="6" y1="-8" x2="6" y2="8"/></g></svg>`;
+    case "speed":   return `<svg viewBox="-12 -12 24 24"><g stroke="${L}" stroke-width="2.5" stroke-linecap="round"><line x1="-9" y1="-5" x2="9" y2="-5"/><line x1="-9" y1="0" x2="6" y2="0"/><line x1="-9" y1="5" x2="9" y2="5"/></g></svg>`;
+    case "shock":   return `<svg viewBox="-12 -12 24 24"><g fill="none" stroke="${L}" stroke-width="2"><path d="M-9 -7 A 9 9 0 0 1 -9 7"/><path d="M9 -7 A 9 9 0 0 0 9 7"/><path d="M-5 -3 A 5 5 0 0 1 -5 3"/><path d="M5 -3 A 5 5 0 0 0 5 3"/></g></svg>`;
+    case "diamond": return `<svg viewBox="-12 -12 24 24"><polygon points="0,-9 7,0 0,9 -7,0" fill="${L}" stroke="#000" stroke-width="1.2"/></svg>`;
+    case "anger":   return `<svg viewBox="-12 -12 24 24"><g fill="${C}" transform="rotate(-15)"><path d="M-2 -8 L0 -3 L4 -4 L1 0 L4 4 L0 3 L-2 8 L-3 3 L-7 4 L-4 0 L-7 -4 L-3 -3 Z"/></g></svg>`;
+    case "spiral":  return `<svg viewBox="-12 -12 24 24"><path d="M0 0 m0 -7 a 7 7 0 1 1 -0.1 0 a 5 5 0 1 0 0.1 -0.1 a 3 3 0 1 1 -0.1 0" fill="none" stroke="${Y}" stroke-width="1.8"/></svg>`;
+    case "spark4":  return `<svg viewBox="-12 -12 24 24"><path d="M0 -10 L2.5 -2.5 L10 0 L2.5 2.5 L0 10 L-2.5 2.5 L-10 0 L-2.5 -2.5 Z" fill="${Y}" stroke="#000" stroke-width="0.8"/></svg>`;
+    case "zzz":     return `<svg viewBox="-12 -12 24 24"><text x="0" y="6" text-anchor="middle" fill="${L}" font-family="serif" font-weight="bold" font-size="14">Zzz</text></svg>`;
+    case "drop":    return `<svg viewBox="-12 -12 24 24"><path d="M0 -8 Q 5 -2 5 3 A 5 5 0 1 1 -5 3 Q -5 -2 0 -8 Z" fill="${B}" stroke="#000" stroke-width="1"/></svg>`;
+    case "bulb":    return `<svg viewBox="-12 -12 24 24"><circle cx="0" cy="-2" r="6" fill="${Y}" stroke="#000" stroke-width="1"/><rect x="-3" y="4" width="6" height="3" fill="#666"/><rect x="-3" y="7" width="6" height="2" fill="#444"/></svg>`;
+    case "crack":   return `<svg viewBox="-12 -12 24 24"><path d="M-1 -9 L 2 -3 L -2 0 L 3 4 L 0 9" fill="none" stroke="${C}" stroke-width="2.5" stroke-linejoin="miter"/></svg>`;
+    case "smoke":   return `<svg viewBox="-12 -12 24 24"><g fill="#888"><ellipse cx="-4" cy="3" rx="4" ry="3"/><ellipse cx="3" cy="2" rx="5" ry="3.5"/><ellipse cx="-1" cy="-2" rx="4" ry="3"/><ellipse cx="2" cy="-5" rx="3" ry="2.5"/></g></svg>`;
+    case "hbar3":   return `<svg viewBox="-12 -12 24 24"><g stroke="${L}" stroke-width="2.5" stroke-linecap="round"><line x1="-9" y1="-3" x2="9" y2="-3"/><line x1="-9" y1="0" x2="9" y2="0"/><line x1="-9" y1="3" x2="9" y2="3"/></g></svg>`;
+    case "radial":  return `<svg viewBox="-12 -12 24 24"><g stroke="${Y}" stroke-width="1.8" stroke-linecap="round">`+
+      [0,45,90,135,180,225,270,315].map(a=>{const r1=4,r2=10,x1=Math.cos(a*Math.PI/180)*r1,y1=Math.sin(a*Math.PI/180)*r1,x2=Math.cos(a*Math.PI/180)*r2,y2=Math.sin(a*Math.PI/180)*r2;return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`;}).join("")+
+      `</g></svg>`;
+    case "wave":    return `<svg viewBox="-12 -12 24 24"><path d="M-10 0 Q -7 -5 -4 0 T 2 0 T 8 0" fill="none" stroke="${L}" stroke-width="2.2"/></svg>`;
+    case "smile":   return `<svg viewBox="-12 -12 24 24"><path d="M-8 -2 Q 0 8 8 -2" fill="none" stroke="${L}" stroke-width="2.5" stroke-linecap="round"/></svg>`;
+    case "frown":   return `<svg viewBox="-12 -12 24 24"><path d="M-8 4 Q 0 -6 8 4" fill="none" stroke="${L}" stroke-width="2.5" stroke-linecap="round"/></svg>`;
+    case "trail":   return `<svg viewBox="-12 -12 24 24"><g fill="none" stroke="${L}" stroke-width="2"><path d="M-9 -5 Q -3 -5 4 -3"/><path d="M-9 0 Q -3 0 5 0"/><path d="M-9 5 Q -3 5 4 3"/></g></svg>`;
+    case "focus":   return `<svg viewBox="-12 -12 24 24"><g stroke="${L}" stroke-width="1.6" stroke-linecap="round">`+
+      [-9,-3,3,9].map(p=>`<line x1="${p}" y1="-10" x2="${p*0.4}" y2="-3"/><line x1="${p}" y1="10" x2="${p*0.4}" y2="3"/><line x1="-10" y1="${p}" x2="-3" y2="${p*0.4}"/><line x1="10" y1="${p}" x2="3" y2="${p*0.4}"/>`).join("")+
+      `</g></svg>`;
+    case "ecg":     return `<svg viewBox="-12 -12 24 24"><polyline points="-10,0 -5,0 -3,-7 0,7 3,-3 5,0 10,0" fill="none" stroke="${C}" stroke-width="2"/></svg>`;
+    case "burst":   return `<svg viewBox="-12 -12 24 24"><polygon points="0,-10 2,-5 7,-7 5,-2 10,-1 5,2 7,7 2,4 0,9 -2,4 -7,7 -5,2 -10,-1 -5,-2 -7,-7 -2,-5" fill="#fff8b0" stroke="${Y}" stroke-width="1.2"/></svg>`;
+    case "underln": return `<svg viewBox="-12 -12 24 24"><line x1="-10" y1="3" x2="10" y2="3" stroke="${C}" stroke-width="3" stroke-linecap="round"/></svg>`;
+    case "qcurl":   return `<svg viewBox="-12 -12 24 24"><path d="M-7 7 Q -2 7 -3 0 Q -4 -5 0 -5 Q 4 -5 3 -1 Q 2 1 0 2 L0 5" fill="none" stroke="${L}" stroke-width="2"/><circle cx="0" cy="8" r="1.4" fill="${L}"/></svg>`;
+    case "arc":     return `<svg viewBox="-12 -12 24 24"><path d="M-10 6 Q 0 -10 10 6" fill="none" stroke="${L}" stroke-width="1.8" stroke-dasharray="3 2"/></svg>`;
+    case "star4":   return `<svg viewBox="-12 -12 24 24"><path d="M0 -9 Q 1 -1 9 0 Q 1 1 0 9 Q -1 1 -9 0 Q -1 -1 0 -9 Z" fill="${Y}" stroke="#000" stroke-width="1"/></svg>`;
+    case "heart":   return `<svg viewBox="-12 -12 24 24"><path d="M0 8 C -10 0 -10 -7 -4 -7 Q 0 -7 0 -2 Q 0 -7 4 -7 C 10 -7 10 0 0 8 Z" fill="${C}" stroke="#000" stroke-width="0.8"/></svg>`;
+    case "ring2":   return `<svg viewBox="-12 -12 24 24"><circle cx="0" cy="0" r="9" fill="none" stroke="${L}" stroke-width="2"/><circle cx="0" cy="0" r="4" fill="none" stroke="${L}" stroke-width="2"/></svg>`;
+    case "speech":  return `<svg viewBox="-12 -12 24 24"><path d="M-10 -7 Q -10 -10 -7 -10 L 7 -10 Q 10 -10 10 -7 L 10 3 Q 10 6 7 6 L -3 6 L -8 10 L -7 6 Q -10 6 -10 3 Z" fill="${L}" stroke="#000" stroke-width="1.2"/></svg>`;
+    case "thought": return `<svg viewBox="-12 -12 24 24"><g fill="${L}" stroke="#000" stroke-width="0.8"><ellipse cx="0" cy="-3" rx="9" ry="6"/><circle cx="-7" cy="6" r="2"/><circle cx="-9" cy="9" r="1.2"/></g></svg>`;
+    case "excl":    return `<svg viewBox="-12 -12 24 24"><text x="0" y="8" text-anchor="middle" fill="${C}" font-weight="900" font-size="22" font-family="sans-serif">!</text></svg>`;
+    case "qmark":   return `<svg viewBox="-12 -12 24 24"><text x="0" y="8" text-anchor="middle" fill="${B}" font-weight="900" font-size="20" font-family="sans-serif">?</text></svg>`;
+    case "cross":   return `<svg viewBox="-12 -12 24 24"><g stroke="${C}" stroke-width="3.5" stroke-linecap="round"><line x1="-7" y1="-7" x2="7" y2="7"/><line x1="-7" y1="7" x2="7" y2="-7"/></g></svg>`;
+    case "check":   return `<svg viewBox="-12 -12 24 24"><polyline points="-7,1 -2,6 8,-5" fill="none" stroke="#43a047" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    case "music":   return `<svg viewBox="-12 -12 24 24"><path d="M-3 6 a 3 3 0 1 0 3 -3 L0 -8 L7 -10 L7 -6 L3 -5 L3 3 a 3 3 0 1 1 -3 -3" fill="${C}" stroke="#000" stroke-width="0.8"/></svg>`;
+    case "ban":     return `<svg viewBox="-12 -12 24 24"><circle cx="0" cy="0" r="9" fill="none" stroke="${C}" stroke-width="2.2"/><line x1="-6.5" y1="-6.5" x2="6.5" y2="6.5" stroke="${C}" stroke-width="2.2"/></svg>`;
+    case "bolt":    return `<svg viewBox="-12 -12 24 24"><polygon points="3,-9 -5,2 0,2 -3,9 5,-2 0,-2" fill="${Y}" stroke="#000" stroke-width="1"/></svg>`;
+  }
+  return `<svg viewBox="-12 -12 24 24"><circle cx="0" cy="0" r="6" fill="${C}"/></svg>`;
+}
+
+/* Draw decoration shape on a given context, already transformed. */
+function drawDecoOnCtx(ctx, o) {
+  if (!ctx) return;
+  ctx.lineCap = "round"; ctx.lineJoin = "round";
+  const fillStyle = o.noFill ? null : (o.fill || defaultFillFor(o.deco));
+  const strokeStyle = o.stroke || defaultStrokeFor(o.deco);
+  const strokeW = (o.strokeW !== undefined ? o.strokeW : defaultStrokeWFor(o.deco));
+  // Within a 80x80 box centered at origin
+  const id = o.deco;
+  switch (id) {
+    case "lines3":
+      ctx.strokeStyle = fillStyle || strokeStyle; ctx.lineWidth = strokeW;
+      [-20,0,20].forEach(x => { ctx.beginPath(); ctx.moveTo(x, -28); ctx.lineTo(x, 28); ctx.stroke(); });
+      break;
+    case "speed":
+      ctx.strokeStyle = fillStyle || strokeStyle; ctx.lineWidth = strokeW;
+      [-18,-2,18].forEach((y,i) => { const len = i === 1 ? 60 : 76; ctx.beginPath(); ctx.moveTo(-len/2, y); ctx.lineTo(len/2, y); ctx.stroke(); });
+      break;
+    case "shock":
+      ctx.strokeStyle = fillStyle || strokeStyle; ctx.lineWidth = strokeW; ctx.fillStyle = "transparent";
+      [16,28].forEach(r => {
+        ctx.beginPath(); ctx.arc(-30, 0, r, -Math.PI/3, Math.PI/3, true); ctx.stroke();
+        ctx.beginPath(); ctx.arc(30, 0, r, Math.PI - Math.PI/3, Math.PI + Math.PI/3); ctx.stroke();
+      });
+      break;
+    case "diamond":
+      ctx.beginPath(); ctx.moveTo(0,-30); ctx.lineTo(22,0); ctx.lineTo(0,30); ctx.lineTo(-22,0); ctx.closePath();
+      if (fillStyle) { ctx.fillStyle = fillStyle; ctx.fill(); }
+      ctx.strokeStyle = strokeStyle; ctx.lineWidth = strokeW; ctx.stroke();
+      break;
+    case "anger": {
+      ctx.save(); ctx.rotate(-0.2);
+      ctx.beginPath();
+      // 6-pointed angry symbol
+      const pts = [];
+      for (let i = 0; i < 12; i++) {
+        const a = i * Math.PI / 6;
+        const r = (i % 2 === 0) ? 28 : 12;
+        pts.push([Math.cos(a) * r, Math.sin(a) * r]);
+      }
+      ctx.moveTo(pts[0][0], pts[0][1]);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+      ctx.closePath();
+      if (fillStyle) { ctx.fillStyle = fillStyle; ctx.fill(); }
+      ctx.strokeStyle = strokeStyle; ctx.lineWidth = Math.max(strokeW, 1); ctx.stroke();
+      ctx.restore();
+      break;
+    }
+    case "spiral": {
+      ctx.strokeStyle = fillStyle || strokeStyle; ctx.lineWidth = strokeW;
+      ctx.beginPath();
+      for (let t = 0; t < 5 * Math.PI; t += 0.1) {
+        const r = 2 + t * 1.8;
+        const x = Math.cos(t) * r;
+        const y = Math.sin(t) * r;
+        if (t === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      break;
+    }
+    case "spark4": {
+      ctx.beginPath();
+      ctx.moveTo(0, -32); ctx.lineTo(8, -8); ctx.lineTo(32, 0); ctx.lineTo(8, 8);
+      ctx.lineTo(0, 32); ctx.lineTo(-8, 8); ctx.lineTo(-32, 0); ctx.lineTo(-8, -8); ctx.closePath();
+      if (fillStyle) { ctx.fillStyle = fillStyle; ctx.fill(); }
+      ctx.strokeStyle = strokeStyle; ctx.lineWidth = strokeW; ctx.stroke();
+      break;
+    }
+    case "zzz": {
+      ctx.fillStyle = fillStyle || strokeStyle;
+      ctx.strokeStyle = strokeStyle; ctx.lineWidth = strokeW;
+      ctx.font = "bold 36px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      const txt = "Zzz";
+      if (strokeW > 0) ctx.strokeText(txt, 0, 0);
+      ctx.fillText(txt, 0, 0);
+      break;
+    }
+    case "drop": {
+      ctx.beginPath();
+      ctx.moveTo(0, -28); ctx.quadraticCurveTo(22, -6, 22, 10);
+      ctx.arc(0, 10, 22, 0, Math.PI);
+      ctx.quadraticCurveTo(-22, -6, 0, -28); ctx.closePath();
+      if (fillStyle) { ctx.fillStyle = fillStyle; ctx.fill(); }
+      ctx.strokeStyle = strokeStyle; ctx.lineWidth = strokeW; ctx.stroke();
+      break;
+    }
+    case "bulb": {
+      ctx.beginPath(); ctx.arc(0, -8, 22, 0, Math.PI * 2);
+      if (fillStyle) { ctx.fillStyle = fillStyle; ctx.fill(); }
+      ctx.strokeStyle = strokeStyle; ctx.lineWidth = strokeW; ctx.stroke();
+      ctx.fillStyle = "#666"; ctx.fillRect(-10, 12, 20, 10);
+      ctx.fillStyle = "#444"; ctx.fillRect(-10, 22, 20, 6);
+      break;
+    }
+    case "crack": {
+      ctx.strokeStyle = fillStyle || strokeStyle; ctx.lineWidth = strokeW + 1;
+      ctx.lineJoin = "miter";
+      ctx.beginPath(); ctx.moveTo(-4, -32); ctx.lineTo(8, -10);
+      ctx.lineTo(-8, 0); ctx.lineTo(10, 14); ctx.lineTo(-2, 32); ctx.stroke();
+      break;
+    }
+    case "smoke": {
+      ctx.fillStyle = fillStyle || "#888";
+      [
+        [-15, 12, 16, 12], [12, 8, 20, 14], [-4, -8, 16, 12], [8, -20, 12, 10]
+      ].forEach(p => { ctx.beginPath(); ctx.ellipse(p[0], p[1], p[2], p[3], 0, 0, Math.PI * 2); ctx.fill(); });
+      break;
+    }
+    case "hbar3": {
+      ctx.strokeStyle = fillStyle || strokeStyle; ctx.lineWidth = strokeW;
+      [-12, 0, 12].forEach(y => { ctx.beginPath(); ctx.moveTo(-32, y); ctx.lineTo(32, y); ctx.stroke(); });
+      break;
+    }
+    case "radial": {
+      ctx.strokeStyle = fillStyle || strokeStyle; ctx.lineWidth = strokeW;
+      for (let i = 0; i < 12; i++) {
+        const a = i * Math.PI / 6;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a) * 12, Math.sin(a) * 12);
+        ctx.lineTo(Math.cos(a) * 32, Math.sin(a) * 32);
+        ctx.stroke();
+      }
+      break;
+    }
+    case "wave": {
+      ctx.strokeStyle = fillStyle || strokeStyle; ctx.lineWidth = strokeW;
+      ctx.beginPath();
+      for (let x = -32; x <= 32; x += 2) {
+        const y = Math.sin(x / 6) * 10;
+        if (x === -32) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      break;
+    }
+    case "smile": {
+      ctx.strokeStyle = fillStyle || strokeStyle; ctx.lineWidth = strokeW + 1;
+      ctx.beginPath(); ctx.arc(0, -4, 28, Math.PI * 0.15, Math.PI * 0.85); ctx.stroke();
+      break;
+    }
+    case "frown": {
+      ctx.strokeStyle = fillStyle || strokeStyle; ctx.lineWidth = strokeW + 1;
+      ctx.beginPath(); ctx.arc(0, 4, 28, Math.PI * 1.15, Math.PI * 1.85); ctx.stroke();
+      break;
+    }
+    case "trail": {
+      ctx.strokeStyle = fillStyle || strokeStyle; ctx.lineWidth = strokeW;
+      [-16, -4, 8].forEach(x => {
+        ctx.beginPath();
+        ctx.moveTo(-32, x); ctx.quadraticCurveTo(-10, x, 16, x * 0.6);
+        ctx.stroke();
+      });
+      break;
+    }
+    case "focus": {
+      ctx.strokeStyle = fillStyle || strokeStyle; ctx.lineWidth = strokeW;
+      // 8 focus lines in from edges to near center
+      const corners = [-30, -10, 10, 30];
+      corners.forEach(p => {
+        ctx.beginPath(); ctx.moveTo(p, -34); ctx.lineTo(p * 0.4, -10); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(p, 34); ctx.lineTo(p * 0.4, 10); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(-34, p); ctx.lineTo(-10, p * 0.4); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(34, p); ctx.lineTo(10, p * 0.4); ctx.stroke();
+      });
+      break;
+    }
+    case "ecg": {
+      ctx.strokeStyle = fillStyle || strokeStyle; ctx.lineWidth = strokeW;
+      ctx.beginPath();
+      ctx.moveTo(-32,0); ctx.lineTo(-12,0); ctx.lineTo(-6,-22); ctx.lineTo(2,22);
+      ctx.lineTo(8,-8); ctx.lineTo(14,0); ctx.lineTo(32,0);
+      ctx.stroke();
+      break;
+    }
+    case "burst": {
+      ctx.beginPath();
+      const N = 16;
+      for (let i = 0; i < N * 2; i++) {
+        const a = i * Math.PI / N - Math.PI / 2;
+        const r = (i % 2 === 0) ? 32 : 16;
+        const x = Math.cos(a) * r, y = Math.sin(a) * r;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      if (fillStyle) { ctx.fillStyle = fillStyle; ctx.fill(); }
+      ctx.strokeStyle = strokeStyle; ctx.lineWidth = strokeW; ctx.stroke();
+      break;
+    }
+    case "underln": {
+      ctx.strokeStyle = fillStyle || strokeStyle; ctx.lineWidth = Math.max(strokeW, 4);
+      ctx.beginPath(); ctx.moveTo(-32, 8); ctx.lineTo(32, 8); ctx.stroke();
+      break;
+    }
+    case "qcurl": {
+      ctx.strokeStyle = fillStyle || strokeStyle; ctx.lineWidth = strokeW;
+      ctx.beginPath();
+      ctx.moveTo(-22, 22);
+      ctx.quadraticCurveTo(-8, 22, -10, 0);
+      ctx.quadraticCurveTo(-12, -18, 0, -18);
+      ctx.quadraticCurveTo(14, -18, 10, -2);
+      ctx.quadraticCurveTo(6, 6, 0, 8);
+      ctx.lineTo(0, 18);
+      ctx.stroke();
+      ctx.beginPath(); ctx.arc(0, 26, 4, 0, Math.PI * 2);
+      ctx.fillStyle = fillStyle || strokeStyle; ctx.fill();
+      break;
+    }
+    case "arc": {
+      ctx.strokeStyle = fillStyle || strokeStyle; ctx.lineWidth = strokeW;
+      ctx.setLineDash([8, 5]);
+      ctx.beginPath();
+      ctx.moveTo(-32, 16);
+      ctx.quadraticCurveTo(0, -34, 32, 16);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      break;
+    }
+    case "star4": {
+      ctx.beginPath();
+      ctx.moveTo(0, -32);
+      ctx.quadraticCurveTo(4, -4, 32, 0);
+      ctx.quadraticCurveTo(4, 4, 0, 32);
+      ctx.quadraticCurveTo(-4, 4, -32, 0);
+      ctx.quadraticCurveTo(-4, -4, 0, -32);
+      ctx.closePath();
+      if (fillStyle) { ctx.fillStyle = fillStyle; ctx.fill(); }
+      ctx.strokeStyle = strokeStyle; ctx.lineWidth = strokeW; ctx.stroke();
+      break;
+    }
+    case "heart": {
+      ctx.beginPath();
+      ctx.moveTo(0, 28);
+      ctx.bezierCurveTo(-36, 4, -36, -24, -16, -24);
+      ctx.quadraticCurveTo(0, -24, 0, -8);
+      ctx.quadraticCurveTo(0, -24, 16, -24);
+      ctx.bezierCurveTo(36, -24, 36, 4, 0, 28);
+      ctx.closePath();
+      if (fillStyle) { ctx.fillStyle = fillStyle; ctx.fill(); }
+      ctx.strokeStyle = strokeStyle; ctx.lineWidth = strokeW; ctx.stroke();
+      break;
+    }
+    case "ring2": {
+      ctx.strokeStyle = fillStyle || strokeStyle; ctx.lineWidth = strokeW;
+      ctx.beginPath(); ctx.arc(0, 0, 30, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(0, 0, 14, 0, Math.PI * 2); ctx.stroke();
+      break;
+    }
+    case "speech": {
+      ctx.beginPath();
+      ctx.moveTo(-30, -24);
+      ctx.quadraticCurveTo(-34, -24, -34, -18);
+      ctx.lineTo(-34, 8);
+      ctx.quadraticCurveTo(-34, 14, -28, 14);
+      ctx.lineTo(-12, 14); ctx.lineTo(-22, 28); ctx.lineTo(-4, 14);
+      ctx.lineTo(28, 14);
+      ctx.quadraticCurveTo(34, 14, 34, 8);
+      ctx.lineTo(34, -18);
+      ctx.quadraticCurveTo(34, -24, 28, -24);
+      ctx.closePath();
+      if (fillStyle) { ctx.fillStyle = fillStyle; ctx.fill(); }
+      ctx.strokeStyle = strokeStyle; ctx.lineWidth = strokeW; ctx.stroke();
+      break;
+    }
+    case "thought": {
+      ctx.beginPath(); ctx.ellipse(0, -8, 30, 20, 0, 0, Math.PI * 2);
+      if (fillStyle) { ctx.fillStyle = fillStyle; ctx.fill(); }
+      ctx.strokeStyle = strokeStyle; ctx.lineWidth = strokeW; ctx.stroke();
+      ctx.beginPath(); ctx.arc(-22, 18, 6, 0, Math.PI * 2);
+      if (fillStyle) ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.arc(-30, 28, 3, 0, Math.PI * 2);
+      if (fillStyle) ctx.fill(); ctx.stroke();
+      break;
+    }
+    case "excl": {
+      ctx.fillStyle = fillStyle || "#e53935";
+      ctx.font = "900 64px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.lineWidth = strokeW; ctx.strokeStyle = strokeStyle;
+      if (strokeW > 0) ctx.strokeText("!", 0, 0);
+      ctx.fillText("!", 0, 0);
+      break;
+    }
+    case "qmark": {
+      ctx.fillStyle = fillStyle || "#42a5f5";
+      ctx.font = "900 60px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.lineWidth = strokeW; ctx.strokeStyle = strokeStyle;
+      if (strokeW > 0) ctx.strokeText("?", 0, 0);
+      ctx.fillText("?", 0, 0);
+      break;
+    }
+    case "cross": {
+      ctx.strokeStyle = fillStyle || strokeStyle; ctx.lineWidth = Math.max(strokeW, 6);
+      ctx.beginPath(); ctx.moveTo(-22, -22); ctx.lineTo(22, 22); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-22, 22); ctx.lineTo(22, -22); ctx.stroke();
+      break;
+    }
+    case "check": {
+      ctx.strokeStyle = fillStyle || "#43a047"; ctx.lineWidth = Math.max(strokeW, 6);
+      ctx.beginPath();
+      ctx.moveTo(-24, 4); ctx.lineTo(-6, 22); ctx.lineTo(26, -16);
+      ctx.stroke();
+      break;
+    }
+    case "music": {
+      ctx.beginPath();
+      // ellipse note head
+      ctx.save(); ctx.translate(-10, 18); ctx.rotate(-0.3);
+      ctx.ellipse(0, 0, 11, 8, 0, 0, Math.PI * 2);
+      ctx.restore();
+      if (fillStyle) { ctx.fillStyle = fillStyle; ctx.fill(); }
+      ctx.strokeStyle = strokeStyle; ctx.lineWidth = strokeW; ctx.stroke();
+      // stem + flag
+      ctx.beginPath();
+      ctx.moveTo(0, 18); ctx.lineTo(0, -28); ctx.lineTo(20, -22); ctx.lineTo(20, -10);
+      ctx.lineTo(0, -16);
+      ctx.stroke();
+      if (fillStyle) ctx.fill();
+      break;
+    }
+    case "ban": {
+      ctx.strokeStyle = fillStyle || "#e53935"; ctx.lineWidth = Math.max(strokeW, 6);
+      ctx.beginPath(); ctx.arc(0, 0, 28, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath();
+      const a = Math.PI / 4;
+      ctx.moveTo(-Math.cos(a) * 22, -Math.sin(a) * 22);
+      ctx.lineTo(Math.cos(a) * 22, Math.sin(a) * 22);
+      ctx.stroke();
+      break;
+    }
+    case "bolt": {
+      ctx.beginPath();
+      ctx.moveTo(8, -32); ctx.lineTo(-16, 4); ctx.lineTo(0, 4);
+      ctx.lineTo(-8, 32); ctx.lineTo(16, -4); ctx.lineTo(0, -4);
+      ctx.closePath();
+      if (fillStyle) { ctx.fillStyle = fillStyle; ctx.fill(); }
+      ctx.strokeStyle = strokeStyle; ctx.lineWidth = strokeW; ctx.stroke();
+      break;
+    }
+    default: {
+      ctx.fillStyle = fillStyle || "#f95f8e";
+      ctx.beginPath(); ctx.arc(0, 0, 20, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = strokeStyle; ctx.lineWidth = strokeW; ctx.stroke();
+    }
+  }
+}
+
+
+/* ===========================================================
+ * Editor (per-frame canvas editor with text + decorations)
+ * =========================================================== */
+const Editor = (function () {
+  // Editor logical canvas dimensions = format spec
+  let cv, ctx;
+  let frameIdx = -1;
+  let bgImg = null;          // base image
+  let bgState = { x: 0, y: 0, scale: 1.0 };
+  let objects = [];          // {type: 'text'|'deco', data, x, y, w, h, rotation, ...}
+  let selectedObj = null;
+  let drag = null;           // active drag info
+  let pickingFor = null;     // 'txtColor', 'txtStroke', 'objFill', 'objStroke'
+
+  function open(idx) {
+    frameIdx = idx;
+    const frame = AppState.compose.frames[idx];
+    // Always edit from the original image (so re-edits are non-destructive)
+    bgImg = frame.origImg || frame.img;
+    selectedObj = null;
+    // Restore previously-saved overlays + bg position if any
+    if (frame.editorState) {
+      bgState = { ...frame.editorState.bgState };
+      objects = frame.editorState.objects.map(o => ({ ...o }));   // shallow clone each object
+    } else {
+      bgState = { x: 0, y: 0, scale: 1.0 };
+      objects = [];
+    }
+    $("#editorFrameNum").textContent = (idx + 1);
+    if ($("#editorEditedBadge")) {
+      $("#editorEditedBadge").style.display = frame.editorState ? "inline-flex" : "none";
+    }
+    $("#editorModal").classList.add("active");
+    setupOnce();
+    setupCanvas();
+    // Sync bgScale slider with restored value
+    if ($("#bgScaleSlider")) {
+      $("#bgScaleSlider").value = Math.round(bgState.scale * 100);
+      $("#bgScaleVal").textContent = Math.round(bgState.scale * 100) + "%";
+    }
+    render();
+  }
+
+  function close() {
+    $("#editorModal").classList.remove("active");
+    pickingFor = null;
+    document.body.style.cursor = "";
+  }
+
+  let inited = false;
+  function setupOnce() {
+    if (inited) return; inited = true;
+    cv = $("#editorCanvas");
+
+    // Section collapsing
+    $$(".editor-section-head").forEach(h => {
+      h.addEventListener("click", () => h.parentElement.classList.toggle("collapsed"));
+    });
+
+    $("#editorClose").addEventListener("click", close);
+    $("#editorCancel").addEventListener("click", close);
+    $("#editorSave").addEventListener("click", saveAndClose);
+
+    // bg controls
+    $("#bgScaleSlider").addEventListener("input", e => {
+      bgState.scale = parseInt(e.target.value) / 100;
+      $("#bgScaleVal").textContent = e.target.value + "%";
+      render();
+    });
+    $("#bgResetBtn").addEventListener("click", () => {
+      bgState = { x: 0, y: 0, scale: 1.0 };
+      $("#bgScaleSlider").value = 100; $("#bgScaleVal").textContent = "100%";
+      render();
+    });
+
+    // Add text
+    $("#addTextBtn").addEventListener("click", () => {
+      const o = {
+        type: "text", text: "文字",
+        font: "'Noto Sans TC',sans-serif", size: 32,
+        color: "#ffffff", stroke: "#000000", strokeW: 2,
+        direction: "h",
+        x: cv.width / 2, y: cv.height / 2,
+        scale: 1.0, rotation: 0
+      };
+      objects.push(o);
+      selectedObj = o;
+      $("#textProps").style.display = "block";
+      reflectTextProps();
+      render();
+      // Scroll the side panel so all text properties (including direction/color) are visible
+      setTimeout(() => $("#textProps").scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+    });
+
+    // text props
+    $("#txtContent").addEventListener("input", e => { if (selectedObj?.type === "text") { selectedObj.text = e.target.value; render(); } });
+    $("#txtFont").addEventListener("change", e => { if (selectedObj?.type === "text") { selectedObj.font = e.target.value; render(); } });
+    $("#txtSize").addEventListener("input", e => {
+      $("#txtSizeVal").textContent = e.target.value + "px";
+      if (selectedObj?.type === "text") { selectedObj.size = parseInt(e.target.value); render(); }
+    });
+    $("#dirH").addEventListener("click", () => {
+      $("#dirH").classList.add("sel"); $("#dirV").classList.remove("sel");
+      if (selectedObj?.type === "text") { selectedObj.direction = "h"; render(); }
+    });
+    $("#dirV").addEventListener("click", () => {
+      $("#dirV").classList.add("sel"); $("#dirH").classList.remove("sel");
+      if (selectedObj?.type === "text") { selectedObj.direction = "v"; render(); }
+    });
+    $("#txtColor").addEventListener("input", e => { if (selectedObj?.type === "text") { selectedObj.color = e.target.value; $("#txtColorVal").textContent = e.target.value; render(); } });
+    $("#txtStroke").addEventListener("input", e => { if (selectedObj?.type === "text") { selectedObj.stroke = e.target.value; $("#txtStrokeVal").textContent = e.target.value; render(); } });
+    $("#txtStrokeW").addEventListener("input", e => {
+      $("#txtStrokeWVal").textContent = e.target.value + "px";
+      if (selectedObj?.type === "text") { selectedObj.strokeW = parseFloat(e.target.value); render(); }
+    });
+    $("#txtColorPicker").addEventListener("click", () => startPicker("txtColor"));
+    $("#txtStrokePicker").addEventListener("click", () => startPicker("txtStroke"));
+    $("#txtRot").addEventListener("input", e => {
+      const deg = parseFloat(e.target.value);
+      $("#txtRotVal").textContent = deg + "°";
+      if (selectedObj?.type === "text") { selectedObj.rotation = deg * Math.PI / 180; render(); }
+    });
+    // Double-click rotation slider to reset to 0°
+    $("#txtRot").addEventListener("dblclick", () => {
+      if (selectedObj?.type !== "text") return;
+      selectedObj.rotation = 0;
+      $("#txtRot").value = 0;
+      $("#txtRotVal").textContent = "0°";
+      render();
+    });
+    $("#txtDelete").addEventListener("click", () => {
+      if (selectedObj?.type === "text") { objects = objects.filter(o => o !== selectedObj); selectedObj = null; $("#textProps").style.display = "none"; render(); }
+    });
+
+    // build deco panel
+    buildDecoPanel();
+
+    // object style panel
+    $("#objFill").addEventListener("input", e => { if (selectedObj?.type === "deco") { selectedObj.fill = e.target.value; render(); } });
+    $("#objStroke").addEventListener("input", e => { if (selectedObj?.type === "deco") { selectedObj.stroke = e.target.value; render(); } });
+    $("#objStrokeW").addEventListener("input", e => {
+      $("#objStrokeWVal").textContent = e.target.value + "px";
+      if (selectedObj?.type === "deco") { selectedObj.strokeW = parseFloat(e.target.value); render(); }
+    });
+    $("#objFillNone").addEventListener("change", e => {
+      if (selectedObj?.type === "deco") { selectedObj.noFill = e.target.checked; render(); }
+    });
+    $("#objFillPicker").addEventListener("click", () => startPicker("objFill"));
+    $("#objStrokePicker").addEventListener("click", () => startPicker("objStroke"));
+    $("#objRot").addEventListener("input", e => {
+      const deg = parseFloat(e.target.value);
+      $("#objRotVal").textContent = deg + "°";
+      if (selectedObj?.type === "deco") { selectedObj.rotation = deg * Math.PI / 180; render(); }
+    });
+    $("#objRot").addEventListener("dblclick", () => {
+      if (selectedObj?.type !== "deco") return;
+      selectedObj.rotation = 0;
+      $("#objRot").value = 0;
+      $("#objRotVal").textContent = "0°";
+      render();
+    });
+    $("#objDelete").addEventListener("click", () => {
+      if (selectedObj?.type === "deco") { objects = objects.filter(o => o !== selectedObj); selectedObj = null; $("#objStyleSection").style.display = "none"; render(); }
+    });
+
+    // canvas mouse handlers
+    cv.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+    cv.addEventListener("mousemove", onCanvasHover);
+    cv.addEventListener("click", onCanvasClick);
+    cv.addEventListener("wheel", onWheel, { passive: false });
+    document.addEventListener("keydown", e => {
+      if (!$("#editorModal").classList.contains("active")) return;
+      if (e.key === "Delete" || e.key === "Backspace") {
+        if (selectedObj && document.activeElement.tagName !== "INPUT" && document.activeElement.tagName !== "TEXTAREA") {
+          objects = objects.filter(o => o !== selectedObj);
+          selectedObj = null;
+          $("#textProps").style.display = "none";
+          $("#objStyleSection").style.display = "none";
+          render();
+        }
+      }
+      if (e.key === "Escape") close();
+    });
+  }
+
+  function setupCanvas() {
+    const fmt = FormatSpec[AppState.compose.format];
+    cv.width = fmt.w; cv.height = fmt.h;
+    // Display sizing — fit to canvas area minus padding
+    const area = $("#editorCanvasArea");
+    const maxW = area.clientWidth - 64;
+    const maxH = area.clientHeight - 64;
+    let dispScale = Math.min(maxW / fmt.w, maxH / fmt.h);
+    // Cap to prevent extreme upscale
+    dispScale = Math.min(dispScale, 8);
+    cv.style.width = (fmt.w * dispScale) + "px";
+    cv.style.height = (fmt.h * dispScale) + "px";
+    ctx = cv.getContext("2d", { willReadFrequently: true });
+  }
+
+  function reflectTextProps() {
+    const o = selectedObj;
+    if (!o || o.type !== "text") return;
+    $("#txtContent").value = o.text;
+    $("#txtFont").value = o.font;
+    $("#txtSize").value = o.size;
+    $("#txtSizeVal").textContent = o.size + "px";
+    $("#txtColor").value = o.color; $("#txtColorVal").textContent = o.color;
+    $("#txtStroke").value = o.stroke; $("#txtStrokeVal").textContent = o.stroke;
+    $("#txtStrokeW").value = o.strokeW; $("#txtStrokeWVal").textContent = o.strokeW + "px";
+    $("#dirH").classList.toggle("sel", o.direction === "h");
+    $("#dirV").classList.toggle("sel", o.direction === "v");
+    const degT = Math.round((o.rotation || 0) * 180 / Math.PI);
+    $("#txtRot").value = ((degT + 180) % 360) - 180;
+    $("#txtRotVal").textContent = degT + "°";
+  }
+  function reflectObjProps() {
+    const o = selectedObj;
+    if (!o || o.type !== "deco") return;
+    $("#objFill").value = o.fill || "#f95f8e";
+    $("#objStroke").value = o.stroke || "#000000";
+    $("#objStrokeW").value = o.strokeW; $("#objStrokeWVal").textContent = o.strokeW + "px";
+    $("#objFillNone").checked = !!o.noFill;
+    const degO = Math.round((o.rotation || 0) * 180 / Math.PI);
+    $("#objRot").value = ((degO + 180) % 360) - 180;
+    $("#objRotVal").textContent = degO + "°";
+  }
+
+  function render() {
+    if (!ctx) return;
+    const fmt = FormatSpec[AppState.compose.format];
+    ctx.clearRect(0, 0, fmt.w, fmt.h);
+
+    // 1. background image
+    if (bgImg) {
+      const iw = bgImg.naturalWidth, ih = bgImg.naturalHeight;
+      const baseR = Math.min(fmt.w / iw, fmt.h / ih) * bgState.scale;
+      const dw = iw * baseR, dh = ih * baseR;
+      const dx = (fmt.w - dw) / 2 + bgState.x;
+      const dy = (fmt.h - dh) / 2 + bgState.y;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(bgImg, dx, dy, dw, dh);
+    }
+
+    // 2. objects
+    objects.forEach(o => {
+      ctx.save();
+      ctx.translate(o.x, o.y);
+      ctx.rotate(o.rotation || 0);
+      ctx.scale(o.scale || 1, o.scale || 1);
+      if (o.type === "text") drawTextObject(o);
+      else if (o.type === "deco") drawDecoOnCtx(ctx, o);
+      ctx.restore();
+    });
+
+    // 3. selection
+    if (selectedObj) drawSelectionBox(selectedObj);
+  }
+
+  function drawTextObjectOnCtx(c, o) {
+    const prev = ctx; ctx = c;
+    drawTextObject(o);
+    ctx = prev;
+  }
+  function drawTextObject(o) {
+    const fontStr = `${o.size}px ${o.font}`;
+    ctx.font = fontStr;
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.lineJoin = "round";
+    if (o.direction === "h") {
+      if (o.strokeW > 0) {
+        ctx.lineWidth = o.strokeW; ctx.strokeStyle = o.stroke;
+        ctx.strokeText(o.text, 0, 0);
+      }
+      ctx.fillStyle = o.color;
+      ctx.fillText(o.text, 0, 0);
+    } else {
+      // vertical text
+      const chars = Array.from(o.text);
+      const total = chars.length;
+      chars.forEach((ch, i) => {
+        const yy = (i - (total - 1) / 2) * o.size;
+        if (o.strokeW > 0) {
+          ctx.lineWidth = o.strokeW; ctx.strokeStyle = o.stroke;
+          ctx.strokeText(ch, 0, yy);
+        }
+        ctx.fillStyle = o.color;
+        ctx.fillText(ch, 0, yy);
+      });
+    }
+  }
+
+  function getTextBounds(o) {
+    ctx.save();
+    ctx.font = `${o.size}px ${o.font}`;
+    if (o.direction === "h") {
+      const m = ctx.measureText(o.text);
+      const w = (m.width + o.strokeW) * (o.scale || 1);
+      const h = (o.size + o.strokeW) * (o.scale || 1);
+      ctx.restore();
+      return { w, h };
+    } else {
+      const chars = Array.from(o.text);
+      let maxW = 0;
+      chars.forEach(c => { maxW = Math.max(maxW, ctx.measureText(c).width); });
+      const w = (maxW + o.strokeW) * (o.scale || 1);
+      const h = (chars.length * o.size + o.strokeW) * (o.scale || 1);
+      ctx.restore();
+      return { w, h };
+    }
+  }
+
+  function getObjectBounds(o) {
+    if (o.type === "text") return getTextBounds(o);
+    // deco: stored bounding size = 80 base, scale outward
+    const base = 80;
+    return { w: base * o.scale, h: base * o.scale };
+  }
+
+  function drawSelectionBox(o) {
+    const b = getObjectBounds(o);
+    ctx.save();
+    ctx.translate(o.x, o.y);
+    ctx.rotate(o.rotation || 0);  // selection box rotates with the object
+    ctx.strokeStyle = "#f95f8e"; ctx.lineWidth = 1.2;
+    ctx.setLineDash([4, 3]);
+    ctx.strokeRect(-b.w/2, -b.h/2, b.w, b.h);
+    ctx.setLineDash([]);
+    // resize handle bottom-right
+    ctx.fillStyle = "#fff";
+    ctx.strokeStyle = "#f95f8e"; ctx.lineWidth = 1.5;
+    const hs = 6;
+    ctx.fillRect(b.w/2 - hs, b.h/2 - hs, hs*2, hs*2);
+    ctx.strokeRect(b.w/2 - hs, b.h/2 - hs, hs*2, hs*2);
+    // X delete button at top-left (away from resize handle to avoid mis-clicks)
+    const xR = 9;
+    const xX = -b.w/2;
+    const xY = -b.h/2;
+    ctx.fillStyle = "#ef4444";
+    ctx.beginPath(); ctx.arc(xX, xY, xR, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.stroke();
+    // Draw the "X" symbol
+    ctx.lineCap = "round";
+    const armLen = 4;
+    ctx.beginPath();
+    ctx.moveTo(xX - armLen, xY - armLen); ctx.lineTo(xX + armLen, xY + armLen);
+    ctx.moveTo(xX - armLen, xY + armLen); ctx.lineTo(xX + armLen, xY - armLen);
+    ctx.stroke();
+    // Rotation handle: line + circle at top-center, above the box
+    const rotR = 9;
+    const rotOffset = 24;     // px above the bounding box top edge
+    const rotY = -b.h/2 - rotOffset;
+    // Connection line from top-center to handle
+    ctx.strokeStyle = "#06C755"; ctx.lineWidth = 1.2;
+    ctx.setLineDash([3, 2]);
+    ctx.beginPath();
+    ctx.moveTo(0, -b.h/2); ctx.lineTo(0, rotY + rotR);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    // Handle circle (LINE green to differentiate from delete/resize)
+    ctx.fillStyle = "#06C755";
+    ctx.beginPath(); ctx.arc(0, rotY, rotR, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.stroke();
+    // Curved arrow icon inside the handle (270° arc + arrowhead)
+    ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.6;
+    const arcR = 4.2;
+    ctx.beginPath();
+    ctx.arc(0, rotY, arcR, Math.PI * 0.25, Math.PI * 1.75);
+    ctx.stroke();
+    // Arrowhead at start of arc
+    ctx.fillStyle = "#fff";
+    const ax = Math.cos(Math.PI * 0.25) * arcR;
+    const ay = rotY + Math.sin(Math.PI * 0.25) * arcR;
+    ctx.beginPath();
+    ctx.moveTo(ax + 2, ay - 1);
+    ctx.lineTo(ax - 1, ay - 2);
+    ctx.lineTo(ax + 1, ay + 2.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function getCanvasCoords(e) {
+    const rect = cv.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * cv.width / rect.width;
+    const y = (e.clientY - rect.top) * cv.height / rect.height;
+    return { x, y };
+  }
+
+  // Convert world coordinates → object's local (un-rotated) space.
+  // After this, hit-testing can simply compare to the un-rotated bounding box.
+  function worldToLocal(o, wx, wy) {
+    const dx = wx - o.x, dy = wy - o.y;
+    const r = -(o.rotation || 0);
+    const c = Math.cos(r), s = Math.sin(r);
+    return { lx: dx * c - dy * s, ly: dx * s + dy * c };
+  }
+
+  function findObjectAt(x, y) {
+    for (let i = objects.length - 1; i >= 0; i--) {
+      const o = objects[i];
+      const b = getObjectBounds(o);
+      const { lx, ly } = worldToLocal(o, x, y);
+      if (lx >= -b.w/2 && lx <= b.w/2 && ly >= -b.h/2 && ly <= b.h/2) return o;
+    }
+    return null;
+  }
+  function isInResizeHandle(o, x, y) {
+    const b = getObjectBounds(o);
+    const { lx, ly } = worldToLocal(o, x, y);
+    return Math.abs(lx - b.w/2) < 10 && Math.abs(ly - b.h/2) < 10;
+  }
+  function isInDeleteButton(o, x, y) {
+    const b = getObjectBounds(o);
+    const { lx, ly } = worldToLocal(o, x, y);
+    return Math.hypot(lx + b.w/2, ly + b.h/2) < 12;
+  }
+  function isInRotateHandle(o, x, y) {
+    const b = getObjectBounds(o);
+    const { lx, ly } = worldToLocal(o, x, y);
+    return Math.hypot(lx, ly + b.h/2 + 24) < 12;   // 24 = rotOffset in drawSelectionBox
+  }
+
+  function onMouseDown(e) {
+    const { x, y } = getCanvasCoords(e);
+    if (pickingFor) return;
+    e.preventDefault();
+    // Check the X delete button FIRST (top priority over resize/move)
+    if (selectedObj && isInDeleteButton(selectedObj, x, y)) {
+      objects = objects.filter(o => o !== selectedObj);
+      selectedObj = null;
+      $("#textProps").style.display = "none";
+      $("#objStyleSection").style.display = "none";
+      render();
+      toast("已刪除物件", "");
+      return;
+    }
+    if (selectedObj && isInRotateHandle(selectedObj, x, y)) {
+      drag = {
+        kind: "rotate",
+        obj: selectedObj,
+        startMouseAng: Math.atan2(y - selectedObj.y, x - selectedObj.x),
+        startObjAng: selectedObj.rotation || 0
+      };
+      return;
+    }
+    if (selectedObj && isInResizeHandle(selectedObj, x, y)) {
+      drag = { kind: "resize", startScale: selectedObj.scale, startDist: Math.hypot(x - selectedObj.x, y - selectedObj.y), obj: selectedObj };
+      return;
+    }
+    const o = findObjectAt(x, y);
+    if (o) {
+      selectedObj = o;
+      drag = { kind: "move", offX: x - o.x, offY: y - o.y, obj: o };
+      onSelect(o);
+      render();
+    } else {
+      selectedObj = null;
+      // bg drag
+      drag = { kind: "bg", startX: x, startY: y, startBgX: bgState.x, startBgY: bgState.y };
+      $("#textProps").style.display = "none";
+      $("#objStyleSection").style.display = "none";
+      render();
+    }
+  }
+  function onMouseMove(e) {
+    if (!drag) return;
+    const { x, y } = getCanvasCoords(e);
+    if (drag.kind === "move") {
+      drag.obj.x = x - drag.offX;
+      drag.obj.y = y - drag.offY;
+      render();
+    } else if (drag.kind === "resize") {
+      const dist = Math.hypot(x - drag.obj.x, y - drag.obj.y);
+      drag.obj.scale = clamp(drag.startScale * (dist / Math.max(drag.startDist, 1)), 0.1, 8);
+      render();
+    } else if (drag.kind === "rotate") {
+      const ang = Math.atan2(y - drag.obj.y, x - drag.obj.x);
+      let newRot = drag.startObjAng + (ang - drag.startMouseAng);
+      // Hold Shift for 15° snap (typical design-tool convention)
+      if (e.shiftKey) {
+        const step = Math.PI / 12;   // 15 degrees
+        newRot = Math.round(newRot / step) * step;
+      }
+      drag.obj.rotation = newRot;
+      // Sync the side-panel slider so the user sees angle update live
+      const deg = Math.round(newRot * 180 / Math.PI);
+      const wrappedDeg = ((deg % 360) + 540) % 360 - 180;
+      if (drag.obj.type === "text") {
+        if ($("#txtRot")) { $("#txtRot").value = wrappedDeg; $("#txtRotVal").textContent = deg + "°"; }
+      } else if (drag.obj.type === "deco") {
+        if ($("#objRot")) { $("#objRot").value = wrappedDeg; $("#objRotVal").textContent = deg + "°"; }
+      }
+      render();
+    } else if (drag.kind === "bg") {
+      bgState.x = drag.startBgX + (x - drag.startX);
+      bgState.y = drag.startBgY + (y - drag.startY);
+      render();
+    }
+  }
+  function onMouseUp() { drag = null; }
+
+  function onSelect(o) {
+    if (o.type === "text") {
+      $("#textProps").style.display = "block";
+      $("#objStyleSection").style.display = "none";
+      reflectTextProps();
+      setTimeout(() => $("#textProps").scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+    } else if (o.type === "deco") {
+      $("#objStyleSection").style.display = "block";
+      reflectObjProps();
+      setTimeout(() => $("#objStyleSection").scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+    }
+  }
+
+  function onCanvasHover(e) {
+    if (!pickingFor) {
+      if (selectedObj) {
+        const { x, y } = getCanvasCoords(e);
+        if (isInDeleteButton(selectedObj, x, y)) cv.style.cursor = "pointer";
+        else if (isInRotateHandle(selectedObj, x, y)) cv.style.cursor = "grab";
+        else if (isInResizeHandle(selectedObj, x, y)) cv.style.cursor = "nwse-resize";
+        else cv.style.cursor = "move";
+      } else { cv.style.cursor = ""; }
+    }
+  }
+
+  function onCanvasClick(e) {
+    if (!pickingFor) return;
+    const { x, y } = getCanvasCoords(e);
+    const id = ctx.getImageData(Math.round(x), Math.round(y), 1, 1).data;
+    const hex = "#" + [id[0], id[1], id[2]].map(v => v.toString(16).padStart(2, "0")).join("");
+    if (pickingFor === "txtColor" && selectedObj?.type === "text") { selectedObj.color = hex; $("#txtColor").value = hex; $("#txtColorVal").textContent = hex; }
+    if (pickingFor === "txtStroke" && selectedObj?.type === "text") { selectedObj.stroke = hex; $("#txtStroke").value = hex; $("#txtStrokeVal").textContent = hex; }
+    if (pickingFor === "objFill" && selectedObj?.type === "deco") { selectedObj.fill = hex; selectedObj.noFill = false; $("#objFill").value = hex; $("#objFillNone").checked = false; }
+    if (pickingFor === "objStroke" && selectedObj?.type === "deco") { selectedObj.stroke = hex; $("#objStroke").value = hex; }
+    stopPicker();
+    render();
+  }
+
+  function startPicker(target) {
+    pickingFor = target;
+    cv.style.cursor = "crosshair";
+    document.querySelectorAll(".picker-btn").forEach(b => b.classList.remove("active"));
+    const btnMap = { txtColor: "txtColorPicker", txtStroke: "txtStrokePicker", objFill: "objFillPicker", objStroke: "objStrokePicker" };
+    $("#" + btnMap[target]).classList.add("active");
+    toast("🎯 點擊畫布吸取顏色", "");
+  }
+  function stopPicker() {
+    pickingFor = null;
+    cv.style.cursor = "";
+    document.querySelectorAll(".picker-btn").forEach(b => b.classList.remove("active"));
+  }
+
+  function onWheel(e) {
+    if (!selectedObj) return;
+    e.preventDefault();
+    const factor = e.deltaY > 0 ? 0.92 : 1.08;
+    selectedObj.scale = clamp(selectedObj.scale * factor, 0.1, 8);
+    render();
+  }
+
+  function buildDecoPanel() {
+    const body = $("#decoBody");
+    const cats = [
+      { key: "emo",  label: "😊 表情" },
+      { key: "line", label: "〰 線條" },
+      { key: "geo",  label: "★ 幾何" }
+    ];
+    body.innerHTML = `
+      <div class="deco-tabs">
+        ${cats.map((c, i) => `<button class="deco-tab${i === 0 ? " active" : ""}" data-cat="${c.key}">${c.label}</button>`).join("")}
+      </div>
+      <div class="deco-grid" id="decoActiveGrid"></div>
+    `;
+
+    function addDecoToCanvas(d) {
+      const o = {
+        type: "deco", deco: d.id,
+        x: cv.width / 2, y: cv.height / 2,
+        scale: 1.0, rotation: 0,
+        fill: defaultFillFor(d.id),
+        stroke: defaultStrokeFor(d.id),
+        strokeW: defaultStrokeWFor(d.id),
+        noFill: defaultNoFill(d.id)
+      };
+      objects.push(o);
+      selectedObj = o;
+      $("#objStyleSection").style.display = "block";
+      $("#textProps").style.display = "none";
+      reflectObjProps();
+      render();
+      setTimeout(() => $("#objStyleSection").scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+    }
+
+    function renderGridForCat(catKey) {
+      const grid = $("#decoActiveGrid");
+      grid.innerHTML = "";
+      AppConfig.decorations.filter(d => d.cat === catKey).forEach(d => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "deco-btn";
+        btn.title = d.label;
+        btn.innerHTML = decoSVGIcon(d.id);
+        btn.addEventListener("click", () => addDecoToCanvas(d));
+        grid.appendChild(btn);
+      });
+    }
+
+    body.querySelectorAll(".deco-tab").forEach(tab => {
+      tab.addEventListener("click", () => {
+        body.querySelectorAll(".deco-tab").forEach(x => x.classList.toggle("active", x === tab));
+        renderGridForCat(tab.dataset.cat);
+      });
+    });
+
+    renderGridForCat("emo");   // default active category
+  }
+
+  function saveAndClose() {
+    // Re-render to a fresh canvas without selection, then store back
+    const fmt = FormatSpec[AppState.compose.format];
+    const out = document.createElement("canvas");
+    out.width = fmt.w; out.height = fmt.h;
+    const octx = out.getContext("2d", { willReadFrequently: true });
+
+    // bg
+    if (bgImg) {
+      const iw = bgImg.naturalWidth, ih = bgImg.naturalHeight;
+      const baseR = Math.min(fmt.w / iw, fmt.h / ih) * bgState.scale;
+      const dw = iw * baseR, dh = ih * baseR;
+      const dx = (fmt.w - dw) / 2 + bgState.x;
+      const dy = (fmt.h - dh) / 2 + bgState.y;
+      octx.imageSmoothingQuality = "high";
+      octx.drawImage(bgImg, dx, dy, dw, dh);
+    }
+    // objects
+    objects.forEach(o => {
+      octx.save();
+      octx.translate(o.x, o.y);
+      octx.rotate(o.rotation || 0);
+      octx.scale(o.scale || 1, o.scale || 1);
+      if (o.type === "text") drawTextObjectOnCtx(octx, o);
+      else if (o.type === "deco") drawDecoOnCtx(octx, o);
+      octx.restore();
+    });
+
+    const url = out.toDataURL("image/png");
+    dataURLToImage(url).then(img => {
+      const frame = AppState.compose.frames[frameIdx];
+      // Update the displayed/exported (baked) image
+      frame.img = img;
+      frame.dataURL = url;
+      // Persist editor state so user can re-open and continue editing
+      // (origImg stays untouched as the pristine bg for future edits)
+      frame.editorState = {
+        bgState: { ...bgState },
+        objects: objects.map(o => ({ ...o }))
+      };
+      composeRefreshAll();
+      toast("✅ 已儲存編輯（可再次開啟編輯器修改）", "success");
+      close();
+    });
+  }
+
+  return { open };
+})();
+
+
+/* ===========================================================
+ * Router (hash based SPA)
+ * =========================================================== */
+function setupRouter() {
+  const nav = $("#tabsNav");
+  AppConfig.tabs.forEach((tab, i) => {
+    const b = document.createElement("button");
+    b.className = "tab-btn"; b.textContent = tab.name; b.dataset.tab = tab.id;
+    b.addEventListener("click", () => location.hash = tab.id);
+    nav.appendChild(b);
+  });
+  function applyHash() {
+    let h = (location.hash || "").replace("#", "");
+    if (!AppConfig.tabs.find(t => t.id === h)) h = AppConfig.tabs[0].id;
+    $$(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === h));
+    $$(".panel").forEach(p => p.classList.toggle("active", p.id === "panel-" + h));
+    if (h === "tab-watermark") onWatermarkTabShow();
+    if (h === "tab-compose") composeRefreshAll();
+  }
+  window.addEventListener("hashchange", applyHash);
+  applyHash();
+}
+
+
+
+/* ===========================================================
+ * App Initialization
+ * =========================================================== */
+async function bootstrap() {
+  setupRouter();
+  setupPromptTab();
+  setupWatermarkTab();
+  setupSplitTab();
+  setupComposeTab();
+  try {
+    await loadWatermarkMask();
+    console.log("Watermark mask loaded.");
+  } catch (e) {
+    console.error("Failed to load watermark mask:", e);
+    toast("浮水印遮罩載入失敗", "error");
+  }
+}
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", bootstrap);
+} else {
+  bootstrap();
+}
+
+</script>
+</body>
+</html>
