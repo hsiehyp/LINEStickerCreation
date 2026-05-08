@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<!-- saved from url=(0045)file:///C:/Users/user/Downloads/index_67.html -->
+<html lang="zh-TW"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>LINE 動態貼圖自動化助手</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/upng-js@2.1.0/UPNG.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Noto+Serif+TC:wght@400;700&family=LXGW+WenKai+TC&family=Ma+Shan+Zheng&family=Long+Cang&family=Liu+Jian+Mao+Cao&family=ZCOOL+KuaiLe&family=ZCOOL+QingKe+HuangYou&family=ZCOOL+XiaoWei&family=DotGothic16&family=Cherry+Bomb+One&display=swap" rel="stylesheet">
+<script src="./index_files/jszip.min.js.下載"></script>
+<script src="./index_files/pako.min.js.下載"></script>
+<script src="./index_files/UPNG.js.下載"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
+<link href="./index_files/css2" rel="stylesheet">
 <style>
 /* ===== Reset & Base ===== */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -302,18 +302,18 @@ textarea.input{resize:vertical;min-height:80px;line-height:1.5}
       <div>LINE 動態貼圖自動化助手</div>
       <span class="line-badge">LINE Ready</span>
     </div>
-    <nav class="tabs" id="tabsNav"></nav>
+    <nav class="tabs" id="tabsNav"><button class="tab-btn active" data-tab="tab-prompt">1. 動態貼圖 Prompt 大師</button><button class="tab-btn" data-tab="tab-watermark">2. 去除星星浮水印</button><button class="tab-btn" data-tab="tab-split">3. 圖片分割 / 智慧去背</button><button class="tab-btn" data-tab="tab-compose">4. 動態貼圖製作</button></nav>
   </header>
   <main class="main">
 
     <!-- ===== TAB 1: PROMPT ===== -->
-    <section class="panel" id="panel-tab-prompt">
+    <section class="panel active" id="panel-tab-prompt">
       <div class="prompt-grid">
         <div>
           <div class="card">
             <div class="card-title"><span class="num">1</span>模式設定 (固定)</div>
             <div class="row">
-              <button class="btn primary" disabled>連續動作 (無文字)</button>
+              <button class="btn primary" disabled="">連續動作 (無文字)</button>
               <span class="muted">已鎖定為連續動作模式以避免 AI 文字干擾</span>
             </div>
           </div>
@@ -335,8 +335,48 @@ textarea.input{resize:vertical;min-height:80px;line-height:1.5}
 
           <div class="card">
             <div class="card-title"><span class="num">3</span>動作主題（最多選 5 個關鍵動作）</div>
-            <div class="kw-selected-bar" id="kwSelectedBar"></div>
-            <div id="kwCategories"></div>
+            <div class="kw-selected-bar" id="kwSelectedBar"><span class="kw-selected-empty">尚未選取動作（請從下方分類點選 1–5 個）</span><span class="kw-counter">已選 <b>0</b>/5</span></div>
+            <div id="kwCategories"><div class="kw-cat">
+      <div class="kw-cat-head">
+        <span class="title"><b>日常動作</b> · 32 個</span>
+        <span class="arrow">▼</span>
+      </div>
+      <div class="kw-cat-body"><button type="button" class="kw-chip" data-kw="打哈欠">打哈欠</button><button type="button" class="kw-chip" data-kw="打瞌睡">打瞌睡</button><button type="button" class="kw-chip" data-kw="睡覺">睡覺</button><button type="button" class="kw-chip" data-kw="Say HI">Say HI</button><button type="button" class="kw-chip" data-kw="捧碗">捧碗</button><button type="button" class="kw-chip" data-kw="打招呼">打招呼</button><button type="button" class="kw-chip" data-kw="揮手">揮手</button><button type="button" class="kw-chip" data-kw="鞠躬">鞠躬</button><button type="button" class="kw-chip" data-kw="拜託">拜託</button><button type="button" class="kw-chip" data-kw="握手">握手</button><button type="button" class="kw-chip" data-kw="打呼">打呼</button><button type="button" class="kw-chip" data-kw="吹泡泡">吹泡泡</button><button type="button" class="kw-chip" data-kw="起床">起床</button><button type="button" class="kw-chip" data-kw="躲進被窩">躲進被窩</button><button type="button" class="kw-chip" data-kw="點頭">點頭</button><button type="button" class="kw-chip" data-kw="比OK">比OK</button><button type="button" class="kw-chip" data-kw="搖頭">搖頭</button><button type="button" class="kw-chip" data-kw="手比X">手比X</button><button type="button" class="kw-chip" data-kw="嘟嘴">嘟嘴</button><button type="button" class="kw-chip" data-kw="眨眼">眨眼</button><button type="button" class="kw-chip" data-kw="驚訝">驚訝</button><button type="button" class="kw-chip" data-kw="疑惑">疑惑</button><button type="button" class="kw-chip" data-kw="驚嚇">驚嚇</button><button type="button" class="kw-chip" data-kw="石化">石化</button><button type="button" class="kw-chip" data-kw="僵硬">僵硬</button><button type="button" class="kw-chip" data-kw="不解">不解</button><button type="button" class="kw-chip" data-kw="抓頭">抓頭</button><button type="button" class="kw-chip" data-kw="思考">思考</button><button type="button" class="kw-chip" data-kw="尷尬">尷尬</button><button type="button" class="kw-chip" data-kw="探頭">探頭</button><button type="button" class="kw-chip" data-kw="眼冒金星">眼冒金星</button><button type="button" class="kw-chip" data-kw="疲倦">疲倦</button></div></div><div class="kw-cat">
+      <div class="kw-cat-head">
+        <span class="title"><b>開心慶祝</b> · 14 個</span>
+        <span class="arrow">▼</span>
+      </div>
+      <div class="kw-cat-body"><button type="button" class="kw-chip" data-kw="歡呼">歡呼</button><button type="button" class="kw-chip" data-kw="跳躍">跳躍</button><button type="button" class="kw-chip" data-kw="鼓掌">鼓掌</button><button type="button" class="kw-chip" data-kw="撒花">撒花</button><button type="button" class="kw-chip" data-kw="比耶">比耶</button><button type="button" class="kw-chip" data-kw="握拳喝采">握拳喝采</button><button type="button" class="kw-chip" data-kw="大笑">大笑</button><button type="button" class="kw-chip" data-kw="開心">開心</button><button type="button" class="kw-chip" data-kw="狂笑">狂笑</button><button type="button" class="kw-chip" data-kw="轉圈圈">轉圈圈</button><button type="button" class="kw-chip" data-kw="加油">加油</button><button type="button" class="kw-chip" data-kw="握拳">握拳</button><button type="button" class="kw-chip" data-kw="比大讚">比大讚</button><button type="button" class="kw-chip" data-kw="唱歌">唱歌</button></div></div><div class="kw-cat">
+      <div class="kw-cat-head">
+        <span class="title"><b>難過失落</b> · 15 個</span>
+        <span class="arrow">▼</span>
+      </div>
+      <div class="kw-cat-body"><button type="button" class="kw-chip" data-kw="垂頭喪氣">垂頭喪氣</button><button type="button" class="kw-chip" data-kw="擦眼淚">擦眼淚</button><button type="button" class="kw-chip" data-kw="蹲牆角">蹲牆角</button><button type="button" class="kw-chip" data-kw="畫圈圈">畫圈圈</button><button type="button" class="kw-chip" data-kw="掩面">掩面</button><button type="button" class="kw-chip" data-kw="嘆氣">嘆氣</button><button type="button" class="kw-chip" data-kw="哭泣">哭泣</button><button type="button" class="kw-chip" data-kw="噴淚">噴淚</button><button type="button" class="kw-chip" data-kw="大哭">大哭</button><button type="button" class="kw-chip" data-kw="淚奔">淚奔</button><button type="button" class="kw-chip" data-kw="瀑布淚">瀑布淚</button><button type="button" class="kw-chip" data-kw="難過">難過</button><button type="button" class="kw-chip" data-kw="啜泣">啜泣</button><button type="button" class="kw-chip" data-kw="咬手帕">咬手帕</button><button type="button" class="kw-chip" data-kw="躲牆角">躲牆角</button></div></div><div class="kw-cat">
+      <div class="kw-cat-head">
+        <span class="title"><b>生氣激動</b> · 14 個</span>
+        <span class="arrow">▼</span>
+      </div>
+      <div class="kw-cat-body"><button type="button" class="kw-chip" data-kw="跺腳">跺腳</button><button type="button" class="kw-chip" data-kw="拍桌">拍桌</button><button type="button" class="kw-chip" data-kw="指責">指責</button><button type="button" class="kw-chip" data-kw="翻白眼">翻白眼</button><button type="button" class="kw-chip" data-kw="噴火">噴火</button><button type="button" class="kw-chip" data-kw="雙手抱胸">雙手抱胸</button><button type="button" class="kw-chip" data-kw="發火">發火</button><button type="button" class="kw-chip" data-kw="氣炸">氣炸</button><button type="button" class="kw-chip" data-kw="冒煙">冒煙</button><button type="button" class="kw-chip" data-kw="臉紅脖子粗">臉紅脖子粗</button><button type="button" class="kw-chip" data-kw="鄙視">鄙視</button><button type="button" class="kw-chip" data-kw="三條線">三條線</button><button type="button" class="kw-chip" data-kw="冷淡">冷淡</button><button type="button" class="kw-chip" data-kw="撇頭">撇頭</button></div></div><div class="kw-cat">
+      <div class="kw-cat-head">
+        <span class="title"><b>工作情境</b> · 12 個</span>
+        <span class="arrow">▼</span>
+      </div>
+      <div class="kw-cat-body"><button type="button" class="kw-chip" data-kw="敲鍵盤">敲鍵盤</button><button type="button" class="kw-chip" data-kw="接電話">接電話</button><button type="button" class="kw-chip" data-kw="遞名片">遞名片</button><button type="button" class="kw-chip" data-kw="開會討論">開會討論</button><button type="button" class="kw-chip" data-kw="看手錶">看手錶</button><button type="button" class="kw-chip" data-kw="伸懶腰">伸懶腰</button><button type="button" class="kw-chip" data-kw="工作">工作</button><button type="button" class="kw-chip" data-kw="學習">學習</button><button type="button" class="kw-chip" data-kw="打字">打字</button><button type="button" class="kw-chip" data-kw="寫字">寫字</button><button type="button" class="kw-chip" data-kw="打電腦">打電腦</button><button type="button" class="kw-chip" data-kw="戰鬥">戰鬥</button></div></div><div class="kw-cat">
+      <div class="kw-cat-head">
+        <span class="title"><b>戀愛撒嬌</b> · 14 個</span>
+        <span class="arrow">▼</span>
+      </div>
+      <div class="kw-cat-body"><button type="button" class="kw-chip" data-kw="送愛心">送愛心</button><button type="button" class="kw-chip" data-kw="托腮臉紅">托腮臉紅</button><button type="button" class="kw-chip" data-kw="牽手">牽手</button><button type="button" class="kw-chip" data-kw="飛吻">飛吻</button><button type="button" class="kw-chip" data-kw="依偎">依偎</button><button type="button" class="kw-chip" data-kw="眨眼電人">眨眼電人</button><button type="button" class="kw-chip" data-kw="幸福">幸福</button><button type="button" class="kw-chip" data-kw="比心">比心</button><button type="button" class="kw-chip" data-kw="眼冒愛心">眼冒愛心</button><button type="button" class="kw-chip" data-kw="抱抱">抱抱</button><button type="button" class="kw-chip" data-kw="摸頭">摸頭</button><button type="button" class="kw-chip" data-kw="撒嬌">撒嬌</button><button type="button" class="kw-chip" data-kw="害羞">害羞</button><button type="button" class="kw-chip" data-kw="臉紅">臉紅</button></div></div><div class="kw-cat">
+      <div class="kw-cat-head">
+        <span class="title"><b>運動健身</b> · 6 個</span>
+        <span class="arrow">▼</span>
+      </div>
+      <div class="kw-cat-body"><button type="button" class="kw-chip" data-kw="舉啞鈴">舉啞鈴</button><button type="button" class="kw-chip" data-kw="擦汗">擦汗</button><button type="button" class="kw-chip" data-kw="跑步">跑步</button><button type="button" class="kw-chip" data-kw="伸展">伸展</button><button type="button" class="kw-chip" data-kw="喝水補給">喝水補給</button><button type="button" class="kw-chip" data-kw="秀肌肉">秀肌肉</button></div></div><div class="kw-cat">
+      <div class="kw-cat-head">
+        <span class="title"><b>吃貨日常</b> · 7 個</span>
+        <span class="arrow">▼</span>
+      </div>
+      <div class="kw-cat-body"><button type="button" class="kw-chip" data-kw="大口咬下">大口咬下</button><button type="button" class="kw-chip" data-kw="流口水">流口水</button><button type="button" class="kw-chip" data-kw="舔嘴唇">舔嘴唇</button><button type="button" class="kw-chip" data-kw="乾杯">乾杯</button><button type="button" class="kw-chip" data-kw="捧肚子">捧肚子</button><button type="button" class="kw-chip" data-kw="幸福地嚼">幸福地嚼</button><button type="button" class="kw-chip" data-kw="大口吃">大口吃</button></div></div></div>
             <div style="margin-top:14px">
               <label class="label">✏️ 自訂動作（選填，填寫後將覆蓋上方選取）</label>
               <textarea class="input" id="customActions" rows="2" placeholder="例：抱貓咪、彈吉他、打電動、追公車、煮泡麵、噴嚏  ←  以「、」分隔，建議 5 個動作"></textarea>
@@ -346,13 +386,13 @@ textarea.input{resize:vertical;min-height:80px;line-height:1.5}
 
           <div class="card">
             <div class="card-title"><span class="num">4</span>畫風選擇</div>
-            <div class="opt-grid" id="styleGrid"></div>
+            <div class="opt-grid" id="styleGrid"><button class="btn sel" data-style="qcute">可愛 Q 版</button><button class="btn" data-style="real">照片級寫實</button><button class="btn" data-style="3d">3D 公仔</button><button class="btn" data-style="flat">扁平插畫</button><button class="btn" data-style="book">童書繪本</button><button class="btn" data-style="doodle">童趣手繪</button><button class="btn" data-style="chibi">日系 Chibi</button><button class="btn" data-style="water">清新水彩</button><button class="btn" data-style="ink">古風水墨</button><button class="btn" data-style="pixel">復古像素</button><button class="btn" data-style="pastel">粉蠟筆</button><button class="btn" data-style="bwline">黑白塗鴉線條風</button><button class="btn" data-style="kaomoji">浮誇顏藝風</button><button class="btn" data-style="uscartoon">美式卡通風</button></div>
           </div>
 
           <div class="card">
             <div class="card-title"><span class="num">5</span>邊框設定</div>
             <div class="row">
-              <label class="switch"><input type="checkbox" id="borderSwitch" /><span class="slot"></span></label>
+              <label class="switch"><input type="checkbox" id="borderSwitch"><span class="slot"></span></label>
               <span>為角色加入白色貼圖邊框 (Add white sticker border)</span>
             </div>
           </div>
@@ -367,7 +407,47 @@ textarea.input{resize:vertical;min-height:80px;line-height:1.5}
                 <button data-lang="zh">🇹🇼 完全中文</button>
               </div>
             </div>
-            <div id="promptOutput" class="prompt-output"></div>
+            <div id="promptOutput" class="prompt-output"># Animated Sticker Prompt (Continuous-Action Mode, NO TEXT)
+
+[!!! CRITICAL — NO VISIBLE GRID LINES !!!]
+The "5×4 grid" is a LOGICAL LAYOUT CONCEPT for the AI to organize the composition.
+The output image MUST NOT contain any visible:
+  ✗ grid lines (white, black, or any color)
+  ✗ borders, frames, or boxes around individual cells
+  ✗ gutters, gaps, or separator strips between cells
+  ✗ panel dividers (like in a comic book or photo collage)
+  ✗ corner marks, crop marks, or registration marks
+The 20 sub-images must touch each other directly with NO visual separation.
+The viewer should NOT be able to tell where one cell ends and the next begins, except by the change in pose/character.
+A continuous green background fills the entire 2560×1664 canvas with NO interruption.
+
+[Layout Specification]
+- Canvas size: 2560 x 1664 px (single uninterrupted image)
+- Logical arrangement: 5 columns × 4 rows = 20 sub-images (each conceptually ~512 × 416 px)
+- Each VERTICAL COLUMN represents ONE continuous animation sequence (4 frames per column, top → bottom).
+- 5 distinct continuous-action sequences in total.
+- IMPORTANT: This grid structure is INVISIBLE — only the AI uses it for composition; the rendered output shows only characters on a uniform green background.
+
+[Core Rules]
+- ABSOLUTELY NO TEXT, words, letters, numbers, captions, watermarks, or signatures anywhere.
+- ABSOLUTELY NO GRID LINES of any kind — no white lines, no black lines, no thin strokes, no faint guides. The 20 sub-images blend seamlessly into ONE flat green canvas.
+- Composition: half-body or full-body depending on the action; full character must remain inside its conceptual cell area.
+- Background: SOLID GREEN SCREEN (#00C800), perfectly flat and uniform across the ENTIRE 2560×1664 canvas, for easy chroma keying.
+- Subtle, expressive variation between frames within a column to create smooth animation.
+
+[Creative Settings]
+- Use the reference image attached as the main character. (Please attach the reference image in the AI platform's UI when sending this prompt.)
+- (⚠ NOT YET SET — please select 1-5 action keywords or fill the custom-actions field in the UI before sending to Gemini.)
+- Visual style: cute chibi Q-version style, big head, soft pastel colors.
+- Lighting: clean, even, no harsh shadows that would interfere with chroma key.
+- Each column tells one micro-story (4 frames of a single motion). Different columns show different actions.
+
+[Hard Constraints]
+- Output exactly 5×4 sub-images, no more, no less.
+- Do not draw anything outside the conceptual cell boundaries.
+- The green background MUST be visible around the character on every sub-image (no edge-to-edge fill).
+- ZERO visible grid lines, borders, frames, or panel dividers anywhere in the output. If you are tempted to draw a thin line to separate cells — DO NOT. The cells separate themselves naturally through the green negative space around each character.
+</div>
             <div class="row" style="margin-top:12px;gap:8px">
               <button class="btn primary flex-1" id="copyPromptBtn">📑 複製 Prompt</button>
               <button class="btn line flex-1" id="goGeminiBtn">✨ 前往 Gemini</button>
@@ -397,7 +477,7 @@ textarea.input{resize:vertical;min-height:80px;line-height:1.5}
               <div class="icon">🖼️</div>
               <h3>拖曳圖片到此 / 點擊選擇</h3>
               <p>支援 PNG / JPG，自動移除右下角 Gemini 星星浮水印</p>
-              <input type="file" id="wmFile" accept="image/*" class="file-hidden" />
+              <input type="file" id="wmFile" accept="image/*" class="file-hidden">
             </div>
             <div id="wmCanvasContainer" style="display:none">
               <canvas id="wmCanvas"></canvas>
@@ -420,7 +500,7 @@ textarea.input{resize:vertical;min-height:80px;line-height:1.5}
             <h4>浮水印去除</h4>
             <div class="row" style="justify-content:space-between;padding:10px 12px;background:rgba(249,95,142,.08);border-radius:8px;border:1px solid rgba(249,95,142,.25)">
               <span style="font-size:13px;font-weight:600">✨ 啟用浮水印去除</span>
-              <label class="switch"><input type="checkbox" id="wmEnable" checked /><span class="slot"></span></label>
+              <label class="switch"><input type="checkbox" id="wmEnable" checked=""><span class="slot"></span></label>
             </div>
             <p class="muted" style="margin-top:6px;font-size:11px">關閉後將直接使用「原始圖片」作為下載/複製到分頁 3 的結果，不執行 Alpha Unmix 演算法。</p>
           </div>
@@ -435,16 +515,16 @@ textarea.input{resize:vertical;min-height:80px;line-height:1.5}
             <h4>浮水印位置</h4>
             <div class="row" style="justify-content:space-between;margin-bottom:8px;padding:6px 8px;background:rgba(239,68,68,.06);border-radius:6px;border:1px solid rgba(239,68,68,.2)">
               <span style="font-size:12px;display:flex;align-items:center;gap:6px"><span style="width:14px;height:8px;border:1.5px dashed #ef4444;display:inline-block"></span>顯示紅色定位框</span>
-              <label class="switch"><input type="checkbox" id="wmBoxVisible" checked /><span class="slot"></span></label>
+              <label class="switch"><input type="checkbox" id="wmBoxVisible" checked=""><span class="slot"></span></label>
             </div>
             <p class="muted" style="margin-bottom:8px;font-size:11px">拖曳紅色框或於此輸入像素值（兩者連動）。下載 PNG 不會包含紅框。</p>
             <div class="kv-row">
               <span class="label mono">距右邊界 (PX)</span>
-              <input type="number" class="input mono" id="wmRightInput" value="60" min="0" />
+              <input type="number" class="input mono" id="wmRightInput" value="60" min="0">
             </div>
             <div class="kv-row">
               <span class="label mono">距下邊界 (PX)</span>
-              <input type="number" class="input mono" id="wmBottomInput" value="60" min="0" />
+              <input type="number" class="input mono" id="wmBottomInput" value="60" min="0">
             </div>
             <button class="btn outline" id="wmResetPosBtn" style="width:100%">↻ 重設為預設值 (60, 60)</button>
           </div>
@@ -452,11 +532,11 @@ textarea.input{resize:vertical;min-height:80px;line-height:1.5}
             <h4>參數微調</h4>
             <div style="margin-bottom:10px">
               <div class="row" style="justify-content:space-between"><span class="label">移除強度 (Alpha Multiplier)</span><span class="mono" id="wmAlphaVal">1.00</span></div>
-              <input type="range" class="slider" id="wmAlphaSlider" min="0.5" max="1.5" step="0.01" value="1.0" />
+              <input type="range" class="slider" id="wmAlphaSlider" min="0.5" max="1.5" step="0.01" value="1.0">
             </div>
             <div>
               <div class="row" style="justify-content:space-between"><span class="label">區域縮放 (Scale)</span><span class="mono" id="wmScaleVal">100%</span></div>
-              <input type="range" class="slider" id="wmScaleSlider" min="50" max="200" step="1" value="100" />
+              <input type="range" class="slider" id="wmScaleSlider" min="50" max="200" step="1" value="100">
             </div>
           </div>
           <div>
@@ -475,11 +555,11 @@ textarea.input{resize:vertical;min-height:80px;line-height:1.5}
           ⚠ 圖檔規格：<b>5 欄 × 4 列，共 20 張，總尺寸 2560 × 1664 px</b>（其他尺寸亦可使用，但建議遵循以保證最佳效果）。
         </div>
         <div class="row" style="margin-bottom:12px;gap:8px;flex-wrap:wrap">
-          <button class="btn line" id="copyFromStep2Btn" disabled>📋 從「去除浮水印」分頁載入處理過的圖片</button>
+          <button class="btn line" id="copyFromStep2Btn" disabled="">📋 從「去除浮水印」分頁載入處理過的圖片</button>
           <button class="btn primary" id="splitChangeBtn">📁 選擇圖片</button>
           <span class="muted" style="font-size:11px;flex-basis:100%">「載入處理過的圖片」需先在分頁 2 完成處理；「選擇圖片」則從電腦選擇本地檔案。</span>
         </div>
-        <input type="file" id="splitFile" accept="image/*" class="file-hidden" />
+        <input type="file" id="splitFile" accept="image/*" class="file-hidden">
         <div class="split-uploader" id="splitUploader">
           <div style="font-size:38px">📤</div>
           <h3 style="margin-top:6px">拖曳網格圖到此 / 點擊上傳</h3>
@@ -500,15 +580,15 @@ textarea.input{resize:vertical;min-height:80px;line-height:1.5}
               <h4 style="margin-bottom:10px;font-size:13px">圖片對齊微調</h4>
               <div style="margin-bottom:10px">
                 <div class="row" style="justify-content:space-between"><span class="label">水平平移 X</span><span class="mono" id="splitXVal">0 px</span></div>
-                <input type="range" class="slider" id="splitX" min="-200" max="200" step="1" value="0" />
+                <input type="range" class="slider" id="splitX" min="-200" max="200" step="1" value="0">
               </div>
               <div style="margin-bottom:10px">
                 <div class="row" style="justify-content:space-between"><span class="label">垂直平移 Y</span><span class="mono" id="splitYVal">0 px</span></div>
-                <input type="range" class="slider" id="splitY" min="-200" max="200" step="1" value="0" />
+                <input type="range" class="slider" id="splitY" min="-200" max="200" step="1" value="0">
               </div>
               <div style="margin-bottom:14px">
                 <div class="row" style="justify-content:space-between"><span class="label">縮放尺寸</span><span class="mono" id="splitScaleVal">100%</span></div>
-                <input type="range" class="slider" id="splitScale" min="50" max="200" step="1" value="100" />
+                <input type="range" class="slider" id="splitScale" min="50" max="200" step="1" value="100">
               </div>
               <div style="padding:10px;background:#0e1119;border-radius:6px;border:1px solid var(--c-border)">
                 <h4 style="margin-bottom:8px;font-size:13px">分割線調整</h4>
@@ -526,7 +606,7 @@ textarea.input{resize:vertical;min-height:80px;line-height:1.5}
 
         <div class="row" style="margin-bottom:14px;gap:14px;flex-wrap:wrap;padding:12px;background:#0e1119;border-radius:8px">
           <div class="row">
-            <label class="switch"><input type="checkbox" id="bgRmEnable" checked /><span class="slot"></span></label>
+            <label class="switch"><input type="checkbox" id="bgRmEnable" checked=""><span class="slot"></span></label>
             <span>啟用智能去背</span>
           </div>
           <select class="select" id="bgRmMode" style="width:auto">
@@ -539,7 +619,7 @@ textarea.input{resize:vertical;min-height:80px;line-height:1.5}
         <div class="row" style="margin-bottom:12px;gap:14px;flex-wrap:wrap">
           <div class="row" style="gap:6px">
             <span class="label" style="margin-bottom:0">起始編號（組）</span>
-            <input type="number" class="input mono" id="zipStartNum" value="1" min="1" style="width:70px" />
+            <input type="number" class="input mono" id="zipStartNum" value="1" min="1" style="width:70px">
           </div>
           <button class="btn line" id="downloadZipBtn">📦 下載完整 ZIP（20 張）</button>
           <span style="width:1px;height:24px;background:var(--c-border)"></span>
@@ -563,7 +643,7 @@ textarea.input{resize:vertical;min-height:80px;line-height:1.5}
               <div class="card-title" style="margin-bottom:0"><span class="num">1</span>批次上傳圖片</div>
               <div class="row">
                 <button class="btn outline" id="composeClearAll" title="清空所有影格圖片、編輯狀態、並恢復格式/秒數/循環為預設值">🔄 恢復原始狀態</button>
-                <input type="file" id="composeBatchFile" accept="image/*" multiple class="file-hidden" />
+                <input type="file" id="composeBatchFile" accept="image/*" multiple="" class="file-hidden">
                 <button class="btn primary" id="composeBatchBtn">📤 批次上傳</button>
               </div>
             </div>
@@ -581,10 +661,10 @@ textarea.input{resize:vertical;min-height:80px;line-height:1.5}
               <button class="btn" id="tbRight">› 右移</button>
               <button class="btn" id="tbReplace">🔄 替換圖片</button>
               <button class="btn danger" id="tbClearAll">🗑 清空全部影格</button>
-              <input type="file" id="composeReplaceFile" accept="image/*" class="file-hidden" />
-              <input type="file" id="composeSingleFile" accept="image/*" class="file-hidden" />
+              <input type="file" id="composeReplaceFile" accept="image/*" class="file-hidden">
+              <input type="file" id="composeSingleFile" accept="image/*" class="file-hidden">
             </div>
-            <div class="frame-grid-compose" id="frameGridCompose"></div>
+            <div class="frame-grid-compose" id="frameGridCompose"><div class="compose-cell"><div class="num">#1</div><div class="empty-icon">+</div><div class="empty-text">點擊上傳</div></div><div class="compose-cell"><div class="num">#2</div><div class="empty-icon">+</div><div class="empty-text">點擊上傳</div></div><div class="compose-cell"><div class="num">#3</div><div class="empty-icon">+</div><div class="empty-text">點擊上傳</div></div><div class="compose-cell"><div class="num">#4</div><div class="empty-icon">+</div><div class="empty-text">點擊上傳</div></div><div class="compose-cell"><div class="num">#5</div><div class="empty-icon">+</div><div class="empty-text">點擊上傳</div></div><div class="compose-cell"><div class="num">#6</div><div class="empty-icon">+</div><div class="empty-text">點擊上傳</div></div><div class="compose-cell"><div class="num">#7</div><div class="empty-icon">+</div><div class="empty-text">點擊上傳</div></div><div class="compose-cell"><div class="num">#8</div><div class="empty-icon">+</div><div class="empty-text">點擊上傳</div></div><div class="compose-cell"><div class="num">#9</div><div class="empty-icon">+</div><div class="empty-text">點擊上傳</div></div><div class="compose-cell"><div class="num">#10</div><div class="empty-icon">+</div><div class="empty-text">點擊上傳</div></div><div class="compose-cell"><div class="num">#11</div><div class="empty-icon">+</div><div class="empty-text">點擊上傳</div></div><div class="compose-cell"><div class="num">#12</div><div class="empty-icon">+</div><div class="empty-text">點擊上傳</div></div><div class="compose-cell" style="border-style: dashed;"><div class="empty-icon">＋</div><div class="empty-text">新增格子</div></div></div>
           </div>
 
           <div class="card">
@@ -596,7 +676,7 @@ textarea.input{resize:vertical;min-height:80px;line-height:1.5}
             </div>
           </div>
 
-          <div class="card" id="animSettingsCard">
+          <div class="card" id="animSettingsCard" style="display: block;">
             <div class="card-title"><span class="num">4</span>動畫設定</div>
             <div style="margin-bottom:14px">
               <span class="label">單次循環時長</span>
@@ -613,15 +693,15 @@ textarea.input{resize:vertical;min-height:80px;line-height:1.5}
                 <span class="muted" style="font-size:11px" id="loopHint">最多 4 次</span>
               </div>
               <div class="btn-group" id="loopBtnGroup">
-                <button class="btn sel" data-loop="1">1 次</button>
-                <button class="btn" data-loop="2">2 次</button>
-                <button class="btn" data-loop="3">3 次</button>
-                <button class="btn" data-loop="4">4 次</button>
+                <button class="btn sel" data-loop="1" title="">1 次</button>
+                <button class="btn" data-loop="2" title="">2 次</button>
+                <button class="btn" data-loop="3" title="">3 次</button>
+                <button class="btn" data-loop="4" title="">4 次</button>
               </div>
             </div>
-            <div style="margin-top:12px;padding:10px;background:#0e1119;border-radius:6px;font-size:12px;font-family:'JetBrains Mono',monospace;line-height:1.7">
-              <div>每格停留：<b id="msPerFrame">- ms</b></div>
-              <div>總播放時間：<b id="totalPlayInfo">- 秒</b></div>
+            <div style="margin-top:12px;padding:10px;background:#0e1119;border-radius:6px;font-size:12px;font-family:&#39;JetBrains Mono&#39;,monospace;line-height:1.7">
+              <div>每格停留：<b id="msPerFrame">—</b></div>
+              <div>總播放時間：<b id="totalPlayInfo">1 × 1 = 1 秒</b></div>
             </div>
             <p class="muted" style="margin-top:8px;font-size:11px">🔒 LINE 規範：總播放時間 ≤ 4 秒；選擇單次循環時長後，循環次數會自動鎖定可用範圍。</p>
           </div>
@@ -659,7 +739,7 @@ textarea.input{resize:vertical;min-height:80px;line-height:1.5}
 
           <div class="card">
             <div class="card-title">🎯 輸出與合規</div>
-            <button class="btn primary export-btn-big" id="exportBtn" disabled>未符合規範</button>
+            <button class="btn primary export-btn-big" id="exportBtn" disabled="">未符合規範</button>
             <a href="https://creator.line.me/zh-hant/" target="_blank" rel="noopener" class="line-market-link">
               <span class="lm-icon">📤</span>
               <span class="lm-text">
@@ -670,13 +750,13 @@ textarea.input{resize:vertical;min-height:80px;line-height:1.5}
             </a>
             <div class="params-list">
               <div>圖片類型：<b id="paramFmt">動態貼圖 (320×270px)</b></div>
-              <div>總播放：<b id="paramPlay">1 秒 (1×0格)</b></div>
+              <div>總播放：<b id="paramPlay">1 秒 × 1 次 = 1 秒（0 格）</b></div>
               <div>每格：<b id="paramMs">0 ms</b></div>
               <div>檔案大小：<b id="paramSize">尚未估算</b> <button class="btn outline" id="estimateSizeBtn" style="padding:2px 8px;font-size:11px;margin-left:4px">📏 估算</button></div>
             </div>
-            <div class="error-list" id="errorList" style="display:none">
+            <div class="error-list" id="errorList" style="display: block;">
               <div class="error-list-title">⚠ 請修正錯誤</div>
-              <ul id="errorUL"></ul>
+              <ul id="errorUL"><li>請至少上傳 1 張圖片或新增文字</li></ul>
             </div>
           </div>
         </div>
@@ -709,7 +789,7 @@ textarea.input{resize:vertical;min-height:80px;line-height:1.5}
           <div class="muted" style="margin-bottom:6px;font-size:11px">直接拖曳底圖移動位置或使用滑桿縮放</div>
           <div style="margin-bottom:8px">
             <div class="row" style="justify-content:space-between"><span class="label">底圖縮放</span><span class="mono" id="bgScaleVal">100%</span></div>
-            <input type="range" class="slider" id="bgScaleSlider" min="10" max="200" step="1" value="100" />
+            <input type="range" class="slider" id="bgScaleSlider" min="10" max="200" step="1" value="100">
           </div>
           <button class="btn outline" id="bgResetBtn" style="width:100%">↻ 重設位置/縮放</button>
         </div>
@@ -721,34 +801,34 @@ textarea.input{resize:vertical;min-height:80px;line-height:1.5}
           <button class="btn primary" id="addTextBtn" style="width:100%;margin-bottom:8px">＋ 新增文字</button>
           <div id="textProps" style="display:none">
             <span class="label">文字內容</span>
-            <input type="text" class="input" id="txtContent" value="文字" style="margin-bottom:8px" />
+            <input type="text" class="input" id="txtContent" value="文字" style="margin-bottom:8px">
             <span class="label">字型</span>
             <select class="select font-preview-select" id="txtFont" style="margin-bottom:8px">
               <optgroup label="基本字型">
-                <option value="'Noto Sans TC',sans-serif" style="font-family:'Noto Sans TC'">黑體 (Noto Sans TC)</option>
-                <option value="'Noto Serif TC',serif" style="font-family:'Noto Serif TC'">明體 (Noto Serif TC)</option>
+                <option value="&#39;Noto Sans TC&#39;,sans-serif" style="font-family:&#39;Noto Sans TC&#39;">黑體 (Noto Sans TC)</option>
+                <option value="&#39;Noto Serif TC&#39;,serif" style="font-family:&#39;Noto Serif TC&#39;">明體 (Noto Serif TC)</option>
               </optgroup>
               <optgroup label="楷書 / 書法">
-                <option value="'LXGW WenKai TC',serif" style="font-family:'LXGW WenKai TC'">楷體 (霞鶩文楷)</option>
-                <option value="'Ma Shan Zheng',cursive" style="font-family:'Ma Shan Zheng'">毛筆字 (馬善政)</option>
-                <option value="'Long Cang',cursive" style="font-family:'Long Cang'">行書 (龍藏)</option>
-                <option value="'Liu Jian Mao Cao',cursive" style="font-family:'Liu Jian Mao Cao'">草書 (劉建毛草)</option>
+                <option value="&#39;LXGW WenKai TC&#39;,serif" style="font-family:&#39;LXGW WenKai TC&#39;">楷體 (霞鶩文楷)</option>
+                <option value="&#39;Ma Shan Zheng&#39;,cursive" style="font-family:&#39;Ma Shan Zheng&#39;">毛筆字 (馬善政)</option>
+                <option value="&#39;Long Cang&#39;,cursive" style="font-family:&#39;Long Cang&#39;">行書 (龍藏)</option>
+                <option value="&#39;Liu Jian Mao Cao&#39;,cursive" style="font-family:&#39;Liu Jian Mao Cao&#39;">草書 (劉建毛草)</option>
               </optgroup>
               <optgroup label="可愛 / 圓體">
-                <option value="'ZCOOL KuaiLe',sans-serif" style="font-family:'ZCOOL KuaiLe'">娃娃體 (ZCOOL 快樂)</option>
-                <option value="'Cherry Bomb One','ZCOOL KuaiLe',sans-serif" style="font-family:'Cherry Bomb One'">泡泡圓體 (Cherry Bomb)</option>
+                <option value="&#39;ZCOOL KuaiLe&#39;,sans-serif" style="font-family:&#39;ZCOOL KuaiLe&#39;">娃娃體 (ZCOOL 快樂)</option>
+                <option value="&#39;Cherry Bomb One&#39;,&#39;ZCOOL KuaiLe&#39;,sans-serif" style="font-family:&#39;Cherry Bomb One&#39;">泡泡圓體 (Cherry Bomb)</option>
               </optgroup>
               <optgroup label="標題 / 粗黑">
-                <option value="'ZCOOL QingKe HuangYou',sans-serif" style="font-family:'ZCOOL QingKe HuangYou'">粗黑體 (ZCOOL 黃油)</option>
-                <option value="'ZCOOL XiaoWei',serif" style="font-family:'ZCOOL XiaoWei'">細明體 (ZCOOL 小薇)</option>
+                <option value="&#39;ZCOOL QingKe HuangYou&#39;,sans-serif" style="font-family:&#39;ZCOOL QingKe HuangYou&#39;">粗黑體 (ZCOOL 黃油)</option>
+                <option value="&#39;ZCOOL XiaoWei&#39;,serif" style="font-family:&#39;ZCOOL XiaoWei&#39;">細明體 (ZCOOL 小薇)</option>
               </optgroup>
               <optgroup label="特殊風格">
-                <option value="'DotGothic16','Noto Sans TC',sans-serif" style="font-family:'DotGothic16'">點陣字 (DotGothic16)</option>
+                <option value="&#39;DotGothic16&#39;,&#39;Noto Sans TC&#39;,sans-serif" style="font-family:&#39;DotGothic16&#39;">點陣字 (DotGothic16)</option>
               </optgroup>
             </select>
             <div style="margin-bottom:8px">
               <div class="row" style="justify-content:space-between"><span class="label">文字大小</span><span class="mono" id="txtSizeVal">32px</span></div>
-              <input type="range" class="slider" id="txtSize" min="10" max="200" step="1" value="32" />
+              <input type="range" class="slider" id="txtSize" min="10" max="200" step="1" value="32">
             </div>
             <span class="label">文字方向</span>
             <div class="btn-group" style="margin-bottom:8px">
@@ -757,23 +837,23 @@ textarea.input{resize:vertical;min-height:80px;line-height:1.5}
             </div>
             <span class="label">文字顏色</span>
             <div class="color-row" style="margin-bottom:8px">
-              <input type="color" id="txtColor" value="#ffffff" />
+              <input type="color" id="txtColor" value="#ffffff">
               <button class="picker-btn" id="txtColorPicker">🔍 吸色</button>
               <span class="mono muted" id="txtColorVal">#ffffff</span>
             </div>
             <span class="label">外框顏色</span>
             <div class="color-row" style="margin-bottom:8px">
-              <input type="color" id="txtStroke" value="#000000" />
+              <input type="color" id="txtStroke" value="#000000">
               <button class="picker-btn" id="txtStrokePicker">🔍 吸色</button>
               <span class="mono muted" id="txtStrokeVal">#000000</span>
             </div>
             <div style="margin-bottom:8px">
               <div class="row" style="justify-content:space-between"><span class="label">外框粗細</span><span class="mono" id="txtStrokeWVal">2px</span></div>
-              <input type="range" class="slider" id="txtStrokeW" min="0" max="20" step="0.5" value="2" />
+              <input type="range" class="slider" id="txtStrokeW" min="0" max="20" step="0.5" value="2">
             </div>
             <div style="margin-bottom:8px">
               <div class="row" style="justify-content:space-between"><span class="label">旋轉角度</span><span class="mono" id="txtRotVal">0°</span></div>
-              <input type="range" class="slider" id="txtRot" min="-180" max="180" step="1" value="0" />
+              <input type="range" class="slider" id="txtRot" min="-180" max="180" step="1" value="0">
               <p class="muted" style="margin-top:4px;font-size:11px">💡 也可在畫面上直接拖曳綠色圓圈控制點旋轉（按住 Shift 以 15° 吸附）</p>
             </div>
             <div style="margin-bottom:8px">
@@ -802,22 +882,22 @@ textarea.input{resize:vertical;min-height:80px;line-height:1.5}
         <div class="editor-section-body">
           <span class="label">填滿顏色</span>
           <div class="color-row" style="margin-bottom:8px">
-            <input type="color" id="objFill" value="#f95f8e" />
+            <input type="color" id="objFill" value="#f95f8e">
             <button class="picker-btn" id="objFillPicker">🔍 吸色</button>
-            <label class="row" style="gap:4px;font-size:11px"><input type="checkbox" id="objFillNone" />無填滿</label>
+            <label class="row" style="gap:4px;font-size:11px"><input type="checkbox" id="objFillNone">無填滿</label>
           </div>
           <span class="label">外框顏色</span>
           <div class="color-row" style="margin-bottom:8px">
-            <input type="color" id="objStroke" value="#000000" />
+            <input type="color" id="objStroke" value="#000000">
             <button class="picker-btn" id="objStrokePicker">🔍 吸色</button>
           </div>
           <div style="margin-bottom:8px">
             <div class="row" style="justify-content:space-between"><span class="label">外框粗細</span><span class="mono" id="objStrokeWVal">3px</span></div>
-            <input type="range" class="slider" id="objStrokeW" min="0" max="20" step="0.5" value="3" />
+            <input type="range" class="slider" id="objStrokeW" min="0" max="20" step="0.5" value="3">
           </div>
           <div style="margin-bottom:8px">
             <div class="row" style="justify-content:space-between"><span class="label">旋轉角度</span><span class="mono" id="objRotVal">0°</span></div>
-            <input type="range" class="slider" id="objRot" min="-180" max="180" step="1" value="0" />
+            <input type="range" class="slider" id="objRot" min="-180" max="180" step="1" value="0">
             <p class="muted" style="margin-top:4px;font-size:11px">💡 也可在畫面上直接拖曳綠色圓圈控制點旋轉（按住 Shift 以 15° 吸附）</p>
           </div>
           <div style="margin-bottom:8px">
@@ -4158,6 +4238,10 @@ const Editor = (function () {
  * =========================================================== */
 function setupRouter() {
   const nav = $("#tabsNav");
+  // Clear any pre-existing tab buttons (defensive: if setupRouter accidentally
+  // runs twice — e.g. due to environment-specific readyState quirks on GitHub
+  // Pages — we don't want duplicate tab rows).
+  nav.innerHTML = "";
   AppConfig.tabs.forEach((tab, i) => {
     const b = document.createElement("button");
     b.className = "tab-btn"; b.textContent = tab.name; b.dataset.tab = tab.id;
@@ -4181,7 +4265,10 @@ function setupRouter() {
 /* ===========================================================
  * App Initialization
  * =========================================================== */
+let _bootstrapped = false;
 async function bootstrap() {
+  if (_bootstrapped) return;   // guard against double init (some envs trigger both readyState branches)
+  _bootstrapped = true;
   setupRouter();
   setupPromptTab();
   setupWatermarkTab();
@@ -4202,5 +4289,6 @@ if (document.readyState === "loading") {
 }
 
 </script>
-</body>
-</html>
+
+
+</body></html>
