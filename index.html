@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0045)file:///C:/Users/user/Downloads/index_53.html -->
+<!-- saved from url=(0057)file:///C:/Users/user/Downloads/index_65.html#tab-compose -->
 <html lang="zh-TW"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +7,9 @@
 <script src="./index_files/jszip.min.js.下載"></script>
 <script src="./index_files/pako.min.js.下載"></script>
 <script src="./index_files/UPNG.js.下載"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
+<link href="./index_files/css2" rel="stylesheet">
 <style>
 /* ===== Reset & Base ===== */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -237,7 +240,7 @@ textarea.input{resize:vertical;min-height:80px;line-height:1.5}
 .editor-side{width:340px;background:var(--c-panel);border-left:1px solid var(--c-border);overflow-y:auto;padding:18px 18px 80px;display:flex;flex-direction:column;gap:14px;scroll-behavior:smooth;scroll-padding-block:16px}
 .editor-side::-webkit-scrollbar{width:8px}
 .editor-side::-webkit-scrollbar-thumb{background:var(--c-primary);border-radius:4px}
-.editor-section{background:var(--c-panel-2);border-radius:10px;border:1px solid var(--c-border);overflow:hidden}
+.editor-section{background:var(--c-panel-2);border-radius:10px;border:1px solid var(--c-border);overflow:hidden;flex-shrink:0}
 .editor-section-head{padding:11px 14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-size:13px;font-weight:600}
 .editor-section-head .arrow{transition:transform .2s}
 .editor-section.collapsed .arrow{transform:rotate(-90deg)}
@@ -283,6 +286,12 @@ textarea.input{resize:vertical;min-height:80px;line-height:1.5}
 .modal-actions .btn{min-width:110px;padding:10px 18px}
 @keyframes modalUp{from{opacity:0;transform:translateY(16px) scale(.96)}to{opacity:1;transform:none}}
 
+/* Layer order buttons (z-order control) */
+.layer-btns{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:8px}
+.layer-btns .btn{padding:8px 4px;font-size:11.5px;min-width:0;background:var(--c-secondary);border:1px solid var(--c-border);color:var(--c-text);font-weight:500;white-space:nowrap}
+.layer-btns .btn:hover:not(:disabled){background:var(--c-primary);border-color:var(--c-primary);color:#fff}
+.layer-btns .btn:disabled{opacity:.35;cursor:not-allowed;background:var(--c-bg);color:var(--c-text-faint)}
+
 </style>
 </head>
 <body>
@@ -293,12 +302,12 @@ textarea.input{resize:vertical;min-height:80px;line-height:1.5}
       <div>LINE 動態貼圖自動化助手</div>
       <span class="line-badge">LINE Ready</span>
     </div>
-    <nav class="tabs" id="tabsNav"><button class="tab-btn active" data-tab="tab-prompt">1. 動態貼圖 Prompt 大師</button><button class="tab-btn" data-tab="tab-watermark">2. 去除星星浮水印</button><button class="tab-btn" data-tab="tab-split">3. 圖片分割 / 智慧去背</button><button class="tab-btn" data-tab="tab-compose">4. 動態貼圖製作</button></nav>
+    <nav class="tabs" id="tabsNav"><button class="tab-btn" data-tab="tab-prompt">1. 動態貼圖 Prompt 大師</button><button class="tab-btn" data-tab="tab-watermark">2. 去除星星浮水印</button><button class="tab-btn" data-tab="tab-split">3. 圖片分割 / 智慧去背</button><button class="tab-btn active" data-tab="tab-compose">4. 動態貼圖製作</button></nav>
   </header>
   <main class="main">
 
     <!-- ===== TAB 1: PROMPT ===== -->
-    <section class="panel active" id="panel-tab-prompt">
+    <section class="panel" id="panel-tab-prompt">
       <div class="prompt-grid">
         <div>
           <div class="card">
@@ -485,6 +494,9 @@ A continuous green background fills the entire 2560×1664 canvas with NO interru
 
         <div class="glass wm-side">
           <div>
+            <button class="btn primary" id="wmResetBtnTop" style="width:100%">📁 選擇其他圖片</button>
+          </div>
+          <div>
             <h4>浮水印去除</h4>
             <div class="row" style="justify-content:space-between;padding:10px 12px;background:rgba(249,95,142,.08);border-radius:8px;border:1px solid rgba(249,95,142,.25)">
               <span style="font-size:13px;font-weight:600">✨ 啟用浮水印去除</span>
@@ -529,8 +541,7 @@ A continuous green background fills the entire 2560×1664 canvas with NO interru
           </div>
           <div>
             <h4>匯出與操作</h4>
-            <button class="btn primary" id="wmDownloadBtn" style="width:100%;margin-bottom:8px">⬇️ 下載 PNG</button>
-            <button class="btn outline" id="wmResetBtn" style="width:100%">📁 選擇其他圖片</button>
+            <button class="btn primary" id="wmDownloadBtn" style="width:100%">⬇️ 下載 PNG</button>
           </div>
         </div>
       </div>
@@ -543,9 +554,10 @@ A continuous green background fills the entire 2560×1664 canvas with NO interru
         <div class="muted" style="margin-bottom:12px">
           ⚠ 圖檔規格：<b>5 欄 × 4 列，共 20 張，總尺寸 2560 × 1664 px</b>（其他尺寸亦可使用，但建議遵循以保證最佳效果）。
         </div>
-        <div class="row" style="margin-bottom:12px">
-          <button class="btn outline" id="copyFromStep2Btn" disabled="">📋 從「去除浮水印」分頁載入處理過的圖片</button>
-          <span class="muted">需先在分頁 2 載入並處理圖片</span>
+        <div class="row" style="margin-bottom:12px;gap:8px;flex-wrap:wrap">
+          <button class="btn line" id="copyFromStep2Btn" disabled="">📋 從「去除浮水印」分頁載入處理過的圖片</button>
+          <button class="btn primary" id="splitChangeBtn">📁 選擇圖片</button>
+          <span class="muted" style="font-size:11px;flex-basis:100%">「載入處理過的圖片」需先在分頁 2 完成處理；「選擇圖片」則從電腦選擇本地檔案。</span>
         </div>
         <input type="file" id="splitFile" accept="image/*" class="file-hidden">
         <div class="split-uploader" id="splitUploader">
@@ -557,7 +569,6 @@ A continuous green background fills the entire 2560×1664 canvas with NO interru
           <div class="row" style="justify-content:space-between;margin:12px 0">
             <div class="muted mono" id="splitImgInfo">-</div>
             <div class="row">
-              <button class="btn outline" id="splitChangeBtn">📁 更換圖片</button>
               <button class="btn primary" id="splitConfirmBtn">✂️ 確認切割（產生 20 張影格）</button>
             </div>
           </div>
@@ -624,7 +635,7 @@ A continuous green background fills the entire 2560×1664 canvas with NO interru
     </section>
 
     <!-- ===== TAB 4: COMPOSE ===== -->
-    <section class="panel" id="panel-tab-compose">
+    <section class="panel active" id="panel-tab-compose">
       <div class="compose-grid">
         <div>
           <div class="card">
@@ -718,7 +729,7 @@ A continuous green background fills the entire 2560×1664 canvas with NO interru
               <span class="mono muted" id="previewTimeLabel">0 ms</span>
             </div>
             <div class="preview-canvas-wrap">
-              <canvas id="previewCanvas"></canvas>
+              <canvas id="previewCanvas" width="320" height="270" style="width: 280px; height: 236.25px;"></canvas>
             </div>
             <div class="row" style="margin-top:10px;justify-content:center">
               <button class="btn primary" id="previewPlayBtn">▶ Play</button>
@@ -792,12 +803,28 @@ A continuous green background fills the entire 2560×1664 canvas with NO interru
             <span class="label">文字內容</span>
             <input type="text" class="input" id="txtContent" value="文字" style="margin-bottom:8px">
             <span class="label">字型</span>
-            <select class="select" id="txtFont" style="margin-bottom:8px">
-              <option value="&#39;Noto Sans TC&#39;,sans-serif">黑體 (Noto Sans TC)</option>
-              <option value="&#39;Noto Serif TC&#39;,serif">明體 (Noto Serif TC)</option>
-              <option value="cursive">手寫體</option>
-              <option value="fantasy">裝飾體</option>
-              <option value="monospace">等寬字</option>
+            <select class="select font-preview-select" id="txtFont" style="margin-bottom:8px">
+              <optgroup label="基本字型">
+                <option value="&#39;Noto Sans TC&#39;,sans-serif" style="font-family:&#39;Noto Sans TC&#39;">黑體 (Noto Sans TC)</option>
+                <option value="&#39;Noto Serif TC&#39;,serif" style="font-family:&#39;Noto Serif TC&#39;">明體 (Noto Serif TC)</option>
+              </optgroup>
+              <optgroup label="楷書 / 書法">
+                <option value="&#39;LXGW WenKai TC&#39;,serif" style="font-family:&#39;LXGW WenKai TC&#39;">楷體 (霞鶩文楷)</option>
+                <option value="&#39;Ma Shan Zheng&#39;,cursive" style="font-family:&#39;Ma Shan Zheng&#39;">毛筆字 (馬善政)</option>
+                <option value="&#39;Long Cang&#39;,cursive" style="font-family:&#39;Long Cang&#39;">行書 (龍藏)</option>
+                <option value="&#39;Liu Jian Mao Cao&#39;,cursive" style="font-family:&#39;Liu Jian Mao Cao&#39;">草書 (劉建毛草)</option>
+              </optgroup>
+              <optgroup label="可愛 / 圓體">
+                <option value="&#39;ZCOOL KuaiLe&#39;,sans-serif" style="font-family:&#39;ZCOOL KuaiLe&#39;">娃娃體 (ZCOOL 快樂)</option>
+                <option value="&#39;Cherry Bomb One&#39;,&#39;ZCOOL KuaiLe&#39;,sans-serif" style="font-family:&#39;Cherry Bomb One&#39;">泡泡圓體 (Cherry Bomb)</option>
+              </optgroup>
+              <optgroup label="標題 / 粗黑">
+                <option value="&#39;ZCOOL QingKe HuangYou&#39;,sans-serif" style="font-family:&#39;ZCOOL QingKe HuangYou&#39;">粗黑體 (ZCOOL 黃油)</option>
+                <option value="&#39;ZCOOL XiaoWei&#39;,serif" style="font-family:&#39;ZCOOL XiaoWei&#39;">細明體 (ZCOOL 小薇)</option>
+              </optgroup>
+              <optgroup label="特殊風格">
+                <option value="&#39;DotGothic16&#39;,&#39;Noto Sans TC&#39;,sans-serif" style="font-family:&#39;DotGothic16&#39;">點陣字 (DotGothic16)</option>
+              </optgroup>
             </select>
             <div style="margin-bottom:8px">
               <div class="row" style="justify-content:space-between"><span class="label">文字大小</span><span class="mono" id="txtSizeVal">32px</span></div>
@@ -828,6 +855,15 @@ A continuous green background fills the entire 2560×1664 canvas with NO interru
               <div class="row" style="justify-content:space-between"><span class="label">旋轉角度</span><span class="mono" id="txtRotVal">0°</span></div>
               <input type="range" class="slider" id="txtRot" min="-180" max="180" step="1" value="0">
               <p class="muted" style="margin-top:4px;font-size:11px">💡 也可在畫面上直接拖曳綠色圓圈控制點旋轉（按住 Shift 以 15° 吸附）</p>
+            </div>
+            <div style="margin-bottom:8px">
+              <span class="label" style="display:flex;justify-content:space-between"><span>圖層順序</span><span class="mono muted" id="txtLayerInfo" style="font-size:11px"></span></span>
+              <div class="layer-btns" id="txtLayerBtns">
+                <button class="btn outline" data-act="back" title="移到最下層">⏬ 置底</button>
+                <button class="btn outline" data-act="backward" title="下移一層">⬇ 下移</button>
+                <button class="btn outline" data-act="forward" title="上移一層">⬆ 上移</button>
+                <button class="btn outline" data-act="front" title="移到最上層">⏫ 置頂</button>
+              </div>
             </div>
             <button class="btn danger" id="txtDelete" style="width:100%">🗑 刪除文字</button>
           </div>
@@ -863,6 +899,15 @@ A continuous green background fills the entire 2560×1664 canvas with NO interru
             <div class="row" style="justify-content:space-between"><span class="label">旋轉角度</span><span class="mono" id="objRotVal">0°</span></div>
             <input type="range" class="slider" id="objRot" min="-180" max="180" step="1" value="0">
             <p class="muted" style="margin-top:4px;font-size:11px">💡 也可在畫面上直接拖曳綠色圓圈控制點旋轉（按住 Shift 以 15° 吸附）</p>
+          </div>
+          <div style="margin-bottom:8px">
+            <span class="label" style="display:flex;justify-content:space-between"><span>圖層順序</span><span class="mono muted" id="objLayerInfo" style="font-size:11px"></span></span>
+            <div class="layer-btns" id="objLayerBtns">
+              <button class="btn outline" data-act="back" title="移到最下層">⏬ 置底</button>
+              <button class="btn outline" data-act="backward" title="下移一層">⬇ 下移</button>
+              <button class="btn outline" data-act="forward" title="上移一層">⬆ 上移</button>
+              <button class="btn outline" data-act="front" title="移到最上層">⏫ 置頂</button>
+            </div>
           </div>
           <button class="btn danger" id="objDelete" style="width:100%">🗑 刪除物件</button>
         </div>
@@ -931,44 +976,56 @@ const AppConfig = {
   ],
   decorations: [
     // category, id, label, drawer-key
-    { cat: "emo", id: "lines3", label: "無言黑線" },
-    { cat: "emo", id: "speed",  label: "快跑速度線" },
-    { cat: "emo", id: "shock",  label: "震動音波" },
-    { cat: "emo", id: "diamond",label: "驚嚇眼白" },
-    { cat: "emo", id: "anger",  label: "生氣井字" },
-    { cat: "emo", id: "spiral", label: "困惑圈圈" },
-    { cat: "emo", id: "spark4", label: "閃亮星星" },
-    { cat: "emo", id: "zzz",    label: "沉睡 ZZZ" },
-    { cat: "emo", id: "drop",   label: "流汗水滴" },
-    { cat: "emo", id: "bulb",   label: "靈感燈泡" },
-    { cat: "emo", id: "crack",  label: "傷心裂痕" },
-    { cat: "emo", id: "smoke",  label: "冒煙火氣" },
+    { cat: "emo", id: "lines3",   label: "無言黑線" },
+    { cat: "emo", id: "speed",    label: "快跑速度線" },
+    { cat: "emo", id: "shock",    label: "震動音波" },
+    { cat: "emo", id: "diamond",  label: "驚嚇眼白" },
+    { cat: "emo", id: "anger",    label: "生氣井字" },
+    { cat: "emo", id: "spiral",   label: "困惑圈圈" },
+    { cat: "emo", id: "spark4",   label: "閃亮星星" },
+    { cat: "emo", id: "zzz",      label: "沉睡 ZZZ" },
+    { cat: "emo", id: "drop",     label: "流汗水滴" },
+    { cat: "emo", id: "bulb",     label: "靈感燈泡" },
+    { cat: "emo", id: "crack",    label: "傷心裂痕" },
+    { cat: "emo", id: "smoke",    label: "冒煙火氣" },
+    { cat: "emo", id: "dizzy3",   label: "暈眩三星" },
+    { cat: "emo", id: "vein",     label: "爆青筋" },
+    { cat: "emo", id: "tear3",    label: "傷心三淚" },
+    { cat: "emo", id: "hearteyes",label: "愛心眼睛" },
 
-    { cat: "line",id: "hbar3",  label: "水平強調線" },
-    { cat: "line",id: "radial", label: "放射狀光芒" },
-    { cat: "line",id: "wave",   label: "波浪震動線" },
-    { cat: "line",id: "smile",  label: "微笑弧線" },
-    { cat: "line",id: "frown",  label: "失落弧線" },
-    { cat: "line",id: "trail",  label: "動態殘影線" },
-    { cat: "line",id: "focus",  label: "聚焦集中線" },
-    { cat: "line",id: "ecg",    label: "心跳起伏線" },
-    { cat: "line",id: "burst",  label: "爆炸齒輪線" },
-    { cat: "line",id: "underln",label: "重點底線" },
-    { cat: "line",id: "qcurl",  label: "疑問彈簧線" },
-    { cat: "line",id: "arc",    label: "跳躍拋物線" },
+    { cat: "line",id: "hbar3",    label: "水平強調線" },
+    { cat: "line",id: "radial",   label: "放射狀光芒" },
+    { cat: "line",id: "wave",     label: "波浪震動線" },
+    { cat: "line",id: "smile",    label: "微笑弧線" },
+    { cat: "line",id: "frown",    label: "失落弧線" },
+    { cat: "line",id: "trail",    label: "動態殘影線" },
+    { cat: "line",id: "focus",    label: "聚焦集中線" },
+    { cat: "line",id: "ecg",      label: "心跳起伏線" },
+    { cat: "line",id: "burst",    label: "爆炸齒輪線" },
+    { cat: "line",id: "underln",  label: "重點底線" },
+    { cat: "line",id: "qcurl",    label: "疑問彈簧線" },
+    { cat: "line",id: "arc",      label: "跳躍拋物線" },
+    { cat: "line",id: "dotted",   label: "虛線軌跡" },
+    { cat: "line",id: "zigzag",   label: "鋸齒衝擊" },
+    { cat: "line",id: "cross_ln", label: "交叉強調線" },
+    { cat: "line",id: "dots_scatter", label: "點點裝飾" },
 
-    { cat: "geo", id: "star4",  label: "閃耀四芒星" },
-    { cat: "geo", id: "heart",  label: "愛心圖形" },
-    { cat: "geo", id: "ring2",  label: "同心圓圈" },
-    { cat: "geo", id: "speech", label: "對話氣泡" },
-    { cat: "geo", id: "thought",label: "思考氣泡" },
-    { cat: "geo", id: "excl",   label: "驚嘆號" },
-    { cat: "geo", id: "qmark",  label: "問號" },
-    { cat: "geo", id: "cross",  label: "打叉" },
-    { cat: "geo", id: "check",  label: "打勾" },
-    { cat: "geo", id: "music",  label: "音樂符號" },
-    { cat: "geo", id: "ban",    label: "禁止標誌" },
-    { cat: "geo", id: "bolt",   label: "閃電符號" },
+    { cat: "geo", id: "star4",    label: "閃耀四芒星" },
+    { cat: "geo", id: "heart",    label: "愛心圖形" },
+    { cat: "geo", id: "ring2",    label: "同心圓圈" },
+    { cat: "geo", id: "speech",   label: "對話氣泡" },
+    { cat: "geo", id: "thought",  label: "思考氣泡" },
+    { cat: "geo", id: "excl",     label: "驚嘆號" },
+    { cat: "geo", id: "qmark",    label: "問號" },
+    { cat: "geo", id: "cross",    label: "打叉" },
+    { cat: "geo", id: "check",    label: "打勾" },
+    { cat: "geo", id: "music",    label: "音樂符號" },
+    { cat: "geo", id: "ban",      label: "禁止標誌" },
+    { cat: "geo", id: "bolt",     label: "閃電符號" },
+    { cat: "geo", id: "star5",    label: "五芒星" },
+    { cat: "geo", id: "cloud",    label: "雲朵" },
+    { cat: "geo", id: "crown",    label: "皇冠" },
+    { cat: "geo", id: "arrow",    label: "箭頭" },
   ]
 };
 
@@ -1680,7 +1737,7 @@ function setupWatermarkTab() {
     downloadBlob(blob, "clean_" + Date.now() + ".png");
     toast("✅ PNG 已下載", "success");
   });
-  $("#wmResetBtn").addEventListener("click", () => $("#wmFile").click());
+  $("#wmResetBtnTop").addEventListener("click", () => $("#wmFile").click());
 
   // drag the wmBox
   const box = $("#wmBox");
@@ -2835,7 +2892,11 @@ function defaultFillFor(id) {
     bulb: "#ffd54f", crack: "#e53935", smoke: "#9e9e9e", heart: "#f95f8e",
     speech: "#ffffff", thought: "#ffffff", excl: "#e53935", qmark: "#42a5f5",
     cross: "#e53935", check: "#43a047", music: "#7e57c2", ban: "#e53935",
-    bolt: "#ffd54f", diamond: "#ffffff", spiral: "#ffd54f"
+    bolt: "#ffd54f", diamond: "#ffffff", spiral: "#ffd54f",
+    // new
+    dizzy3: "#ffd54f", vein: "#e53935", tear3: "#42a5f5", hearteyes: "#f95f8e",
+    dotted: "#ffffff", zigzag: "#ffd54f", cross_ln: "#e53935", dots_scatter: "#ffd54f",
+    star5: "#ffd54f", cloud: "#ffffff", crown: "#ffd54f", arrow: "#f95f8e"
   };
   return fills[id] || "#f95f8e";
 }
@@ -2846,12 +2907,23 @@ function defaultStrokeWFor(id) {
   const w = {
     lines3: 4, speed: 4, shock: 3, hbar3: 4, radial: 3, wave: 3,
     smile: 4, frown: 4, trail: 3, focus: 3, ecg: 3, burst: 3,
-    underln: 5, qcurl: 3, arc: 3, ring2: 4, zzz: 3, music: 3
+    underln: 5, qcurl: 3, arc: 3, ring2: 4, zzz: 3, music: 3,
+    // new line types use thicker strokes since they're stroke-only
+    dotted: 5, zigzag: 4, cross_ln: 5, dots_scatter: 4,
+    // new emo/geo
+    dizzy3: 1, vein: 5, tear3: 1, hearteyes: 1,
+    star5: 1, cloud: 1.5, crown: 1.5, arrow: 1.5
   };
   return w[id] !== undefined ? w[id] : 3;
 }
 function defaultNoFill(id) {
-  const noFillIds = new Set(["lines3","speed","shock","hbar3","radial","wave","smile","frown","trail","focus","ecg","underln","qcurl","arc","ring2","zzz","burst"]);
+  const noFillIds = new Set([
+    "lines3","speed","shock","hbar3","radial","wave","smile","frown",
+    "trail","focus","ecg","underln","qcurl","arc","ring2","zzz","burst",
+    // new line decorations are stroke-only
+    "zigzag","cross_ln"
+    // dotted and dots_scatter are filled dots (handled by fillStyle in drawer)
+  ]);
   return noFillIds.has(id);
 }
 
@@ -2901,6 +2973,31 @@ function decoSVGIcon(id) {
     case "music":   return `<svg viewBox="-12 -12 24 24"><path d="M-3 6 a 3 3 0 1 0 3 -3 L0 -8 L7 -10 L7 -6 L3 -5 L3 3 a 3 3 0 1 1 -3 -3" fill="${C}" stroke="#000" stroke-width="0.8"/></svg>`;
     case "ban":     return `<svg viewBox="-12 -12 24 24"><circle cx="0" cy="0" r="9" fill="none" stroke="${C}" stroke-width="2.2"/><line x1="-6.5" y1="-6.5" x2="6.5" y2="6.5" stroke="${C}" stroke-width="2.2"/></svg>`;
     case "bolt":    return `<svg viewBox="-12 -12 24 24"><polygon points="3,-9 -5,2 0,2 -3,9 5,-2 0,-2" fill="${Y}" stroke="#000" stroke-width="1"/></svg>`;
+    // -- new emo --
+    case "dizzy3":  return `<svg viewBox="-12 -12 24 24"><g fill="${Y}" stroke="#000" stroke-width="0.6">`+
+      [[-7,-4,3.5],[0,-8,4.5],[7,-4,3.5]].map(([cx,cy,r])=>`<path transform="translate(${cx} ${cy})" d="M0 -${r} L${r*0.3} -${r*0.3} L${r} 0 L${r*0.3} ${r*0.3} L0 ${r} L${-r*0.3} ${r*0.3} L${-r} 0 L${-r*0.3} ${-r*0.3} Z"/>`).join("")+
+      `</g></svg>`;
+    case "vein":    return `<svg viewBox="-12 -12 24 24"><g fill="none" stroke="${C}" stroke-width="2.4" stroke-linecap="round"><path d="M-6 -8 L0 0 L-6 8"/><path d="M0 -8 L6 0 L0 8"/><line x1="-9" y1="0" x2="6" y2="0"/></g></svg>`;
+    case "tear3":   return `<svg viewBox="-12 -12 24 24"><g fill="${B}" stroke="#000" stroke-width="0.6">`+
+      [[-6,-2],[0,-4],[6,-2]].map(([cx,cy])=>`<path transform="translate(${cx} ${cy})" d="M0 -2 Q 2.5 2 2.5 5 A 2.5 2.5 0 1 1 -2.5 5 Q -2.5 2 0 -2 Z"/>`).join("")+
+      `</g></svg>`;
+    case "hearteyes": return `<svg viewBox="-12 -12 24 24"><g fill="${C}" stroke="#000" stroke-width="0.6">`+
+      [-5,5].map(cx=>`<path transform="translate(${cx} 0)" d="M0 4 C -4 0 -4 -3 -1.6 -3 Q 0 -3 0 -1 Q 0 -3 1.6 -3 C 4 -3 4 0 0 4 Z"/>`).join("")+
+      `</g></svg>`;
+    // -- new line --
+    case "dotted":  return `<svg viewBox="-12 -12 24 24"><g fill="${L}">`+
+      [-9,-5,-1,3,7].map(cx=>`<circle cx="${cx}" cy="0" r="1.4"/>`).join("")+
+      `</g></svg>`;
+    case "zigzag":  return `<svg viewBox="-12 -12 24 24"><polyline points="-10,4 -6,-4 -2,4 2,-4 6,4 10,-4" fill="none" stroke="${Y}" stroke-width="2.2" stroke-linejoin="miter"/></svg>`;
+    case "cross_ln":return `<svg viewBox="-12 -12 24 24"><g stroke="${C}" stroke-width="2.5" stroke-linecap="round"><line x1="-9" y1="-9" x2="9" y2="9"/><line x1="-9" y1="9" x2="9" y2="-9"/></g></svg>`;
+    case "dots_scatter": return `<svg viewBox="-12 -12 24 24"><g fill="${Y}">`+
+      [[-7,-5,1.8],[5,-7,1.4],[-3,2,2],[7,3,1.6],[-8,7,1.4],[2,8,1.6],[-1,-8,1.2]].map(([cx,cy,r])=>`<circle cx="${cx}" cy="${cy}" r="${r}"/>`).join("")+
+      `</g></svg>`;
+    // -- new geo --
+    case "star5":   return `<svg viewBox="-12 -12 24 24"><polygon points="0,-9 2.6,-2.8 9.5,-2.8 4,1.4 6,8.5 0,4.4 -6,8.5 -4,1.4 -9.5,-2.8 -2.6,-2.8" fill="${Y}" stroke="#000" stroke-width="0.8"/></svg>`;
+    case "cloud":   return `<svg viewBox="-12 -12 24 24"><path d="M-8 4 Q -10 4 -10 1 Q -10 -2 -7 -2 Q -7 -7 -2 -7 Q 2 -8 5 -5 Q 9 -5 9 -1 Q 11 1 9 4 Z" fill="${L}" stroke="#000" stroke-width="1"/></svg>`;
+    case "crown":   return `<svg viewBox="-12 -12 24 24"><path d="M-10 6 L-9 -5 L-4 0 L0 -7 L4 0 L9 -5 L10 6 Z" fill="${Y}" stroke="#000" stroke-width="1"/><circle cx="0" cy="-2" r="1.4" fill="${C}"/></svg>`;
+    case "arrow":   return `<svg viewBox="-12 -12 24 24"><path d="M-9 -3 L4 -3 L4 -7 L11 0 L4 7 L4 3 L-9 3 Z" fill="${C}" stroke="#000" stroke-width="0.8"/></svg>`;
   }
   return `<svg viewBox="-12 -12 24 24"><circle cx="0" cy="0" r="6" fill="${C}"/></svg>`;
 }
@@ -3241,6 +3338,163 @@ function drawDecoOnCtx(ctx, o) {
       ctx.strokeStyle = strokeStyle; ctx.lineWidth = strokeW; ctx.stroke();
       break;
     }
+    // ===== new emo =====
+    case "dizzy3": {
+      // Three stars in arc above center (4-pointed star-ish at varying sizes)
+      const stars = [[-22,-12,11],[0,-26,14],[22,-12,11]];
+      stars.forEach(([cx,cy,r]) => {
+        ctx.save(); ctx.translate(cx,cy);
+        ctx.beginPath();
+        ctx.moveTo(0,-r); ctx.lineTo(r*0.3,-r*0.3); ctx.lineTo(r,0);
+        ctx.lineTo(r*0.3,r*0.3); ctx.lineTo(0,r); ctx.lineTo(-r*0.3,r*0.3);
+        ctx.lineTo(-r,0); ctx.lineTo(-r*0.3,-r*0.3); ctx.closePath();
+        if (fillStyle) { ctx.fillStyle = fillStyle; ctx.fill(); }
+        ctx.strokeStyle = strokeStyle; ctx.lineWidth = strokeW; ctx.stroke();
+        ctx.restore();
+      });
+      break;
+    }
+    case "vein": {
+      ctx.strokeStyle = fillStyle || strokeStyle; ctx.lineWidth = Math.max(strokeW, 5);
+      ctx.lineCap = "round";
+      // Two angle brackets ⟨ ⟩ + horizontal line in between
+      ctx.beginPath(); ctx.moveTo(-22, -28); ctx.lineTo(0, 0); ctx.lineTo(-22, 28); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, -28); ctx.lineTo(22, 0); ctx.lineTo(0, 28); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-32, 0); ctx.lineTo(22, 0); ctx.stroke();
+      break;
+    }
+    case "tear3": {
+      // Three teardrops side by side
+      const drops = [[-22,-8],[0,-16],[22,-8]];
+      drops.forEach(([cx,cy]) => {
+        ctx.save(); ctx.translate(cx,cy);
+        ctx.beginPath();
+        ctx.moveTo(0, -8);
+        ctx.quadraticCurveTo(10, 0, 10, 8);
+        ctx.arc(0, 8, 10, 0, Math.PI);
+        ctx.quadraticCurveTo(-10, 0, 0, -8);
+        ctx.closePath();
+        if (fillStyle) { ctx.fillStyle = fillStyle; ctx.fill(); }
+        ctx.strokeStyle = strokeStyle; ctx.lineWidth = strokeW; ctx.stroke();
+        ctx.restore();
+      });
+      break;
+    }
+    case "hearteyes": {
+      // Two hearts side by side
+      const hearts = [[-18,0],[18,0]];
+      hearts.forEach(([cx,cy]) => {
+        ctx.save(); ctx.translate(cx,cy);
+        ctx.beginPath();
+        ctx.moveTo(0, 14);
+        ctx.bezierCurveTo(-16, 0, -16, -14, -6, -14);
+        ctx.quadraticCurveTo(0, -14, 0, -6);
+        ctx.quadraticCurveTo(0, -14, 6, -14);
+        ctx.bezierCurveTo(16, -14, 16, 0, 0, 14);
+        ctx.closePath();
+        if (fillStyle) { ctx.fillStyle = fillStyle; ctx.fill(); }
+        ctx.strokeStyle = strokeStyle; ctx.lineWidth = strokeW; ctx.stroke();
+        ctx.restore();
+      });
+      break;
+    }
+    // ===== new line =====
+    case "dotted": {
+      // Row of dots horizontally
+      ctx.fillStyle = fillStyle || strokeStyle;
+      [-30,-18,-6,6,18,30].forEach(x => {
+        ctx.beginPath(); ctx.arc(x, 0, Math.max(strokeW * 0.9, 4), 0, Math.PI * 2); ctx.fill();
+      });
+      break;
+    }
+    case "zigzag": {
+      ctx.strokeStyle = fillStyle || strokeStyle; ctx.lineWidth = Math.max(strokeW, 4);
+      ctx.lineJoin = "miter";
+      ctx.beginPath();
+      ctx.moveTo(-30, 12);
+      [-18, -6, 6, 18, 30].forEach((x, i) => ctx.lineTo(x, i % 2 === 0 ? -12 : 12));
+      ctx.stroke();
+      break;
+    }
+    case "cross_ln": {
+      ctx.strokeStyle = fillStyle || strokeStyle; ctx.lineWidth = Math.max(strokeW, 5);
+      ctx.lineCap = "round";
+      ctx.beginPath(); ctx.moveTo(-26, -26); ctx.lineTo(26, 26); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-26, 26); ctx.lineTo(26, -26); ctx.stroke();
+      break;
+    }
+    case "dots_scatter": {
+      // Random-looking but deterministic scatter of dots
+      ctx.fillStyle = fillStyle || strokeStyle;
+      const dots = [[-22,-16,5],[16,-22,4],[-10,6,6],[22,10,5],[-26,22,4],[6,26,5],[-3,-26,3.5],[26,-4,3.5]];
+      dots.forEach(([x,y,r]) => { ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); });
+      break;
+    }
+    // ===== new geo =====
+    case "star5": {
+      // Classic 5-point star
+      ctx.beginPath();
+      const outerR = 30, innerR = 12;
+      for (let i = 0; i < 10; i++) {
+        const r = i % 2 === 0 ? outerR : innerR;
+        const a = -Math.PI / 2 + i * Math.PI / 5;
+        const x = Math.cos(a) * r, y = Math.sin(a) * r;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      if (fillStyle) { ctx.fillStyle = fillStyle; ctx.fill(); }
+      ctx.strokeStyle = strokeStyle; ctx.lineWidth = strokeW; ctx.stroke();
+      break;
+    }
+    case "cloud": {
+      // Cloud made of 4 overlapping bumps
+      ctx.beginPath();
+      ctx.moveTo(-30, 12);
+      ctx.quadraticCurveTo(-36, 12, -36, 4);
+      ctx.quadraticCurveTo(-36, -10, -22, -8);
+      ctx.quadraticCurveTo(-22, -24, -6, -22);
+      ctx.quadraticCurveTo(8, -28, 16, -16);
+      ctx.quadraticCurveTo(32, -16, 32, -2);
+      ctx.quadraticCurveTo(38, 4, 32, 12);
+      ctx.closePath();
+      if (fillStyle) { ctx.fillStyle = fillStyle; ctx.fill(); }
+      ctx.strokeStyle = strokeStyle; ctx.lineWidth = strokeW; ctx.stroke();
+      break;
+    }
+    case "crown": {
+      // 3-spike crown with central jewel
+      ctx.beginPath();
+      ctx.moveTo(-32, 22);            // bottom-left
+      ctx.lineTo(-30, -16);           // up to first spike base
+      ctx.lineTo(-14, 2);             // dip after first spike
+      ctx.lineTo(0, -24);             // central spike top
+      ctx.lineTo(14, 2);              // dip after central
+      ctx.lineTo(30, -16);            // last spike top
+      ctx.lineTo(32, 22);             // bottom-right
+      ctx.closePath();
+      if (fillStyle) { ctx.fillStyle = fillStyle; ctx.fill(); }
+      ctx.strokeStyle = strokeStyle; ctx.lineWidth = strokeW; ctx.stroke();
+      // Central jewel
+      ctx.beginPath(); ctx.arc(0, -6, 5, 0, Math.PI * 2);
+      ctx.fillStyle = "#f95f8e"; ctx.fill();
+      ctx.strokeStyle = strokeStyle; ctx.lineWidth = Math.max(strokeW * 0.6, 1); ctx.stroke();
+      break;
+    }
+    case "arrow": {
+      // Right-pointing block arrow
+      ctx.beginPath();
+      ctx.moveTo(-30, -10);
+      ctx.lineTo(10, -10);
+      ctx.lineTo(10, -22);
+      ctx.lineTo(34, 0);
+      ctx.lineTo(10, 22);
+      ctx.lineTo(10, 10);
+      ctx.lineTo(-30, 10);
+      ctx.closePath();
+      if (fillStyle) { ctx.fillStyle = fillStyle; ctx.fill(); }
+      ctx.strokeStyle = strokeStyle; ctx.lineWidth = strokeW; ctx.stroke();
+      break;
+    }
     default: {
       ctx.fillStyle = fillStyle || "#f95f8e";
       ctx.beginPath(); ctx.arc(0, 0, 20, 0, Math.PI * 2); ctx.fill();
@@ -3383,6 +3637,12 @@ const Editor = (function () {
     $("#txtDelete").addEventListener("click", () => {
       if (selectedObj?.type === "text") { objects = objects.filter(o => o !== selectedObj); selectedObj = null; $("#textProps").style.display = "none"; render(); }
     });
+    // text layer-order buttons
+    $("#txtLayerBtns").querySelectorAll("[data-act]").forEach(b => {
+      b.addEventListener("click", () => {
+        if (selectedObj?.type === "text") changeZOrder(b.dataset.act);
+      });
+    });
 
     // build deco panel
     buildDecoPanel();
@@ -3413,6 +3673,12 @@ const Editor = (function () {
     });
     $("#objDelete").addEventListener("click", () => {
       if (selectedObj?.type === "deco") { objects = objects.filter(o => o !== selectedObj); selectedObj = null; $("#objStyleSection").style.display = "none"; render(); }
+    });
+    // deco layer-order buttons
+    $("#objLayerBtns").querySelectorAll("[data-act]").forEach(b => {
+      b.addEventListener("click", () => {
+        if (selectedObj?.type === "deco") changeZOrder(b.dataset.act);
+      });
     });
 
     // canvas mouse handlers
@@ -3467,6 +3733,7 @@ const Editor = (function () {
     const degT = Math.round((o.rotation || 0) * 180 / Math.PI);
     $("#txtRot").value = ((degT + 180) % 360) - 180;
     $("#txtRotVal").textContent = degT + "°";
+    updateLayerInfo("#txtLayerInfo", "#txtLayerBtns");
   }
   function reflectObjProps() {
     const o = selectedObj;
@@ -3478,6 +3745,51 @@ const Editor = (function () {
     const degO = Math.round((o.rotation || 0) * 180 / Math.PI);
     $("#objRot").value = ((degO + 180) % 360) - 180;
     $("#objRotVal").textContent = degO + "°";
+    updateLayerInfo("#objLayerInfo", "#objLayerBtns");
+  }
+
+  /** Reflect current selectedObj's layer position in the side-panel UI.
+   *  - infoSel: selector for the "x / N" label
+   *  - btnsSel: selector for the layer-btns container; we disable buttons that have no effect
+   */
+  function updateLayerInfo(infoSel, btnsSel) {
+    if (!selectedObj) return;
+    const idx = objects.indexOf(selectedObj);
+    const total = objects.length;
+    // Display layer position: 1 = bottom, total = top (so user thinks "higher number = on top")
+    const layerPos = idx + 1;
+    const info = $(infoSel);
+    if (info) info.textContent = `第 ${layerPos} 層 / 共 ${total} 層`;
+    const grp = $(btnsSel);
+    if (grp) {
+      const atTop = idx === total - 1;
+      const atBot = idx === 0;
+      grp.querySelectorAll("[data-act]").forEach(b => {
+        const a = b.dataset.act;
+        b.disabled = (atTop && (a === "front" || a === "forward")) ||
+                     (atBot && (a === "back" || a === "backward"));
+      });
+    }
+  }
+
+  function changeZOrder(action) {
+    if (!selectedObj) return;
+    const i = objects.indexOf(selectedObj);
+    if (i < 0) return;
+    objects.splice(i, 1);   // remove
+    let newIdx;
+    switch (action) {
+      case "front":    newIdx = objects.length;          break;       // append (top)
+      case "back":     newIdx = 0;                        break;       // prepend (bottom)
+      case "forward":  newIdx = Math.min(i + 1, objects.length); break;
+      case "backward": newIdx = Math.max(i - 1, 0);       break;
+      default:         newIdx = i;
+    }
+    objects.splice(newIdx, 0, selectedObj);
+    render();
+    // Refresh whichever panel is currently visible
+    if (selectedObj.type === "text") updateLayerInfo("#txtLayerInfo", "#txtLayerBtns");
+    else if (selectedObj.type === "deco") updateLayerInfo("#objLayerInfo", "#objLayerBtns");
   }
 
   function render() {
