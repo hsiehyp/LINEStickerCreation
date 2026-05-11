@@ -227,6 +227,20 @@
   .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
 
   /* Watermark Tab */
+  .wm-topbar{
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    margin-bottom:14px;
+  }
+  .wm-topbar .switch-row{
+    background:var(--panel-2);padding:8px 14px;border-radius:var(--radius-sm);
+    flex:1;min-width:280px;
+  }
+  @media (max-width:560px){
+    .wm-topbar{flex-direction:column;align-items:stretch}
+    .wm-topbar .switch-row{min-width:0}
+  }
+  /* 浮水印移除關閉時，定位/參數控制卡片整體變暗 */
+  .control-card.wm-disabled{opacity:.4;pointer-events:none;filter:saturate(.5);transition:opacity .2s,filter .2s}
   .wm-layout{display:grid;grid-template-columns:1fr 320px;gap:18px}
   .wm-canvas-area{
     background:var(--panel-2);border-radius:var(--radius);
@@ -651,6 +665,21 @@
       </div>
 
       <div id="wm-editor" class="hidden">
+        <!-- 頂部工具列：重選 + 總開關 -->
+        <div class="wm-topbar">
+          <button class="btn ghost" id="wm-reset">📁 選擇其他圖片</button>
+          <div class="switch-row" style="flex:1;padding:8px 14px">
+            <div>
+              <div class="label">啟用浮水印移除</div>
+              <div class="label-desc">關閉後將直接輸出原圖（不做任何處理）</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="wm-enabled" checked />
+              <span class="slider-sw"></span>
+            </label>
+          </div>
+        </div>
+
         <div class="view-toggle">
           <button id="wm-view-processed" class="active">處理結果</button>
           <button id="wm-view-original">原始圖片</button>
@@ -668,7 +697,7 @@
           </div>
 
           <div class="wm-controls">
-            <div class="control-card">
+            <div class="control-card" id="wm-loc-card">
               <h3>📍 浮水印定位</h3>
               <div class="num-input-row">
                 <label>
@@ -689,7 +718,7 @@
               </div>
             </div>
 
-            <div class="control-card">
+            <div class="control-card" id="wm-param-card">
               <h3>🎚️ 參數微調</h3>
               <div class="slider-row">
                 <label>移除強度 alpha <span class="val" id="wm-alpha-val">1.00</span></label>
@@ -705,7 +734,6 @@
               <h3>💾 匯出</h3>
               <div class="button-row" style="margin:0">
                 <button class="btn" id="wm-download">下載 PNG</button>
-                <button class="btn ghost" id="wm-reset">選擇其他圖片</button>
               </div>
             </div>
           </div>
@@ -1233,6 +1261,7 @@ const WM = {
   alphaMul: 1.0,
   scale: 1.0,                // 模板縮放
   showBox: true,
+  enabled: true,             // 是否啟用浮水印移除
   view: "processed",
   draggingBox: false,
   dragOffset: {x:0, y:0}
@@ -1271,6 +1300,14 @@ function initWatermarkTab() {
   });
 
   // 控制
+  $("wm-enabled").addEventListener("change", e => {
+    WM.enabled = e.target.checked;
+    // 視覺：關閉時將定位卡與參數卡置灰
+    $("wm-loc-card").classList.toggle("wm-disabled", !WM.enabled);
+    $("wm-param-card").classList.toggle("wm-disabled", !WM.enabled);
+    renderWm();
+    toast(WM.enabled ? "浮水印移除已啟用" : "已關閉浮水印移除（將輸出原圖）", "info");
+  });
   $("wm-margin-r").addEventListener("input", e => { WM.marginR = +e.target.value || 0; renderWm(); });
   $("wm-margin-b").addEventListener("input", e => { WM.marginB = +e.target.value || 0; renderWm(); });
   $("wm-show-box").addEventListener("change", e => { WM.showBox = e.target.checked; renderWm(); });
@@ -1414,6 +1451,8 @@ function processWatermark() {
     new Uint8ClampedArray(WM.origImage.data),
     WM.width, WM.height
   );
+  // 開關關閉時直接回傳原圖（不做任何處理）
+  if (!WM.enabled) return out;
   if (!WM.alphaArr) return out;
 
   const tplW = 100 * WM.scale;
@@ -1507,6 +1546,11 @@ function downloadWm() {
 function resetWm() {
   WM.origImage = null;
   WM.origCanvas = null;
+  // 還原開關預設值（啟用），並把卡片置灰樣式清掉
+  WM.enabled = true;
+  $("wm-enabled").checked = true;
+  $("wm-loc-card").classList.remove("wm-disabled");
+  $("wm-param-card").classList.remove("wm-disabled");
   $("wm-upload-wrap").classList.remove("hidden");
   $("wm-editor").classList.add("hidden");
   $("wm-file-input").value = "";
