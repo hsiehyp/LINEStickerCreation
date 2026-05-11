@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0045)file:///C:/Users/user/Downloads/index_39.html -->
+<!-- saved from url=(0045)file:///C:/Users/user/Downloads/index_40.html -->
 <html lang="zh-TW"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -555,11 +555,11 @@
   </div>
 </header>
 
-<nav class="nav-tabs" id="nav-tabs"><button class="tab-btn" data-target="tab-prompt">1. Line貼圖 Prompt 大師</button><button class="tab-btn" data-target="tab-watermark">2. 去除星星浮水印</button><button class="tab-btn active" data-target="tab-split">3. 上傳與分割 / 智慧去背</button></nav>
+<nav class="nav-tabs" id="nav-tabs"><button class="tab-btn active" data-target="tab-prompt">1. Line貼圖 Prompt 大師</button><button class="tab-btn" data-target="tab-watermark">2. 去除星星浮水印</button><button class="tab-btn" data-target="tab-split">3. 上傳與分割 / 智慧去背</button></nav>
 
 <main class="container">
   <!-- Tab 1: Prompt -->
-  <section class="tab-content" id="tab-prompt">
+  <section class="tab-content active" id="tab-prompt">
     <div class="panel">
       <h2><span class="step-num">1</span>Line 貼圖 Prompt 大師</h2>
       <p class="desc">透過結構化表單，快速生成精準的 AI 繪圖詠唱詞，可直接帶入 Gemini 等 AI 生圖工具。</p>
@@ -738,7 +738,7 @@ Generate exactly 20 stickers, each cell expressing one of the following actions 
   </section>
 
   <!-- Tab 3: Split & Background Removal -->
-  <section class="tab-content active" id="tab-split">
+  <section class="tab-content" id="tab-split">
     <div class="panel">
       <h2><span class="step-num">3</span>上傳與分割 / 智慧去背</h2>
       <p class="desc">將 5×4 網格大圖切為 20 張獨立貼圖、自動去除綠幕背景，最後一鍵打包 ZIP 下載。</p>
@@ -972,6 +972,8 @@ function copyText(text) {
  * ======================================================================= */
 function initTabs() {
   const navWrap = $("nav-tabs");
+  // 冪等保證：先清空既有內容，避免重複呼叫時按鈕疊加
+  navWrap.innerHTML = "";
   AppConfig.tabs.forEach((tab, idx) => {
     const btn = document.createElement("button");
     btn.className = "tab-btn" + (idx === 0 ? " active" : "");
@@ -2249,7 +2251,11 @@ function createZip(files) {
 /* =========================================================================
  * Bootstrap
  * ======================================================================= */
-document.addEventListener("DOMContentLoaded", () => {
+function bootstrap() {
+  // 冪等保證：避免任何原因（重複載入、瀏覽器熱重載、擴充注入）導致初始化跑兩次
+  if (window.__lineStickerInited) return;
+  window.__lineStickerInited = true;
+
   initTabs();
   initPromptTab();
   initWatermarkTab();
@@ -2261,7 +2267,13 @@ document.addEventListener("DOMContentLoaded", () => {
       $("split-from-step2").disabled = !WM.origImage;
     });
   });
-});
+}
+// DOMContentLoaded 已過時也要能跑（例如腳本在 body 結束時才解析到）
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", bootstrap);
+} else {
+  bootstrap();
+}
 </script>
 
 
