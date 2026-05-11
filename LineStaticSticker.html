@@ -1,17 +1,18 @@
-<!DOCTYPE html>
-<!-- saved from url=(0056)file:///C:/Users/user/Downloads/LineStaticSticker_1.html -->
-<html lang="zh-TW"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <!-- 防止瀏覽器快取舊版（每次部署更新後使用者一進站就會抓到最新版） -->
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
 <!-- BUILD: 2026-05-11-v2-idempotent-tabs -->
 <title>LINE 貼圖自動化助手</title>
-<link rel="preconnect" href="https://fonts.googleapis.com/">
-<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
-<link href="./LineStaticSticker_files/css2" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root{
     --primary:#f95f8e;
@@ -560,11 +561,11 @@
   </div>
 </header>
 
-<nav class="nav-tabs" id="nav-tabs"><button class="tab-btn active" data-target="tab-prompt">1. Line貼圖 Prompt 大師</button><button class="tab-btn" data-target="tab-watermark">2. 去除星星浮水印</button><button class="tab-btn" data-target="tab-split">3. 上傳與分割 / 智慧去背</button></nav>
+<nav class="nav-tabs" id="nav-tabs"></nav>
 
 <main class="container">
   <!-- Tab 1: Prompt -->
-  <section class="tab-content active" id="tab-prompt">
+  <section class="tab-content" id="tab-prompt">
     <div class="panel">
       <h2><span class="step-num">1</span>Line 貼圖 Prompt 大師</h2>
       <p class="desc">透過結構化表單，快速生成精準的 AI 繪圖詠唱詞，可直接帶入 Gemini 等 AI 生圖工具。</p>
@@ -586,12 +587,12 @@
           <span class="selected-count" id="scenario-count">已選 0 / 20</span>
         </label>
         <div class="hint">點選想要的文字情境，最多選 20 個。AI 會依此產生對應的姿勢與文字。</div>
-        <div id="scenarios-wrap" class="mt-2"><div class="scenario-section"><div class="cat-title">日常情境</div><div class="scenario-pills"><button class="chip" data-val="HI">HI</button><button class="chip" data-val="OK">OK</button><button class="chip" data-val="早安">早安</button><button class="chip" data-val="午安">午安</button><button class="chip" data-val="晚安">晚安</button><button class="chip" data-val="3Q">3Q</button><button class="chip" data-val="哈囉">哈囉</button><button class="chip" data-val="Bye">Bye</button><button class="chip" data-val="先閃人">先閃人</button><button class="chip" data-val="收到">收到</button><button class="chip" data-val="沒問題">沒問題</button><button class="chip" data-val="路上小心">路上小心</button><button class="chip" data-val="回應一下吧">回應一下吧</button><button class="chip" data-val="好的">好的</button><button class="chip" data-val="謝謝你">謝謝你</button><button class="chip" data-val="感恩">感恩</button><button class="chip" data-val="謝謝您">謝謝您</button><button class="chip" data-val="真假啦">真假啦</button><button class="chip" data-val="出發">出發</button><button class="chip" data-val="下次見">下次見</button><button class="chip" data-val="舉手">舉手</button></div></div><div class="scenario-section"><div class="cat-title">開心慶祝</div><div class="scenario-pills"><button class="chip" data-val="感動捏">感動捏</button><button class="chip" data-val="Fighting">Fighting</button><button class="chip" data-val="做得好">做得好</button><button class="chip" data-val="哈哈哈">哈哈哈</button><button class="chip" data-val="衝">衝</button><button class="chip" data-val="樂翻">樂翻</button><button class="chip" data-val="太好笑">太好笑</button><button class="chip" data-val="很可以">很可以</button><button class="chip" data-val="讚啦">讚啦</button><button class="chip" data-val="超棒的">超棒的</button><button class="chip" data-val="太好了">太好了</button><button class="chip" data-val="幹得好">幹得好</button><button class="chip" data-val="YA">YA</button><button class="chip" data-val="耶">耶</button><button class="chip" data-val="開心">開心</button><button class="chip" data-val="我很棒">我很棒</button></div></div><div class="scenario-section"><div class="cat-title">難過失落</div><div class="scenario-pills"><button class="chip" data-val="不知道">不知道</button><button class="chip" data-val="泣">泣</button><button class="chip" data-val="好累哦">好累哦</button><button class="chip" data-val="嗚嗚嗚">嗚嗚嗚</button><button class="chip" data-val="撐不住了">撐不住了</button><button class="chip" data-val="怎麼了">怎麼了</button><button class="chip" data-val="眼神死">眼神死</button><button class="chip" data-val="心碎">心碎</button><button class="chip" data-val="只能白眼">只能白眼</button><button class="chip" data-val="難過">難過</button><button class="chip" data-val="哭哭">哭哭</button></div></div><div class="scenario-section"><div class="cat-title">生氣激動</div><div class="scenario-pills"><button class="chip" data-val="欠處理">欠處理</button><button class="chip" data-val="生氣氣">生氣氣</button><button class="chip" data-val="不爽啦">不爽啦</button><button class="chip" data-val="麥鬧">麥鬧</button><button class="chip" data-val="想吵架嗎">想吵架嗎</button><button class="chip" data-val="氣炸了">氣炸了</button><button class="chip" data-val="驚">驚</button><button class="chip" data-val="涥">涥</button></div></div><div class="scenario-section"><div class="cat-title">工作情境</div><div class="scenario-pills"><button class="chip" data-val="收到">收到</button><button class="chip" data-val="沒問題">沒問題</button><button class="chip" data-val="等你喔">等你喔</button><button class="chip" data-val="回應一下吧">回應一下吧</button><button class="chip" data-val="開會中">開會中</button><button class="chip" data-val="辛苦了">辛苦了</button><button class="chip" data-val="冷靜冷靜">冷靜冷靜</button><button class="chip" data-val="放輕鬆">放輕鬆</button></div></div><div class="scenario-section"><div class="cat-title">戀愛撒嬌</div><div class="scenario-pills"><button class="chip" data-val="拜託">拜託</button><button class="chip" data-val="抱抱">抱抱</button><button class="chip" data-val="求你">求你</button><button class="chip" data-val="想你喔">想你喔</button><button class="chip" data-val="愛你">愛你</button><button class="chip" data-val="愛泥">愛泥</button><button class="chip" data-val="貼貼">貼貼</button><button class="chip" data-val="抓緊緊">抓緊緊</button><button class="chip" data-val="不好意思">不好意思</button><button class="chip" data-val="喜歡">喜歡</button><button class="chip" data-val="感動">感動</button></div></div><div class="scenario-section"><div class="cat-title">運動健身</div><div class="scenario-pills"><button class="chip" data-val="Fighting">Fighting</button><button class="chip" data-val="衝">衝</button><button class="chip" data-val="撐住">撐住</button><button class="chip" data-val="燃燒脂肪">燃燒脂肪</button><button class="chip" data-val="最後一組">最後一組</button></div></div><div class="scenario-section"><div class="cat-title">吃貨日常</div><div class="scenario-pills"><button class="chip" data-val="想吃">想吃</button><button class="chip" data-val="餓了">餓了</button><button class="chip" data-val="宵夜時間">宵夜時間</button><button class="chip" data-val="罪惡感">罪惡感</button><button class="chip" data-val="吃飽了">吃飽了</button><button class="chip" data-val="這家超推">這家超推</button><button class="chip" data-val="真香">真香</button></div></div></div>
+        <div id="scenarios-wrap" class="mt-2"></div>
       </div>
 
       <div class="form-group">
         <label class="form-label">③ 選擇畫風</label>
-        <div class="toggle-group" id="style-pick"><button class="pill active">可愛 Q 版</button><button class="pill">照片級寫實</button><button class="pill">3D 公仔</button><button class="pill">扁平插畫</button><button class="pill">童書繪本</button><button class="pill">童趣手繪</button><button class="pill">日系 Chibi</button><button class="pill">清新水彩</button><button class="pill">古風水墨</button><button class="pill">復古像素</button><button class="pill">粉蠟筆</button><button class="pill">黑白塗鴉線條風</button><button class="pill">浮誇顏藝風</button></div>
+        <div class="toggle-group" id="style-pick"></div>
       </div>
 
       <div class="form-group">
@@ -602,7 +603,7 @@
             <div class="label-desc">啟用後 AI 會繪製清晰的白色 die-cut 貼圖風格邊框</div>
           </div>
           <label class="switch">
-            <input type="checkbox" id="border-toggle">
+            <input type="checkbox" id="border-toggle" />
             <span class="slider-sw"></span>
           </label>
         </div>
@@ -625,36 +626,7 @@
           <span>🀄 完全中文</span><span class="tag">ZH</span>
         </button>
       </div>
-      <div class="prompt-output" id="prompt-output" data-lang="en"># LINE Sticker Sheet Generation Prompt
-
-## [Layout Settings]
-- Canvas size: 2560 x 1664 pixels
-- Grid: 5 columns x 4 rows = 20 stickers in total
-- Each cell focuses on a distinct facial expression and pose
-- Background: Solid Green Screen (#00FF00) — fully flat, no gradients, no shadows on background
-- Sticker count: 20 (filling every cell of the 5x4 grid)
-
-## [Core Rules]
-- Composition: half-body or full-body, choose per pose to best convey the action
-- Strictly NO grid lines, NO white separators, NO borders between cells — cells must blend seamlessly into one solid green background
-- Optional Traditional Chinese (繁體中文) text on each sticker — text may be horizontal or vertical, hand-lettered or speech-bubble style
-- Maintain consistent character design (face shape, hair, outfit, palette) across all 20 stickers
-
-## [Character]
-Use the uploaded reference image as the base character. Maintain its exact appearance, outfit, and identity across all 20 stickers.
-
-## [Art Style]
-可愛 Q 版
-
-## [Sticker Scenarios]
-Generate exactly 20 stickers, each cell expressing one of the following actions / texts (use Traditional Chinese for any displayed text):
-  (請至少選擇 1 個情境主題)
-
-## [Output Requirements]
-- Single image, 2560x1664 px
-- Pure green background (#00FF00) outside the character silhouette
-- Each character occupies the cell with comfortable padding so cropping into 5x4 cells captures the full pose
-- High detail, sharp lines, sticker-optimized illustration</div>
+      <div class="prompt-output" id="prompt-output" data-lang="en"></div>
       <div class="button-row">
         <button class="btn" id="copy-prompt-btn">📋 複製當前版本</button>
         <button class="btn secondary" id="open-gemini-btn">🚀 前往 Gemini</button>
@@ -674,7 +646,7 @@ Generate exactly 20 stickers, each cell expressing one of the following actions 
           <div class="upload-icon">⬆️</div>
           <h3>拖曳圖片到此 或 點擊上傳</h3>
           <p>支援 PNG / JPG，建議使用 Gemini 生成的原始大圖</p>
-          <input type="file" id="wm-file-input" accept="image/*" hidden="">
+          <input type="file" id="wm-file-input" accept="image/*" hidden />
         </div>
       </div>
 
@@ -701,17 +673,17 @@ Generate exactly 20 stickers, each cell expressing one of the following actions 
               <div class="num-input-row">
                 <label>
                   <span>距右邊界 (px)</span>
-                  <input type="number" id="wm-margin-r" value="60" min="0">
+                  <input type="number" id="wm-margin-r" value="60" min="0" />
                 </label>
                 <label>
                   <span>距下邊界 (px)</span>
-                  <input type="number" id="wm-margin-b" value="60" min="0">
+                  <input type="number" id="wm-margin-b" value="60" min="0" />
                 </label>
               </div>
               <div class="switch-row" style="padding:8px 12px">
                 <div class="label" style="font-size:13px">顯示紅色定位框</div>
                 <label class="switch" style="width:42px;height:24px">
-                  <input type="checkbox" id="wm-show-box" checked="">
+                  <input type="checkbox" id="wm-show-box" checked />
                   <span class="slider-sw"></span>
                 </label>
               </div>
@@ -721,11 +693,11 @@ Generate exactly 20 stickers, each cell expressing one of the following actions 
               <h3>🎚️ 參數微調</h3>
               <div class="slider-row">
                 <label>移除強度 alpha <span class="val" id="wm-alpha-val">1.00</span></label>
-                <input type="range" id="wm-alpha" min="0.5" max="1.5" step="0.01" value="1.0">
+                <input type="range" id="wm-alpha" min="0.5" max="1.5" step="0.01" value="1.0" />
               </div>
               <div class="slider-row">
                 <label>區域縮放 scale <span class="val" id="wm-scale-val">100%</span></label>
-                <input type="range" id="wm-scale" min="50" max="200" step="1" value="100">
+                <input type="range" id="wm-scale" min="50" max="200" step="1" value="100" />
               </div>
             </div>
 
@@ -758,9 +730,9 @@ Generate exactly 20 stickers, each cell expressing one of the following actions 
           📐 圖檔規格：<strong>5 欄 × 4 列</strong>，共 20 張貼圖，總尺寸建議 <strong>2560 × 1664 px</strong>
         </div>
         <div class="row" style="margin-bottom:14px">
-          <button class="btn warn" id="split-from-step2" disabled="">📋 從步驟 2 複製圖片</button>
+          <button class="btn warn" id="split-from-step2" disabled>📋 從步驟 2 複製圖片</button>
           <button class="btn ghost" id="split-pick-file">📂 選擇檔案</button>
-          <input type="file" id="split-file-input" accept="image/*" hidden="">
+          <input type="file" id="split-file-input" accept="image/*" hidden />
         </div>
 
         <div id="split-upload-zone" class="upload-zone">
@@ -789,7 +761,7 @@ Generate exactly 20 stickers, each cell expressing one of the following actions 
                 </div>
                 <div class="track-wrap">
                   <span class="track-mark"></span>
-                  <input type="range" id="split-x" min="-100" max="100" step="1" value="0" style="--p: 50%;">
+                  <input type="range" id="split-x" min="-100" max="100" step="1" value="0" />
                 </div>
                 <div class="scale-row"><span>-100</span><span>0</span><span>+100</span></div>
               </div>
@@ -803,7 +775,7 @@ Generate exactly 20 stickers, each cell expressing one of the following actions 
                 </div>
                 <div class="track-wrap">
                   <span class="track-mark"></span>
-                  <input type="range" id="split-y" min="-100" max="100" step="1" value="0" style="--p: 50%;">
+                  <input type="range" id="split-y" min="-100" max="100" step="1" value="0" />
                 </div>
                 <div class="scale-row"><span>-100</span><span>0</span><span>+100</span></div>
               </div>
@@ -817,7 +789,7 @@ Generate exactly 20 stickers, each cell expressing one of the following actions 
                 </div>
                 <div class="track-wrap">
                   <span class="track-mark"></span>
-                  <input type="range" id="split-zoom" min="80" max="120" step="1" value="100" style="--p: 50%;">
+                  <input type="range" id="split-zoom" min="80" max="120" step="1" value="100" />
                 </div>
                 <div class="scale-row"><span>80%</span><span>100%</span><span>120%</span></div>
               </div>
@@ -847,7 +819,7 @@ Generate exactly 20 stickers, each cell expressing one of the following actions 
             <div class="label-desc">遍歷 20 張影格將純綠幕背景轉換為透明</div>
           </div>
           <label class="switch">
-            <input type="checkbox" id="bg-toggle" checked="">
+            <input type="checkbox" id="bg-toggle" checked />
             <span class="slider-sw"></span>
           </label>
         </div>
@@ -859,7 +831,7 @@ Generate exactly 20 stickers, each cell expressing one of the following actions 
         </div>
         <div class="slider-row">
           <label>容差值 tolerance <span class="val" id="bg-tol-val">80</span></label>
-          <input type="range" id="bg-tol" min="20" max="150" step="1" value="80">
+          <input type="range" id="bg-tol" min="20" max="150" step="1" value="80" />
         </div>
         <div class="button-row">
           <button class="btn" id="bg-execute">▶️ 執行去背處理</button>
@@ -879,7 +851,7 @@ Generate exactly 20 stickers, each cell expressing one of the following actions 
         </div>
         <div class="row" style="margin-bottom:14px">
           <label style="font-size:14px;font-weight:600">起始編號（組）：</label>
-          <input type="number" id="zip-start" value="1" min="1" max="999" style="width:80px">
+          <input type="number" id="zip-start" value="1" min="1" max="999" style="width:80px" />
           <span style="font-size:12px;color:var(--text-mute)" id="zip-preview-name">輸出檔名：1-1.png ~ 5-4.png</span>
         </div>
         <div class="button-row">
@@ -2285,6 +2257,5 @@ if (document.readyState === "loading") {
 }
 </script>
 
-
-
-</body></html>
+</body>
+</html>
