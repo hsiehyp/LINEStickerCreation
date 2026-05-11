@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0054)file:///C:/Users/user/Downloads/LineStaticSticker.html -->
+<!-- saved from url=(0056)file:///C:/Users/user/Downloads/LineStaticSticker_1.html -->
 <html lang="zh-TW"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -1031,6 +1031,8 @@ function initPromptTab() {
 
   // 情境主題
   const wrap = $("scenarios-wrap");
+  // 冪等保證：清空 hardcoded 殘留（防 Save-As 污染或重複初始化）
+  wrap.innerHTML = "";
   Object.entries(AppConfig.scenarios).forEach(([cat, items]) => {
     const sec = document.createElement("div");
     sec.className = "scenario-section";
@@ -1053,6 +1055,8 @@ function initPromptTab() {
 
   // 畫風選擇
   const styleWrap = $("style-pick");
+  // 冪等保證：清空 hardcoded 殘留
+  styleWrap.innerHTML = "";
   AppConfig.styles.forEach((s, i) => {
     const btn = document.createElement("button");
     btn.className = "pill" + (i === 0 ? " active" : "");
