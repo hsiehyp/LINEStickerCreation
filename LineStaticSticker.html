@@ -1,0 +1,2269 @@
+<!DOCTYPE html>
+<!-- saved from url=(0045)file:///C:/Users/user/Downloads/index_39.html -->
+<html lang="zh-TW"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>LINE 貼圖自動化助手</title>
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
+<link href="./LineStaticSticker_files/css2" rel="stylesheet">
+<style>
+  :root{
+    --primary:#f95f8e;
+    --primary-soft:rgba(249,95,142,.12);
+    --primary-dim:#c44b71;
+    --secondary:#2c3344;
+    --secondary-hover:#363d52;
+    --text:#ffffff;
+    --text-dim:#a8b0c2;
+    --text-mute:#6c7385;
+    --bg:#1a1e29;
+    --panel:#222736;
+    --panel-2:#2a3043;
+    --border:#363d52;
+    --success:#4ade80;
+    --warning:#fbbf24;
+    --danger:#ef4444;
+    --shadow:0 8px 24px rgba(0,0,0,.35);
+    --radius-sm:8px;
+    --radius:12px;
+    --radius-lg:18px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--text);font-family:"M PLUS Rounded 1c","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;-webkit-font-smoothing:antialiased;font-weight:500}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(1200px 600px at 80% -10%,rgba(249,95,142,.08),transparent 60%),
+      radial-gradient(900px 500px at 0% 100%,rgba(99,102,241,.06),transparent 60%),
+      var(--bg);
+    padding-bottom:60px;
+  }
+  .container{max-width:1280px;margin:0 auto;padding:18px 22px}
+  header.app-header{
+    display:flex;align-items:center;gap:14px;
+    padding:14px 22px;border-bottom:1px solid var(--border);
+    position:sticky;top:0;background:rgba(26,30,41,.85);backdrop-filter:blur(12px);
+    z-index:50;
+  }
+  .logo{
+    width:38px;height:38px;border-radius:11px;
+    background:linear-gradient(135deg,#f95f8e,#c44b71);
+    display:flex;align-items:center;justify-content:center;
+    font-size:20px;box-shadow:0 6px 18px rgba(249,95,142,.35);
+  }
+  .app-title{font-weight:800;font-size:18px;letter-spacing:.5px}
+  .app-subtitle{color:var(--text-mute);font-size:12px;margin-top:1px}
+  .nav-tabs{
+    display:flex;gap:8px;overflow-x:auto;
+    padding:14px 22px 0;
+    scrollbar-width:none;
+  }
+  .nav-tabs::-webkit-scrollbar{display:none}
+  .tab-btn{
+    flex-shrink:0;
+    background:var(--secondary);color:var(--text-dim);
+    border:1px solid transparent;
+    padding:10px 18px;border-radius:999px;
+    font-family:inherit;font-size:14px;font-weight:700;
+    cursor:pointer;transition:.2s;
+    white-space:nowrap;
+  }
+  .tab-btn:hover{background:var(--secondary-hover);color:var(--text)}
+  .tab-btn.active{background:var(--primary);color:#fff;box-shadow:0 6px 18px rgba(249,95,142,.4)}
+  main{padding:6px 0}
+  .tab-content{display:none}
+  .tab-content.active{display:block;animation:fadeIn .35s ease}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius-lg);
+    padding:22px;
+    margin-bottom:18px;
+    box-shadow:var(--shadow);
+  }
+  .panel h2{font-size:18px;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+  .panel h2 .step-num{
+    background:var(--primary);color:#fff;
+    width:26px;height:26px;border-radius:8px;
+    display:inline-flex;align-items:center;justify-content:center;
+    font-size:14px;font-weight:800;
+  }
+  .panel .desc{color:var(--text-dim);font-size:13px;margin-bottom:16px;line-height:1.6}
+
+  .form-group{margin-bottom:18px}
+  .form-label{font-weight:700;font-size:14px;margin-bottom:10px;display:block;color:var(--text)}
+  .hint{font-size:12px;color:var(--text-mute);margin-top:6px;line-height:1.5}
+
+  .toggle-group{display:flex;gap:8px;flex-wrap:wrap}
+  .pill{
+    background:var(--secondary);color:var(--text-dim);
+    border:1px solid transparent;
+    padding:8px 14px;border-radius:999px;
+    font-family:inherit;font-size:13px;font-weight:600;
+    cursor:pointer;transition:.15s;user-select:none;
+  }
+  .pill:hover{background:var(--secondary-hover);color:var(--text)}
+  .pill.active{background:var(--primary);color:#fff;box-shadow:0 4px 12px rgba(249,95,142,.3)}
+
+  .chip{
+    background:var(--secondary);color:var(--text-dim);
+    border:1px solid transparent;
+    padding:6px 12px;border-radius:999px;
+    font-family:inherit;font-size:13px;font-weight:600;
+    cursor:pointer;transition:.15s;user-select:none;
+  }
+  .chip:hover{background:var(--secondary-hover);color:var(--text)}
+  .chip.active{background:var(--primary);color:#fff}
+  .chip.disabled{opacity:.4;cursor:not-allowed}
+
+  textarea,input[type="text"],input[type="number"]{
+    width:100%;background:var(--bg);color:var(--text);
+    border:1px solid var(--border);border-radius:var(--radius-sm);
+    padding:10px 12px;font-family:inherit;font-size:14px;
+    transition:.15s;
+  }
+  textarea:focus,input[type="text"]:focus,input[type="number"]:focus{
+    outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft);
+  }
+  textarea{resize:vertical;min-height:80px;line-height:1.5}
+
+  .btn{
+    background:var(--primary);color:#fff;
+    border:none;padding:11px 22px;border-radius:var(--radius-sm);
+    font-family:inherit;font-size:14px;font-weight:700;
+    cursor:pointer;transition:.15s;text-decoration:none;
+    display:inline-flex;align-items:center;gap:8px;
+  }
+  .btn:hover{background:var(--primary-dim);transform:translateY(-1px)}
+  .btn:active{transform:translateY(0)}
+  .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  .btn.secondary{background:var(--secondary);color:var(--text)}
+  .btn.secondary:hover{background:var(--secondary-hover)}
+  .btn.success{background:var(--success);color:#0d2818}
+  .btn.success:hover{background:#3dc16e}
+  .btn.warn{background:var(--warning);color:#422006;box-shadow:0 4px 14px rgba(251,191,36,.25)}
+  .btn.warn:hover{background:#f59e0b}
+  .btn.warn:disabled{box-shadow:none}
+  .btn.ghost{background:transparent;color:var(--text-dim);border:1px solid var(--border)}
+  .btn.ghost:hover{color:var(--text);border-color:var(--text-dim)}
+
+  .switch{position:relative;display:inline-block;width:46px;height:26px;flex-shrink:0}
+  .switch input{opacity:0;width:0;height:0}
+  .slider-sw{
+    position:absolute;cursor:pointer;inset:0;background:var(--secondary);
+    border-radius:26px;transition:.2s;
+  }
+  .slider-sw::before{
+    content:"";position:absolute;height:20px;width:20px;
+    left:3px;top:3px;background:var(--text);border-radius:50%;
+    transition:.2s;
+  }
+  .switch input:checked + .slider-sw{background:var(--primary)}
+  .switch input:checked + .slider-sw::before{transform:translateX(20px)}
+
+  .switch-row{display:flex;align-items:center;justify-content:space-between;gap:14px;
+    background:var(--panel-2);padding:12px 14px;border-radius:var(--radius-sm);}
+  .switch-row .label{font-weight:600;font-size:14px}
+  .switch-row .label-desc{font-size:12px;color:var(--text-mute);margin-top:2px}
+
+  .prompt-output{
+    background:#0f131c;border:1px solid var(--border);
+    border-radius:var(--radius);padding:16px;
+    font-family:"JetBrains Mono",monospace;font-size:12.5px;
+    line-height:1.7;color:#e2e8f0;
+    white-space:pre-wrap;word-break:break-word;
+    max-height:400px;overflow-y:auto;
+  }
+  .prompt-output::-webkit-scrollbar{width:6px}
+  .prompt-output::-webkit-scrollbar-track{background:transparent}
+  .prompt-output::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+  /* 中文版改用系統字型，英文版維持等寬 */
+  .prompt-output[data-lang="zh"]{
+    font-family:"M PLUS Rounded 1c","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+    font-size:13.5px;line-height:1.85;
+  }
+
+  /* 子頁籤（segmented control 樣式） */
+  .sub-tabs{
+    display:inline-flex;gap:4px;
+    background:var(--panel-2);border:1px solid var(--border);
+    border-radius:10px;padding:4px;margin-bottom:12px;
+  }
+  .sub-tab{
+    background:transparent;border:none;
+    color:var(--text-dim);
+    font-family:inherit;font-size:13px;font-weight:600;
+    padding:7px 16px;border-radius:7px;cursor:pointer;
+    transition:background .15s,color .15s;
+    -webkit-tap-highlight-color:transparent;
+    display:inline-flex;align-items:center;gap:6px;
+  }
+  .sub-tab:hover{color:var(--text)}
+  .sub-tab.active{background:var(--primary);color:#fff;box-shadow:0 2px 8px rgba(249,95,142,.3)}
+  .sub-tab .tag{
+    font-family:"JetBrains Mono",monospace;font-size:10px;
+    background:rgba(255,255,255,.18);
+    padding:1px 6px;border-radius:4px;font-weight:700;
+  }
+  .sub-tab:not(.active) .tag{background:rgba(255,255,255,.06);color:var(--text-mute)}
+  @media (max-width:560px){
+    .sub-tabs{display:flex;width:100%}
+    .sub-tab{flex:1;justify-content:center;padding:7px 8px;font-size:12px}
+  }
+
+  .button-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+
+  /* Watermark Tab */
+  .wm-layout{display:grid;grid-template-columns:1fr 320px;gap:18px}
+  .wm-canvas-area{
+    background:var(--panel-2);border-radius:var(--radius);
+    padding:14px;position:relative;
+    border:1px solid var(--border);
+    min-height:400px;
+  }
+  .wm-canvas-wrap{
+    position:relative;width:100%;
+    background:
+      linear-gradient(45deg,#15192480 25%,transparent 25%),
+      linear-gradient(-45deg,#15192480 25%,transparent 25%),
+      linear-gradient(45deg,transparent 75%,#15192480 75%),
+      linear-gradient(-45deg,transparent 75%,#15192480 75%);
+    background-size:20px 20px;
+    background-position:0 0,0 10px,10px -10px,-10px 0;
+    border-radius:var(--radius-sm);overflow:hidden;
+  }
+  .wm-canvas-wrap canvas{display:block;width:100%;height:auto;cursor:default;user-select:none;-webkit-user-drag:none}
+  .wm-canvas-wrap.dragging canvas{cursor:grabbing}
+  .wm-canvas-wrap canvas.has-box{cursor:grab}
+
+  .wm-controls{display:flex;flex-direction:column;gap:14px}
+  .control-card{background:var(--panel-2);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
+  .control-card h3{font-size:14px;font-weight:700;margin-bottom:10px;color:var(--text)}
+
+  .slider-row{margin-bottom:12px}
+  .slider-row:last-child{margin-bottom:0}
+  .slider-row label{display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:6px}
+  .slider-row label .val{font-family:"JetBrains Mono",monospace;color:var(--primary);font-weight:700}
+  .slider-row input[type="range"]{
+    width:100%;height:5px;background:var(--secondary);
+    border-radius:5px;outline:none;-webkit-appearance:none;cursor:pointer;
+  }
+  .slider-row input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:18px;height:18px;border-radius:50%;
+    background:var(--primary);cursor:pointer;box-shadow:0 2px 8px rgba(249,95,142,.4);
+  }
+  .slider-row input[type="range"]::-moz-range-thumb{
+    width:18px;height:18px;border-radius:50%;border:none;
+    background:var(--primary);cursor:pointer;
+  }
+
+  /* === 對齊微調滑桿（顯眼版） === */
+  .align-panel{
+    background:linear-gradient(180deg,rgba(249,95,142,.06),rgba(249,95,142,.02));
+    border:1px solid rgba(249,95,142,.25);
+    border-radius:var(--radius);padding:14px 16px;margin-top:14px;
+    box-shadow:0 4px 18px rgba(0,0,0,.18) inset;
+  }
+  .align-panel-head{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:12px;padding-bottom:10px;
+    border-bottom:1px dashed rgba(249,95,142,.25);
+  }
+  .align-panel-head .title{
+    display:flex;align-items:center;gap:8px;
+    font-size:14px;font-weight:700;color:var(--text);letter-spacing:.5px;
+  }
+  .align-panel-head .title .dot{
+    width:8px;height:8px;border-radius:50%;background:var(--primary);
+    box-shadow:0 0 8px var(--primary);animation:dotPulse 1.6s infinite;
+  }
+  @keyframes dotPulse{0%,100%{opacity:1}50%{opacity:.4}}
+  .align-panel-head .reset-all{
+    background:transparent;border:1px solid var(--border);
+    color:var(--text-dim);padding:4px 10px;border-radius:6px;
+    font-size:12px;cursor:pointer;transition:all .15s;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .align-panel-head .reset-all:hover{color:var(--primary);border-color:var(--primary)}
+  .align-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+  @media (max-width:900px){.align-grid{grid-template-columns:1fr;gap:10px}}
+
+  .slider-card{
+    background:var(--panel-2);border:1px solid var(--border);
+    border-radius:10px;padding:12px 14px;
+    transition:border-color .2s,box-shadow .2s;
+  }
+  .slider-card:hover{border-color:rgba(249,95,142,.4);box-shadow:0 4px 14px rgba(0,0,0,.25)}
+  .slider-card-head{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:10px;gap:6px;
+  }
+  .slider-card-head .lbl{
+    display:flex;align-items:center;gap:8px;
+    font-size:13px;font-weight:600;color:var(--text);
+  }
+  .slider-card-head .lbl .ico{
+    width:24px;height:24px;flex:none;
+    background:rgba(249,95,142,.14);color:var(--primary);
+    border-radius:6px;display:flex;align-items:center;justify-content:center;
+    font-size:13px;font-weight:700;letter-spacing:-1px;
+  }
+  .slider-card-head .vbox{
+    display:flex;align-items:center;gap:4px;
+  }
+  .slider-card-head .v{
+    font-family:"JetBrains Mono",monospace;
+    color:var(--primary);font-weight:700;font-size:14px;
+    background:rgba(249,95,142,.12);
+    padding:2px 8px;border-radius:6px;min-width:48px;text-align:center;
+  }
+  .slider-card-head .reset-one{
+    background:transparent;border:none;color:var(--text-mute);
+    cursor:pointer;padding:2px 4px;border-radius:4px;
+    font-size:13px;line-height:1;
+    transition:color .15s,transform .2s;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .slider-card-head .reset-one:hover{color:var(--primary);transform:rotate(-180deg)}
+  .slider-card .track-wrap{position:relative;padding:8px 0;touch-action:pan-y}
+  .slider-card input[type="range"]{
+    width:100%;height:8px;border-radius:8px;outline:none;
+    -webkit-appearance:none;appearance:none;cursor:pointer;
+    background:linear-gradient(
+      to right,
+      var(--primary) 0%, var(--primary) var(--p,50%),
+      var(--secondary) var(--p,50%), var(--secondary) 100%
+    );
+    margin:0;
+  }
+  .slider-card input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;
+    width:24px;height:24px;border-radius:50%;
+    background:#fff;border:3px solid var(--primary);
+    cursor:grab;
+    box-shadow:0 3px 10px rgba(249,95,142,.5),0 0 0 4px rgba(249,95,142,.12);
+    transition:transform .12s,box-shadow .12s;
+  }
+  .slider-card input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.1)}
+  .slider-card input[type="range"]:active::-webkit-slider-thumb{
+    cursor:grabbing;transform:scale(1.15);
+    box-shadow:0 3px 14px rgba(249,95,142,.7),0 0 0 6px rgba(249,95,142,.2);
+  }
+  .slider-card input[type="range"]::-moz-range-thumb{
+    width:22px;height:22px;border-radius:50%;
+    background:#fff;border:3px solid var(--primary);cursor:grab;
+    box-shadow:0 3px 10px rgba(249,95,142,.5);
+  }
+  .slider-card input[type="range"]:focus-visible{outline:2px solid var(--primary);outline-offset:6px}
+  /* Track 上的「中央 / 100%」標記 */
+  .slider-card .track-mark{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:2px;height:14px;background:rgba(255,255,255,.18);border-radius:2px;
+    pointer-events:none;
+  }
+  .slider-card .scale-row{
+    display:flex;justify-content:space-between;
+    font-size:10px;color:var(--text-mute);
+    font-family:"JetBrains Mono",monospace;
+    margin-top:4px;
+  }
+
+  .num-input-row{display:flex;gap:8px;margin-bottom:10px}
+  .num-input-row label{flex:1}
+  .num-input-row label span{display:block;font-size:12px;color:var(--text-dim);margin-bottom:4px}
+  .num-input-row input{font-family:"JetBrains Mono",monospace;text-align:right}
+
+  .upload-zone{
+    border:2px dashed var(--border);border-radius:var(--radius);
+    padding:40px 22px;text-align:center;
+    transition:.2s;cursor:pointer;
+    background:var(--panel-2);
+  }
+  .upload-zone:hover{border-color:var(--primary);background:rgba(249,95,142,.04)}
+  .upload-zone.drag-over{border-color:var(--primary);background:var(--primary-soft);transform:scale(1.01)}
+  .upload-zone .upload-icon{font-size:42px;margin-bottom:10px;opacity:.7}
+  .upload-zone h3{font-size:16px;font-weight:700;margin-bottom:6px}
+  .upload-zone p{font-size:13px;color:var(--text-dim)}
+
+  .view-toggle{display:flex;gap:6px;background:var(--bg);padding:4px;border-radius:999px;width:fit-content;margin-bottom:10px}
+  .view-toggle button{
+    background:transparent;border:none;color:var(--text-dim);
+    font-family:inherit;font-size:13px;font-weight:600;
+    padding:6px 14px;border-radius:999px;cursor:pointer;transition:.15s;
+  }
+  .view-toggle button.active{background:var(--primary);color:#fff}
+
+  /* Split tab */
+  .step-card{background:var(--panel-2);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:14px}
+  .step-card.disabled{opacity:.5;pointer-events:none}
+  .step-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .step-header .step-icon{
+    width:30px;height:30px;border-radius:8px;
+    background:var(--primary);color:#fff;
+    display:inline-flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:14px;flex-shrink:0;
+  }
+  .step-card.disabled .step-icon{background:var(--secondary);color:var(--text-mute)}
+  .step-card.done .step-icon{background:var(--success);color:#0d2818}
+  .step-header h3{font-size:16px;font-weight:700}
+
+  .split-canvas-wrap{
+    position:relative;background:var(--panel);border-radius:var(--radius-sm);
+    overflow:hidden;border:1px solid var(--border);max-height:500px;
+    display:flex;justify-content:center;align-items:flex-start;
+  }
+  .split-canvas-wrap canvas{display:block;max-width:100%;max-height:500px;width:auto;height:auto;object-fit:contain}
+
+  .frame-grid{
+    display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:14px;
+  }
+  .frame-cell{
+    background:
+      linear-gradient(45deg,#15192480 25%,transparent 25%),
+      linear-gradient(-45deg,#15192480 25%,transparent 25%),
+      linear-gradient(45deg,transparent 75%,#15192480 75%),
+      linear-gradient(-45deg,transparent 75%,#15192480 75%);
+    background-size:14px 14px;
+    background-position:0 0,0 7px,7px -7px,-7px 0;
+    background-color:var(--panel);
+    border-radius:var(--radius-sm);overflow:hidden;
+    position:relative;aspect-ratio:1.23;
+    border:1px solid var(--border);
+  }
+  .frame-cell canvas,.frame-cell img{display:block;width:100%;height:100%;object-fit:contain}
+  .frame-cell .frame-label{
+    position:absolute;bottom:4px;left:50%;transform:translateX(-50%);
+    background:rgba(0,0,0,.7);color:#fff;
+    padding:2px 8px;border-radius:6px;
+    font-size:11px;font-weight:700;font-family:"JetBrains Mono",monospace;
+  }
+  .frame-cell .frame-dl{
+    position:absolute;top:6px;right:6px;
+    width:30px;height:30px;
+    background:rgba(0,0,0,.65);
+    backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+    border:1px solid rgba(255,255,255,.18);
+    border-radius:50%;
+    color:#fff;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    z-index:2;padding:0;
+    transition:background .15s,transform .12s,border-color .15s;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .frame-cell .frame-dl:hover{background:var(--accent);border-color:var(--accent)}
+  .frame-cell .frame-dl:active{transform:scale(.88)}
+  .frame-cell .frame-dl svg{display:block;width:14px;height:14px}
+  @media (max-width:560px){
+    .frame-cell .frame-dl{width:26px;height:26px}
+    .frame-cell .frame-dl svg{width:12px;height:12px}
+  }
+  .frame-hint{
+    margin-top:10px;font-size:12px;color:var(--text-dim);
+    display:flex;align-items:center;gap:6px;
+  }
+
+  .alert{
+    padding:10px 14px;border-radius:var(--radius-sm);
+    font-size:13px;line-height:1.5;
+    display:flex;align-items:flex-start;gap:8px;
+  }
+  .alert.info{background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.3);color:#c7d2fe}
+  .alert.success{background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);color:#bbf7d0}
+  .alert.warning{background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);color:#fde68a}
+
+  /* Toast */
+  .toast{
+    position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);
+    background:var(--panel);border:1px solid var(--border);
+    color:var(--text);padding:12px 20px;border-radius:999px;
+    font-size:14px;font-weight:600;
+    box-shadow:var(--shadow);z-index:1000;
+    transition:transform .3s ease,opacity .3s ease;opacity:0;
+    pointer-events:none;
+  }
+  .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+  .toast.success{border-color:var(--success);color:var(--success)}
+  .toast.error{border-color:var(--danger);color:#fca5a5}
+
+  .stats-bar{
+    display:flex;gap:14px;flex-wrap:wrap;
+    background:var(--bg);padding:10px 14px;border-radius:var(--radius-sm);
+    font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--text-dim);
+    margin-bottom:14px;
+  }
+  .stats-bar .stat-item{display:flex;align-items:center;gap:6px}
+  .stats-bar .stat-item strong{color:var(--text)}
+
+  .progress-bar{
+    height:6px;background:var(--bg);border-radius:6px;overflow:hidden;
+    margin-top:10px;
+  }
+  .progress-bar .fill{height:100%;background:var(--primary);border-radius:6px;width:0;transition:width .2s}
+
+  .scenario-section{margin-bottom:14px}
+  .scenario-section .cat-title{
+    font-size:12px;font-weight:700;color:var(--text-mute);
+    text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;
+  }
+  .scenario-pills{display:flex;gap:6px;flex-wrap:wrap}
+
+  .selected-count{
+    background:var(--primary-soft);color:var(--primary);
+    padding:4px 10px;border-radius:999px;font-size:12px;font-weight:700;
+    display:inline-block;margin-left:8px;
+  }
+
+  /* Responsive */
+  @media (max-width:900px){
+    .wm-layout{grid-template-columns:1fr}
+    .grid-2,.grid-3{grid-template-columns:1fr}
+    .frame-grid{grid-template-columns:repeat(4,1fr)}
+  }
+  @media (max-width:560px){
+    .container{padding:14px}
+    header.app-header{padding:12px 14px}
+    .app-title{font-size:16px}
+    .panel{padding:16px}
+    .nav-tabs{padding:12px 14px 0}
+    .tab-btn{padding:8px 14px;font-size:13px}
+    .frame-grid{grid-template-columns:repeat(3,1fr);gap:6px}
+    .upload-zone{padding:30px 14px}
+  }
+
+  /* utility */
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .mt-1{margin-top:8px}
+  .mt-2{margin-top:14px}
+  .mt-3{margin-top:20px}
+  .hidden{display:none !important}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="logo">✨</div>
+  <div>
+    <div class="app-title">LINE 貼圖自動化助手</div>
+    <div class="app-subtitle">Prompt 大師 ・ 浮水印移除 ・ 智慧分割去背</div>
+  </div>
+</header>
+
+<nav class="nav-tabs" id="nav-tabs"><button class="tab-btn" data-target="tab-prompt">1. Line貼圖 Prompt 大師</button><button class="tab-btn" data-target="tab-watermark">2. 去除星星浮水印</button><button class="tab-btn active" data-target="tab-split">3. 上傳與分割 / 智慧去背</button></nav>
+
+<main class="container">
+  <!-- Tab 1: Prompt -->
+  <section class="tab-content" id="tab-prompt">
+    <div class="panel">
+      <h2><span class="step-num">1</span>Line 貼圖 Prompt 大師</h2>
+      <p class="desc">透過結構化表單，快速生成精準的 AI 繪圖詠唱詞，可直接帶入 Gemini 等 AI 生圖工具。</p>
+
+      <div class="form-group">
+        <label class="form-label">① 設定角色來源</label>
+        <div class="toggle-group" id="char-source">
+          <button class="pill active" data-val="reference">參考上傳圖</button>
+          <button class="pill" data-val="custom">自訂角色</button>
+        </div>
+        <div id="custom-char-wrap" class="mt-2 hidden">
+          <textarea id="custom-char" placeholder="例：一隻穿著太空衣正在喝珍奶的機器人，圓潤可愛，大眼睛"></textarea>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">
+          ② 選擇貼圖情境主題
+          <span class="selected-count" id="scenario-count">已選 0 / 20</span>
+        </label>
+        <div class="hint">點選想要的文字情境，最多選 20 個。AI 會依此產生對應的姿勢與文字。</div>
+        <div id="scenarios-wrap" class="mt-2"><div class="scenario-section"><div class="cat-title">日常情境</div><div class="scenario-pills"><button class="chip" data-val="HI">HI</button><button class="chip" data-val="OK">OK</button><button class="chip" data-val="早安">早安</button><button class="chip" data-val="午安">午安</button><button class="chip" data-val="晚安">晚安</button><button class="chip" data-val="3Q">3Q</button><button class="chip" data-val="哈囉">哈囉</button><button class="chip" data-val="Bye">Bye</button><button class="chip" data-val="先閃人">先閃人</button><button class="chip" data-val="收到">收到</button><button class="chip" data-val="沒問題">沒問題</button><button class="chip" data-val="路上小心">路上小心</button><button class="chip" data-val="回應一下吧">回應一下吧</button><button class="chip" data-val="好的">好的</button><button class="chip" data-val="謝謝你">謝謝你</button><button class="chip" data-val="感恩">感恩</button><button class="chip" data-val="謝謝您">謝謝您</button><button class="chip" data-val="真假啦">真假啦</button><button class="chip" data-val="出發">出發</button><button class="chip" data-val="下次見">下次見</button><button class="chip" data-val="舉手">舉手</button></div></div><div class="scenario-section"><div class="cat-title">開心慶祝</div><div class="scenario-pills"><button class="chip" data-val="感動捏">感動捏</button><button class="chip" data-val="Fighting">Fighting</button><button class="chip" data-val="做得好">做得好</button><button class="chip" data-val="哈哈哈">哈哈哈</button><button class="chip" data-val="衝">衝</button><button class="chip" data-val="樂翻">樂翻</button><button class="chip" data-val="太好笑">太好笑</button><button class="chip" data-val="很可以">很可以</button><button class="chip" data-val="讚啦">讚啦</button><button class="chip" data-val="超棒的">超棒的</button><button class="chip" data-val="太好了">太好了</button><button class="chip" data-val="幹得好">幹得好</button><button class="chip" data-val="YA">YA</button><button class="chip" data-val="耶">耶</button><button class="chip" data-val="開心">開心</button><button class="chip" data-val="我很棒">我很棒</button></div></div><div class="scenario-section"><div class="cat-title">難過失落</div><div class="scenario-pills"><button class="chip" data-val="不知道">不知道</button><button class="chip" data-val="泣">泣</button><button class="chip" data-val="好累哦">好累哦</button><button class="chip" data-val="嗚嗚嗚">嗚嗚嗚</button><button class="chip" data-val="撐不住了">撐不住了</button><button class="chip" data-val="怎麼了">怎麼了</button><button class="chip" data-val="眼神死">眼神死</button><button class="chip" data-val="心碎">心碎</button><button class="chip" data-val="只能白眼">只能白眼</button><button class="chip" data-val="難過">難過</button><button class="chip" data-val="哭哭">哭哭</button></div></div><div class="scenario-section"><div class="cat-title">生氣激動</div><div class="scenario-pills"><button class="chip" data-val="欠處理">欠處理</button><button class="chip" data-val="生氣氣">生氣氣</button><button class="chip" data-val="不爽啦">不爽啦</button><button class="chip" data-val="麥鬧">麥鬧</button><button class="chip" data-val="想吵架嗎">想吵架嗎</button><button class="chip" data-val="氣炸了">氣炸了</button><button class="chip" data-val="驚">驚</button><button class="chip" data-val="涥">涥</button></div></div><div class="scenario-section"><div class="cat-title">工作情境</div><div class="scenario-pills"><button class="chip" data-val="收到">收到</button><button class="chip" data-val="沒問題">沒問題</button><button class="chip" data-val="等你喔">等你喔</button><button class="chip" data-val="回應一下吧">回應一下吧</button><button class="chip" data-val="開會中">開會中</button><button class="chip" data-val="辛苦了">辛苦了</button><button class="chip" data-val="冷靜冷靜">冷靜冷靜</button><button class="chip" data-val="放輕鬆">放輕鬆</button></div></div><div class="scenario-section"><div class="cat-title">戀愛撒嬌</div><div class="scenario-pills"><button class="chip" data-val="拜託">拜託</button><button class="chip" data-val="抱抱">抱抱</button><button class="chip" data-val="求你">求你</button><button class="chip" data-val="想你喔">想你喔</button><button class="chip" data-val="愛你">愛你</button><button class="chip" data-val="愛泥">愛泥</button><button class="chip" data-val="貼貼">貼貼</button><button class="chip" data-val="抓緊緊">抓緊緊</button><button class="chip" data-val="不好意思">不好意思</button><button class="chip" data-val="喜歡">喜歡</button><button class="chip" data-val="感動">感動</button></div></div><div class="scenario-section"><div class="cat-title">運動健身</div><div class="scenario-pills"><button class="chip" data-val="Fighting">Fighting</button><button class="chip" data-val="衝">衝</button><button class="chip" data-val="撐住">撐住</button><button class="chip" data-val="燃燒脂肪">燃燒脂肪</button><button class="chip" data-val="最後一組">最後一組</button></div></div><div class="scenario-section"><div class="cat-title">吃貨日常</div><div class="scenario-pills"><button class="chip" data-val="想吃">想吃</button><button class="chip" data-val="餓了">餓了</button><button class="chip" data-val="宵夜時間">宵夜時間</button><button class="chip" data-val="罪惡感">罪惡感</button><button class="chip" data-val="吃飽了">吃飽了</button><button class="chip" data-val="這家超推">這家超推</button><button class="chip" data-val="真香">真香</button></div></div></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">③ 選擇畫風</label>
+        <div class="toggle-group" id="style-pick"><button class="pill active">可愛 Q 版</button><button class="pill">照片級寫實</button><button class="pill">3D 公仔</button><button class="pill">扁平插畫</button><button class="pill">童書繪本</button><button class="pill">童趣手繪</button><button class="pill">日系 Chibi</button><button class="pill">清新水彩</button><button class="pill">古風水墨</button><button class="pill">復古像素</button><button class="pill">粉蠟筆</button><button class="pill">黑白塗鴉線條風</button><button class="pill">浮誇顏藝風</button></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">④ 邊框設定</label>
+        <div class="switch-row">
+          <div>
+            <div class="label">為角色加入白色貼圖邊框</div>
+            <div class="label-desc">啟用後 AI 會繪製清晰的白色 die-cut 貼圖風格邊框</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="border-toggle">
+            <span class="slider-sw"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">⑤ 自訂文字情境（選填）</label>
+        <textarea id="custom-action" placeholder="加在「貼圖情境」清單之後，作為額外的文字 / 情境項目。例：週一憂鬱、肚子餓了、睡死了、加油加油、想下班、再忍一下..."></textarea>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>📝 即時 Prompt 預覽</h2>
+      <p class="desc">系統會根據你的設定自動生成完整指令，已強制加入「純綠幕背景」以利後續去背。</p>
+      <div class="sub-tabs" role="tablist" aria-label="Prompt 語言切換">
+        <button class="sub-tab active" type="button" data-lang="en" role="tab" aria-selected="true">
+          <span>🌐 結構化 Prompt</span><span class="tag">EN</span>
+        </button>
+        <button class="sub-tab" type="button" data-lang="zh" role="tab" aria-selected="false">
+          <span>🀄 完全中文</span><span class="tag">ZH</span>
+        </button>
+      </div>
+      <div class="prompt-output" id="prompt-output" data-lang="en"># LINE Sticker Sheet Generation Prompt
+
+## [Layout Settings]
+- Canvas size: 2560 x 1664 pixels
+- Grid: 5 columns x 4 rows = 20 stickers in total
+- Each cell focuses on a distinct facial expression and pose
+- Background: Solid Green Screen (#00FF00) — fully flat, no gradients, no shadows on background
+- Sticker count: 20 (filling every cell of the 5x4 grid)
+
+## [Core Rules]
+- Composition: half-body or full-body, choose per pose to best convey the action
+- Strictly NO grid lines, NO white separators, NO borders between cells — cells must blend seamlessly into one solid green background
+- Optional Traditional Chinese (繁體中文) text on each sticker — text may be horizontal or vertical, hand-lettered or speech-bubble style
+- Maintain consistent character design (face shape, hair, outfit, palette) across all 20 stickers
+
+## [Character]
+Use the uploaded reference image as the base character. Maintain its exact appearance, outfit, and identity across all 20 stickers.
+
+## [Art Style]
+可愛 Q 版
+
+## [Sticker Scenarios]
+Generate exactly 20 stickers, each cell expressing one of the following actions / texts (use Traditional Chinese for any displayed text):
+  (請至少選擇 1 個情境主題)
+
+## [Output Requirements]
+- Single image, 2560x1664 px
+- Pure green background (#00FF00) outside the character silhouette
+- Each character occupies the cell with comfortable padding so cropping into 5x4 cells captures the full pose
+- High detail, sharp lines, sticker-optimized illustration</div>
+      <div class="button-row">
+        <button class="btn" id="copy-prompt-btn">📋 複製當前版本</button>
+        <button class="btn secondary" id="open-gemini-btn">🚀 前往 Gemini</button>
+        <button class="btn secondary" id="open-chatgpt-btn">💬 前往 ChatGPT</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tab 2: Watermark -->
+  <section class="tab-content" id="tab-watermark">
+    <div class="panel">
+      <h2><span class="step-num">2</span>去除星星浮水印</h2>
+      <p class="desc">上傳圖片自動移除 Gemini AI 浮水印（雙線性插值精算 alpha，無破圖）。可拖曳紅框定位浮水印位置。</p>
+
+      <div id="wm-upload-wrap">
+        <div class="upload-zone" id="wm-upload">
+          <div class="upload-icon">⬆️</div>
+          <h3>拖曳圖片到此 或 點擊上傳</h3>
+          <p>支援 PNG / JPG，建議使用 Gemini 生成的原始大圖</p>
+          <input type="file" id="wm-file-input" accept="image/*" hidden="">
+        </div>
+      </div>
+
+      <div id="wm-editor" class="hidden">
+        <div class="view-toggle">
+          <button id="wm-view-processed" class="active">處理結果</button>
+          <button id="wm-view-original">原始圖片</button>
+        </div>
+
+        <div class="wm-layout">
+          <div class="wm-canvas-area">
+            <div class="wm-canvas-wrap" id="wm-canvas-wrap">
+              <canvas id="wm-canvas"></canvas>
+            </div>
+            <div class="stats-bar mt-2" id="wm-stats">
+              <div class="stat-item">尺寸：<strong id="wm-size">-</strong></div>
+              <div class="stat-item">浮水印區：<strong id="wm-area">-</strong></div>
+            </div>
+          </div>
+
+          <div class="wm-controls">
+            <div class="control-card">
+              <h3>📍 浮水印定位</h3>
+              <div class="num-input-row">
+                <label>
+                  <span>距右邊界 (px)</span>
+                  <input type="number" id="wm-margin-r" value="60" min="0">
+                </label>
+                <label>
+                  <span>距下邊界 (px)</span>
+                  <input type="number" id="wm-margin-b" value="60" min="0">
+                </label>
+              </div>
+              <div class="switch-row" style="padding:8px 12px">
+                <div class="label" style="font-size:13px">顯示紅色定位框</div>
+                <label class="switch" style="width:42px;height:24px">
+                  <input type="checkbox" id="wm-show-box" checked="">
+                  <span class="slider-sw"></span>
+                </label>
+              </div>
+            </div>
+
+            <div class="control-card">
+              <h3>🎚️ 參數微調</h3>
+              <div class="slider-row">
+                <label>移除強度 alpha <span class="val" id="wm-alpha-val">1.00</span></label>
+                <input type="range" id="wm-alpha" min="0.5" max="1.5" step="0.01" value="1.0">
+              </div>
+              <div class="slider-row">
+                <label>區域縮放 scale <span class="val" id="wm-scale-val">100%</span></label>
+                <input type="range" id="wm-scale" min="50" max="200" step="1" value="100">
+              </div>
+            </div>
+
+            <div class="control-card">
+              <h3>💾 匯出</h3>
+              <div class="button-row" style="margin:0">
+                <button class="btn" id="wm-download">下載 PNG</button>
+                <button class="btn ghost" id="wm-reset">選擇其他圖片</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tab 3: Split & Background Removal -->
+  <section class="tab-content active" id="tab-split">
+    <div class="panel">
+      <h2><span class="step-num">3</span>上傳與分割 / 智慧去背</h2>
+      <p class="desc">將 5×4 網格大圖切為 20 張獨立貼圖、自動去除綠幕背景，最後一鍵打包 ZIP 下載。</p>
+
+      <!-- Step 3.1 -->
+      <div class="step-card" id="split-step1">
+        <div class="step-header">
+          <div class="step-icon">1</div>
+          <h3>上傳與分割</h3>
+        </div>
+        <div class="alert info" style="margin-bottom:14px">
+          📐 圖檔規格：<strong>5 欄 × 4 列</strong>，共 20 張貼圖，總尺寸建議 <strong>2560 × 1664 px</strong>
+        </div>
+        <div class="row" style="margin-bottom:14px">
+          <button class="btn warn" id="split-from-step2" disabled="">📋 從步驟 2 複製圖片</button>
+          <button class="btn ghost" id="split-pick-file">📂 選擇檔案</button>
+          <input type="file" id="split-file-input" accept="image/*" hidden="">
+        </div>
+
+        <div id="split-upload-zone" class="upload-zone">
+          <div class="upload-icon">🖼️</div>
+          <h3>拖曳大圖到此</h3>
+          <p>支援 PNG / JPG，5×4 = 20 張貼圖網格</p>
+        </div>
+
+        <div id="split-editor" class="hidden">
+          <div class="split-canvas-wrap">
+            <canvas id="split-canvas"></canvas>
+          </div>
+          <div class="align-panel">
+            <div class="align-panel-head">
+              <div class="title"><span class="dot"></span>對齊微調控制</div>
+              <button type="button" class="reset-all" id="split-reset-all">↺ 全部歸零</button>
+            </div>
+            <div class="align-grid">
+              <div class="slider-card">
+                <div class="slider-card-head">
+                  <div class="lbl"><span class="ico">↔</span>水平平移 X</div>
+                  <div class="vbox">
+                    <span class="v" id="split-x-val">0</span>
+                    <button type="button" class="reset-one" data-target="split-x" data-default="0" title="歸零">↺</button>
+                  </div>
+                </div>
+                <div class="track-wrap">
+                  <span class="track-mark"></span>
+                  <input type="range" id="split-x" min="-100" max="100" step="1" value="0" style="--p: 50%;">
+                </div>
+                <div class="scale-row"><span>-100</span><span>0</span><span>+100</span></div>
+              </div>
+              <div class="slider-card">
+                <div class="slider-card-head">
+                  <div class="lbl"><span class="ico">↕</span>垂直平移 Y</div>
+                  <div class="vbox">
+                    <span class="v" id="split-y-val">0</span>
+                    <button type="button" class="reset-one" data-target="split-y" data-default="0" title="歸零">↺</button>
+                  </div>
+                </div>
+                <div class="track-wrap">
+                  <span class="track-mark"></span>
+                  <input type="range" id="split-y" min="-100" max="100" step="1" value="0" style="--p: 50%;">
+                </div>
+                <div class="scale-row"><span>-100</span><span>0</span><span>+100</span></div>
+              </div>
+              <div class="slider-card">
+                <div class="slider-card-head">
+                  <div class="lbl"><span class="ico">⌖</span>縮放尺寸</div>
+                  <div class="vbox">
+                    <span class="v" id="split-zoom-val">100%</span>
+                    <button type="button" class="reset-one" data-target="split-zoom" data-default="100" title="歸零">↺</button>
+                  </div>
+                </div>
+                <div class="track-wrap">
+                  <span class="track-mark"></span>
+                  <input type="range" id="split-zoom" min="80" max="120" step="1" value="100" style="--p: 50%;">
+                </div>
+                <div class="scale-row"><span>80%</span><span>100%</span><span>120%</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="frame-hint" style="margin-top:14px">
+            <span>✋</span>
+            <span>可直接<b style="color:var(--text)">拖曳預覽圖上的粉色虛線或圓點</b>調整每張貼圖的切割範圍。最少 4% 間距以避免重疊。</span>
+          </div>
+          <div class="button-row">
+            <button class="btn" id="split-confirm">✂️ 確認切割</button>
+            <button class="btn secondary" id="split-reset-lines">📐 還原分割線等分</button>
+            <button class="btn ghost" id="split-reset">重新選擇</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3.2 -->
+      <div class="step-card disabled" id="split-step2">
+        <div class="step-header">
+          <div class="step-icon">2</div>
+          <h3>智慧去背</h3>
+        </div>
+        <div class="switch-row" style="margin-bottom:14px">
+          <div>
+            <div class="label">啟用智能去背</div>
+            <div class="label-desc">遍歷 20 張影格將純綠幕背景轉換為透明</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="bg-toggle" checked="">
+            <span class="slider-sw"></span>
+          </label>
+        </div>
+        <div class="form-group">
+          <label class="form-label">處理模式</label>
+          <div class="toggle-group" id="bg-mode">
+            <button class="pill active" data-val="standard">標準模式（一般綠幕去背）</button>
+          </div>
+        </div>
+        <div class="slider-row">
+          <label>容差值 tolerance <span class="val" id="bg-tol-val">80</span></label>
+          <input type="range" id="bg-tol" min="20" max="150" step="1" value="80">
+        </div>
+        <div class="button-row">
+          <button class="btn" id="bg-execute">▶️ 執行去背處理</button>
+        </div>
+        <div class="frame-hint" id="frame-hint" style="display:none">
+          <span>💡</span>
+          <span>點擊每張右上角的 <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> 圖示可下載單張（手機亦支援）。檔名會跟隨「起始編號」設定。</span>
+        </div>
+        <div class="frame-grid" id="frame-preview"></div>
+      </div>
+
+      <!-- Step 3.3 -->
+      <div class="step-card disabled" id="split-step3">
+        <div class="step-header">
+          <div class="step-icon">3</div>
+          <h3>打包與下載</h3>
+        </div>
+        <div class="row" style="margin-bottom:14px">
+          <label style="font-size:14px;font-weight:600">起始編號（組）：</label>
+          <input type="number" id="zip-start" value="1" min="1" max="999" style="width:80px">
+          <span style="font-size:12px;color:var(--text-mute)" id="zip-preview-name">輸出檔名：1-1.png ~ 5-4.png</span>
+        </div>
+        <div class="button-row">
+          <button class="btn success" id="zip-download">📦 下載完整 ZIP</button>
+          <a class="btn secondary" href="https://creator.line.me/zh-hant/" target="_blank" rel="noopener noreferrer" id="open-line-creators">
+            🎨 前往 LINE Creators Market
+          </a>
+        </div>
+        <div class="progress-bar hidden" id="zip-progress"><div class="fill"></div></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================================
+ * AppConfig - 全域設定中樞
+ * ======================================================================= */
+const AppConfig = {
+  colors: {
+    primary: "#f95f8e",
+    secondary: "#2c3344",
+    text: "#ffffff",
+    background: "#1a1e29",
+    panelBg: "#222736"
+  },
+  stickerSpecs: {
+    mainWidth: 240,
+    mainHeight: 240
+  },
+  gridSpec: {
+    columns: 5,
+    rows: 4,
+    totalWidth: 2560,
+    totalHeight: 1664
+  },
+  tabs: [
+    { id: "tab-prompt",    name: "1. Line貼圖 Prompt 大師" },
+    { id: "tab-watermark", name: "2. 去除星星浮水印" },
+    { id: "tab-split",     name: "3. 上傳與分割 / 智慧去背" }
+  ],
+  scenarios: {
+    "日常情境": ["HI","OK","早安","午安","晚安","3Q","哈囉","Bye","先閃人","收到","沒問題","路上小心","回應一下吧","好的","謝謝你","感恩","謝謝您","真假啦","出發","下次見","舉手"],
+    "開心慶祝": ["感動捏","Fighting","做得好","哈哈哈","衝","樂翻","太好笑","很可以","讚啦","超棒的","太好了","幹得好","YA","耶","開心","我很棒"],
+    "難過失落": ["不知道","泣","好累哦","嗚嗚嗚","撐不住了","怎麼了","眼神死","心碎","只能白眼","難過","哭哭"],
+    "生氣激動": ["欠處理","生氣氣","不爽啦","麥鬧","想吵架嗎","氣炸了","驚","涥"],
+    "工作情境": ["收到","沒問題","等你喔","回應一下吧","開會中","辛苦了","冷靜冷靜","放輕鬆"],
+    "戀愛撒嬌": ["拜託","抱抱","求你","想你喔","愛你","愛泥","貼貼","抓緊緊","不好意思","喜歡","感動"],
+    "運動健身": ["Fighting","衝","撐住","燃燒脂肪","最後一組"],
+    "吃貨日常": ["想吃","餓了","宵夜時間","罪惡感","吃飽了","這家超推","真香"]
+  },
+  styles: ["可愛 Q 版","照片級寫實","3D 公仔","扁平插畫","童書繪本","童趣手繪","日系 Chibi","清新水彩","古風水墨","復古像素","粉蠟筆","黑白塗鴉線條風","浮誇顏藝風"]
+};
+
+/* =========================================================================
+ * 內建 100x100 Gemini 星星浮水印 PNG (Base64)
+ * 從實際樣本提取的 alpha 通道，用於精算去除
+ * ======================================================================= */
+const TPL_B64 = "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";
+
+/* =========================================================================
+ * 公用工具函式
+ * ======================================================================= */
+const $ = (id) => document.getElementById(id);
+const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+function toast(msg, type="info") {
+  const t = $("toast");
+  t.textContent = msg;
+  t.className = "toast show " + type;
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.remove("show"), 2200);
+}
+
+// 用 textarea + execCommand 實作複製（避開 iframe 中 navigator.clipboard 權限問題）
+function copyText(text) {
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.position = "fixed";
+  ta.style.left = "-9999px";
+  ta.style.top = "0";
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  let ok = false;
+  try { ok = document.execCommand("copy"); } catch(e) { ok = false; }
+  document.body.removeChild(ta);
+  return ok;
+}
+
+/* =========================================================================
+ * 分頁切換 (Client-side Routing)
+ * ======================================================================= */
+function initTabs() {
+  const navWrap = $("nav-tabs");
+  AppConfig.tabs.forEach((tab, idx) => {
+    const btn = document.createElement("button");
+    btn.className = "tab-btn" + (idx === 0 ? " active" : "");
+    btn.textContent = tab.name;
+    btn.dataset.target = tab.id;
+    btn.addEventListener("click", () => switchTab(tab.id));
+    navWrap.appendChild(btn);
+  });
+  AppConfig.tabs.forEach((tab, idx) => {
+    if (idx === 0) $(tab.id).classList.add("active");
+  });
+}
+function switchTab(id) {
+  $$(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.target === id));
+  $$(".tab-content").forEach(c => c.classList.toggle("active", c.id === id));
+  window.scrollTo({top: 0, behavior: "smooth"});
+}
+
+/* =========================================================================
+ * Tab 1 - Prompt 大師
+ * ======================================================================= */
+const PromptState = {
+  charSource: "reference",
+  customChar: "",
+  scenarios: new Set(),
+  style: "可愛 Q 版",
+  border: false,
+  customAction: ""
+};
+
+function initPromptTab() {
+  // 角色來源切換
+  $$("#char-source .pill").forEach(btn => {
+    btn.addEventListener("click", () => {
+      $$("#char-source .pill").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      PromptState.charSource = btn.dataset.val;
+      $("custom-char-wrap").classList.toggle("hidden", PromptState.charSource !== "custom");
+      updatePrompt();
+    });
+  });
+  $("custom-char").addEventListener("input", e => {
+    PromptState.customChar = e.target.value;
+    updatePrompt();
+  });
+  $("custom-action").addEventListener("input", e => {
+    PromptState.customAction = e.target.value;
+    updatePrompt();
+  });
+
+  // 情境主題
+  const wrap = $("scenarios-wrap");
+  Object.entries(AppConfig.scenarios).forEach(([cat, items]) => {
+    const sec = document.createElement("div");
+    sec.className = "scenario-section";
+    sec.innerHTML = `<div class="cat-title">${cat}</div><div class="scenario-pills"></div>`;
+    const pills = sec.querySelector(".scenario-pills");
+    // 去重避免重複文字
+    const seen = new Set();
+    items.forEach(txt => {
+      if (seen.has(txt)) return;
+      seen.add(txt);
+      const chip = document.createElement("button");
+      chip.className = "chip";
+      chip.textContent = txt;
+      chip.dataset.val = txt;
+      chip.addEventListener("click", () => toggleScenario(chip, txt));
+      pills.appendChild(chip);
+    });
+    wrap.appendChild(sec);
+  });
+
+  // 畫風選擇
+  const styleWrap = $("style-pick");
+  AppConfig.styles.forEach((s, i) => {
+    const btn = document.createElement("button");
+    btn.className = "pill" + (i === 0 ? " active" : "");
+    btn.textContent = s;
+    btn.addEventListener("click", () => {
+      $$("#style-pick .pill").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      PromptState.style = s;
+      updatePrompt();
+    });
+    styleWrap.appendChild(btn);
+  });
+
+  // 邊框 toggle
+  $("border-toggle").addEventListener("change", e => {
+    PromptState.border = e.target.checked;
+    updatePrompt();
+  });
+
+  // 子頁籤切換（英文 / 中文）
+  $$(".sub-tab").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const lang = btn.dataset.lang;
+      const out = $("prompt-output");
+      if (out.dataset.lang === lang) return;
+      $$(".sub-tab").forEach(b => {
+        const act = b.dataset.lang === lang;
+        b.classList.toggle("active", act);
+        b.setAttribute("aria-selected", act ? "true" : "false");
+      });
+      out.dataset.lang = lang;
+      updatePrompt();
+    });
+  });
+
+  // 複製 / 前往 Gemini
+  $("copy-prompt-btn").addEventListener("click", () => {
+    const out = $("prompt-output");
+    const ok = copyText(out.textContent);
+    const langLabel = out.dataset.lang === "zh" ? "中文版" : "英文版";
+    if (ok) toast(`已複製 ${langLabel} Prompt！`, "success");
+    else toast("複製失敗，請手動選取", "error");
+  });
+  $("open-gemini-btn").addEventListener("click", () => {
+    window.open("https://gemini.google.com/", "_blank", "noopener");
+  });
+  $("open-chatgpt-btn").addEventListener("click", () => {
+    window.open("https://chatgpt.com/", "_blank", "noopener");
+  });
+
+  updatePrompt();
+}
+
+function toggleScenario(chip, txt) {
+  if (PromptState.scenarios.has(txt)) {
+    PromptState.scenarios.delete(txt);
+  } else {
+    if (PromptState.scenarios.size >= 20) {
+      toast("最多選 20 個情境", "error");
+      return;
+    }
+    PromptState.scenarios.add(txt);
+  }
+  // 同步所有相同 data-val 的 chip 狀態（部分情境跨分類重複）
+  const isActive = PromptState.scenarios.has(txt);
+  $$("#scenarios-wrap .chip").forEach(c => {
+    if (c.dataset.val === txt) c.classList.toggle("active", isActive);
+  });
+  $("scenario-count").textContent = `已選 ${PromptState.scenarios.size} / 20`;
+  // 達 20 時其餘 chip 變灰
+  $$("#scenarios-wrap .chip").forEach(c => {
+    if (!c.classList.contains("active")) {
+      c.classList.toggle("disabled", PromptState.scenarios.size >= 20);
+    } else {
+      c.classList.remove("disabled");
+    }
+  });
+  updatePrompt();
+}
+
+function buildPrompt() {
+  const charLine = PromptState.charSource === "reference"
+    ? "Use the uploaded reference image as the base character. Maintain its exact appearance, outfit, and identity across all 20 stickers."
+    : (PromptState.customChar.trim() || "[請於上方輸入角色描述]");
+
+  const scenarios = Array.from(PromptState.scenarios);
+  const scenarioBlock = scenarios.length
+    ? scenarios.map((s,i) => `  ${i+1}. ${s}`).join("\n")
+    : "  (請至少選擇 1 個情境主題)";
+
+  const borderInst = PromptState.border
+    ? "\n- Add a clear white die-cut sticker border around the character (only around the character, not around the cells)."
+    : "";
+
+  const customAct = PromptState.customAction.trim()
+    ? `\n[Additional Custom Text Scenarios]\n${PromptState.customAction.trim()}\n`
+    : "";
+
+  return `# LINE Sticker Sheet Generation Prompt
+
+## [Layout Settings]
+- Canvas size: 2560 x 1664 pixels
+- Grid: 5 columns x 4 rows = 20 stickers in total
+- Each cell focuses on a distinct facial expression and pose
+- Background: Solid Green Screen (#00FF00) — fully flat, no gradients, no shadows on background
+- Sticker count: 20 (filling every cell of the 5x4 grid)
+
+## [Core Rules]
+- Composition: half-body or full-body, choose per pose to best convey the action
+- Strictly NO grid lines, NO white separators, NO borders between cells — cells must blend seamlessly into one solid green background
+- Optional Traditional Chinese (繁體中文) text on each sticker — text may be horizontal or vertical, hand-lettered or speech-bubble style
+- Maintain consistent character design (face shape, hair, outfit, palette) across all 20 stickers${borderInst}
+
+## [Character]
+${charLine}
+
+## [Art Style]
+${PromptState.style}
+
+## [Sticker Scenarios]
+Generate exactly 20 stickers, each cell expressing one of the following actions / texts (use Traditional Chinese for any displayed text):
+${scenarioBlock}
+${customAct}
+## [Output Requirements]
+- Single image, 2560x1664 px
+- Pure green background (#00FF00) outside the character silhouette
+- Each character occupies the cell with comfortable padding so cropping into 5x4 cells captures the full pose
+- High detail, sharp lines, sticker-optimized illustration`;
+}
+
+// 完全中文版本（內容對應 buildPrompt，便於不熟英文的使用者直接使用或對照）
+function buildPromptZh() {
+  const charLine = PromptState.charSource === "reference"
+    ? "請以上方上傳的參考圖作為基準角色，所有 20 張貼圖須完全保留其外貌、服裝與身份特徵。"
+    : (PromptState.customChar.trim() || "[請於上方輸入角色描述]");
+
+  const scenarios = Array.from(PromptState.scenarios);
+  const scenarioBlock = scenarios.length
+    ? scenarios.map((s,i) => `  ${i+1}. ${s}`).join("\n")
+    : "  （請至少選擇 1 個情境主題）";
+
+  const borderInst = PromptState.border
+    ? "\n- 為每位角色加上清晰的白色貼紙描邊（僅環繞角色本身，不在格子周圍加邊框）。"
+    : "";
+
+  const customAct = PromptState.customAction.trim()
+    ? `\n[自訂文字情境]\n${PromptState.customAction.trim()}\n`
+    : "";
+
+  return `# LINE 貼圖大圖生成 Prompt
+
+## [版面設定]
+- 畫布尺寸：2560 × 1664 像素
+- 網格：5 欄 × 4 列，共 20 張貼圖
+- 每格呈現不同的臉部表情與動作姿勢
+- 背景：純綠幕（#00FF00）— 完全平面色，不可有漸層或陰影
+- 貼圖總數：20 張（5×4 網格每一格皆需填滿）
+
+## [核心規則]
+- 構圖：依動作選擇半身或全身，以最能傳達該姿勢者為準
+- 嚴禁出現格線、白色分隔線、格與格之間的邊框 — 所有格子必須無縫融合於同一片綠色背景
+- 可在每張貼圖加入繁體中文文字 — 可橫向或直向書寫，手寫風或對話框樣式皆可
+- 所有 20 張貼圖必須維持一致的角色設計（臉型、髮型、服裝、配色）${borderInst}
+
+## [角色設定]
+${charLine}
+
+## [畫風]
+${PromptState.style}
+
+## [貼圖情境]
+請生成正好 20 張貼圖，每一格表現以下其中一個動作 / 文字（如有顯示文字請使用繁體中文）：
+${scenarioBlock}
+${customAct}
+## [輸出要求]
+- 單張圖片，2560×1664 px
+- 角色輪廓以外的部分為純綠色（#00FF00）背景
+- 每個角色於格內留有適當留白，確保切割成 5×4 後仍能完整呈現姿勢
+- 高細節、銳利線條、貼圖最佳化插畫`;
+}
+
+function updatePrompt() {
+  const out = $("prompt-output");
+  const lang = out.dataset.lang || "en";
+  out.textContent = lang === "zh" ? buildPromptZh() : buildPrompt();
+}
+
+/* =========================================================================
+ * Tab 2 - 去除星星浮水印
+ *   • 內建 100x100 模板的 alpha 通道 → Float32Array(10000)
+ *   • 雙線性插值精算每像素 alpha
+ *   • 公式：bg = (obs - 255*a) / (1 - a)，alpha 上限 0.985
+ * ======================================================================= */
+const WM = {
+  alphaArr: null,            // Float32Array(10000) - 模板原始 alpha (0~1)
+  origImage: null,           // 原圖 ImageData
+  origCanvas: null,          // 原圖 backing canvas
+  width: 0,
+  height: 0,
+  marginR: 60,
+  marginB: 60,
+  alphaMul: 1.0,
+  scale: 1.0,                // 模板縮放
+  showBox: true,
+  view: "processed",
+  draggingBox: false,
+  dragOffset: {x:0, y:0}
+};
+
+function initWatermarkTab() {
+  // 載入內建星星模板，提取 alpha → Float32Array(10000)
+  const tplImg = new Image();
+  tplImg.onload = () => {
+    const c = document.createElement("canvas");
+    c.width = 100; c.height = 100;
+    const ctx = c.getContext("2d", { willReadFrequently: true });
+    ctx.drawImage(tplImg, 0, 0);
+    const data = ctx.getImageData(0, 0, 100, 100).data;
+    const arr = new Float32Array(10000);
+    for (let i = 0; i < 10000; i++) {
+      arr[i] = data[i * 4 + 3] / 255;
+    }
+    WM.alphaArr = arr;
+  };
+  tplImg.src = "data:image/png;base64," + TPL_B64;
+
+  // 上傳區
+  const uploadZone = $("wm-upload");
+  const fileInput = $("wm-file-input");
+  uploadZone.addEventListener("click", () => fileInput.click());
+  fileInput.addEventListener("change", e => {
+    if (e.target.files[0]) loadWmImage(e.target.files[0]);
+  });
+  uploadZone.addEventListener("dragover", e => { e.preventDefault(); uploadZone.classList.add("drag-over"); });
+  uploadZone.addEventListener("dragleave", () => uploadZone.classList.remove("drag-over"));
+  uploadZone.addEventListener("drop", e => {
+    e.preventDefault();
+    uploadZone.classList.remove("drag-over");
+    if (e.dataTransfer.files[0]) loadWmImage(e.dataTransfer.files[0]);
+  });
+
+  // 控制
+  $("wm-margin-r").addEventListener("input", e => { WM.marginR = +e.target.value || 0; renderWm(); });
+  $("wm-margin-b").addEventListener("input", e => { WM.marginB = +e.target.value || 0; renderWm(); });
+  $("wm-show-box").addEventListener("change", e => { WM.showBox = e.target.checked; renderWm(); });
+  $("wm-alpha").addEventListener("input", e => {
+    WM.alphaMul = +e.target.value;
+    $("wm-alpha-val").textContent = WM.alphaMul.toFixed(2);
+    renderWm();
+  });
+  $("wm-scale").addEventListener("input", e => {
+    WM.scale = +e.target.value / 100;
+    $("wm-scale-val").textContent = e.target.value + "%";
+    renderWm();
+  });
+
+  // 視圖切換
+  $("wm-view-processed").addEventListener("click", () => setWmView("processed"));
+  $("wm-view-original").addEventListener("click", () => setWmView("original"));
+
+  $("wm-download").addEventListener("click", downloadWm);
+  $("wm-reset").addEventListener("click", resetWm);
+
+  // 拖曳紅框
+  const wrap = $("wm-canvas-wrap");
+  const canvas = $("wm-canvas");
+  function getCanvasCoord(ev) {
+    const rect = canvas.getBoundingClientRect();
+    const sx = canvas.width / rect.width;
+    const sy = canvas.height / rect.height;
+    const cx = ((ev.touches ? ev.touches[0].clientX : ev.clientX) - rect.left) * sx;
+    const cy = ((ev.touches ? ev.touches[0].clientY : ev.clientY) - rect.top) * sy;
+    return { x: cx, y: cy };
+  }
+  function pointInBox(p) {
+    const tplW = 100 * WM.scale, tplH = 100 * WM.scale;
+    const x0 = WM.width - WM.marginR - tplW;
+    const y0 = WM.height - WM.marginB - tplH;
+    return p.x >= x0 && p.x <= x0 + tplW && p.y >= y0 && p.y <= y0 + tplH;
+  }
+  function startDrag(ev) {
+    if (!WM.origImage) return;
+    const p = getCanvasCoord(ev);
+    if (!pointInBox(p)) return;
+    ev.preventDefault();
+    WM.draggingBox = true;
+    wrap.classList.add("dragging");
+    const tplW = 100 * WM.scale, tplH = 100 * WM.scale;
+    const x0 = WM.width - WM.marginR - tplW;
+    const y0 = WM.height - WM.marginB - tplH;
+    WM.dragOffset = { x: p.x - x0, y: p.y - y0 };
+  }
+  function moveDrag(ev) {
+    if (!WM.draggingBox) {
+      // 滑鼠在框上時改 cursor
+      if (WM.origImage) {
+        const p = getCanvasCoord(ev);
+        canvas.classList.toggle("has-box", pointInBox(p));
+      }
+      return;
+    }
+    ev.preventDefault();
+    const p = getCanvasCoord(ev);
+    const tplW = 100 * WM.scale, tplH = 100 * WM.scale;
+    const newX0 = p.x - WM.dragOffset.x;
+    const newY0 = p.y - WM.dragOffset.y;
+    let newR = WM.width - newX0 - tplW;
+    let newB = WM.height - newY0 - tplH;
+    newR = Math.max(0, Math.min(WM.width - tplW, newR));
+    newB = Math.max(0, Math.min(WM.height - tplH, newB));
+    WM.marginR = Math.round(newR);
+    WM.marginB = Math.round(newB);
+    $("wm-margin-r").value = WM.marginR;
+    $("wm-margin-b").value = WM.marginB;
+    renderWm();
+  }
+  function endDrag() {
+    WM.draggingBox = false;
+    wrap.classList.remove("dragging");
+  }
+  canvas.addEventListener("mousedown", startDrag);
+  canvas.addEventListener("touchstart", startDrag, {passive:false});
+  window.addEventListener("mousemove", moveDrag);
+  window.addEventListener("touchmove", moveDrag, {passive:false});
+  window.addEventListener("mouseup", endDrag);
+  window.addEventListener("touchend", endDrag);
+}
+
+function loadWmImage(file) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      WM.width = img.width;
+      WM.height = img.height;
+      WM.origCanvas = document.createElement("canvas");
+      WM.origCanvas.width = WM.width;
+      WM.origCanvas.height = WM.height;
+      const ctx = WM.origCanvas.getContext("2d", { willReadFrequently: true });
+      ctx.drawImage(img, 0, 0);
+      WM.origImage = ctx.getImageData(0, 0, WM.width, WM.height);
+
+      // 切到編輯器
+      $("wm-upload-wrap").classList.add("hidden");
+      $("wm-editor").classList.remove("hidden");
+      $("wm-size").textContent = `${WM.width} × ${WM.height}`;
+
+      // 設定 canvas 內部尺寸
+      const canvas = $("wm-canvas");
+      canvas.width = WM.width;
+      canvas.height = WM.height;
+
+      renderWm();
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function setWmView(view) {
+  WM.view = view;
+  $("wm-view-processed").classList.toggle("active", view === "processed");
+  $("wm-view-original").classList.toggle("active", view === "original");
+  renderWm();
+}
+
+// 雙線性插值取 alpha
+function sampleAlpha(arr, x, y) {
+  if (x < 0 || y < 0 || x > 99 || y > 99) return 0;
+  const x0 = Math.floor(x), y0 = Math.floor(y);
+  const x1 = Math.min(x0 + 1, 99), y1 = Math.min(y0 + 1, 99);
+  const dx = x - x0, dy = y - y0;
+  const a00 = arr[y0 * 100 + x0];
+  const a10 = arr[y0 * 100 + x1];
+  const a01 = arr[y1 * 100 + x0];
+  const a11 = arr[y1 * 100 + x1];
+  return a00 * (1-dx)*(1-dy) + a10 * dx*(1-dy) + a01 * (1-dx)*dy + a11 * dx*dy;
+}
+
+function processWatermark() {
+  // 從原圖複製到輸出
+  const out = new ImageData(
+    new Uint8ClampedArray(WM.origImage.data),
+    WM.width, WM.height
+  );
+  if (!WM.alphaArr) return out;
+
+  const tplW = 100 * WM.scale;
+  const tplH = 100 * WM.scale;
+  const x0 = Math.round(WM.width - WM.marginR - tplW);
+  const y0 = Math.round(WM.height - WM.marginB - tplH);
+
+  const xStart = Math.max(0, x0);
+  const yStart = Math.max(0, y0);
+  const xEnd = Math.min(WM.width, x0 + Math.ceil(tplW));
+  const yEnd = Math.min(WM.height, y0 + Math.ceil(tplH));
+
+  const data = out.data;
+  const orig = WM.origImage.data;
+
+  for (let py = yStart; py < yEnd; py++) {
+    for (let px = xStart; px < xEnd; px++) {
+      // 對應到模板的浮點座標 (0~99)
+      const tx = (px - x0) / WM.scale;
+      const ty = (py - y0) / WM.scale;
+      let a = sampleAlpha(WM.alphaArr, tx, ty) * WM.alphaMul;
+      if (a <= 0) continue;
+      if (a > 0.985) a = 0.985;
+      const inv = 1 - a;
+      const idx = (py * WM.width + px) * 4;
+      // bg = (obs - 255*a) / (1 - a)
+      const r = (orig[idx]   - 255 * a) / inv;
+      const g = (orig[idx+1] - 255 * a) / inv;
+      const b = (orig[idx+2] - 255 * a) / inv;
+      data[idx]   = r < 0 ? 0 : r > 255 ? 255 : r;
+      data[idx+1] = g < 0 ? 0 : g > 255 ? 255 : g;
+      data[idx+2] = b < 0 ? 0 : b > 255 ? 255 : b;
+    }
+  }
+  return out;
+}
+
+function renderWm() {
+  if (!WM.origImage) return;
+  const canvas = $("wm-canvas");
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+
+  if (WM.view === "original") {
+    ctx.putImageData(WM.origImage, 0, 0);
+  } else {
+    const out = processWatermark();
+    ctx.putImageData(out, 0, 0);
+    WM._lastProcessed = out;
+  }
+
+  // 紅色虛線定位框
+  if (WM.showBox) {
+    const tplW = 100 * WM.scale;
+    const tplH = 100 * WM.scale;
+    const x0 = WM.width - WM.marginR - tplW;
+    const y0 = WM.height - WM.marginB - tplH;
+    ctx.save();
+    // 線寬隨圖片尺寸縮放，避免顯示太細
+    const lw = Math.max(2, Math.round(WM.width / 600));
+    ctx.strokeStyle = "#ff3344";
+    ctx.lineWidth = lw;
+    ctx.setLineDash([lw * 3, lw * 2]);
+    ctx.strokeRect(x0, y0, tplW, tplH);
+    ctx.restore();
+  }
+  $("wm-area").textContent = `${Math.round(100*WM.scale)}×${Math.round(100*WM.scale)} @ R${WM.marginR}/B${WM.marginB}`;
+}
+
+function downloadWm() {
+  if (!WM.origImage) return;
+  const canvas = document.createElement("canvas");
+  canvas.width = WM.width;
+  canvas.height = WM.height;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  ctx.putImageData(processWatermark(), 0, 0);
+  canvas.toBlob(blob => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "cleaned_" + Date.now() + ".png";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast("已下載乾淨版本", "success");
+    // 將處理後圖片暫存供 Tab3 使用
+    WM.cleanedBlob = blob;
+  }, "image/png");
+}
+
+function resetWm() {
+  WM.origImage = null;
+  WM.origCanvas = null;
+  $("wm-upload-wrap").classList.remove("hidden");
+  $("wm-editor").classList.add("hidden");
+  $("wm-file-input").value = "";
+  $("split-from-step2").disabled = !getCleanedFromWm();
+}
+
+// 取得 watermark 處理後的影像（給步驟 3.1 使用）
+function getCleanedFromWm() {
+  if (!WM.origImage) return null;
+  const canvas = document.createElement("canvas");
+  canvas.width = WM.width;
+  canvas.height = WM.height;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  ctx.putImageData(processWatermark(), 0, 0);
+  return canvas;
+}
+
+/* =========================================================================
+ * Tab 3 - 上傳與分割 / 智慧去背
+ * ======================================================================= */
+const Split = {
+  sourceCanvas: null,        // 上傳的原始大圖 (可能是被縮放的版本)
+  fullW: 0, fullH: 0,
+  offsetX: 0, offsetY: 0, zoom: 1,
+  // 可拖曳的分割線（normalized 0~1，相對於圖寬/高）
+  colLines: [],              // 4 條垂直線（5 欄之間）
+  rowLines: [],              // 3 條水平線（4 列之間）
+  dragLine: null,            // { type: 'col'|'row', index }
+  hoverLine: null,
+  frames: [],                // 切割後的 ImageData 陣列 (20 張) - 帶綠幕
+  framesNoBg: [],            // 去背後的 ImageData 陣列
+  bgEnabled: true,
+  bgTolerance: 80
+};
+
+// 重置為均分分割線
+function resetSplitLines() {
+  const cols = AppConfig.gridSpec.columns, rows = AppConfig.gridSpec.rows;
+  Split.colLines = [];
+  for (let i = 1; i < cols; i++) Split.colLines.push(i / cols);
+  Split.rowLines = [];
+  for (let j = 1; j < rows; j++) Split.rowLines.push(j / rows);
+}
+
+function initSplitTab() {
+  // 從步驟 2 複製
+  $("split-from-step2").addEventListener("click", () => {
+    const c = getCleanedFromWm();
+    if (!c) { toast("步驟 2 尚未上傳圖片", "error"); return; }
+    loadSplitFromCanvas(c);
+  });
+
+  // 上傳區
+  const zone = $("split-upload-zone");
+  const input = $("split-file-input");
+  $("split-pick-file").addEventListener("click", () => input.click());
+  zone.addEventListener("click", () => input.click());
+  input.addEventListener("change", e => {
+    if (e.target.files[0]) loadSplitFile(e.target.files[0]);
+  });
+  zone.addEventListener("dragover", e => { e.preventDefault(); zone.classList.add("drag-over"); });
+  zone.addEventListener("dragleave", () => zone.classList.remove("drag-over"));
+  zone.addEventListener("drop", e => {
+    e.preventDefault(); zone.classList.remove("drag-over");
+    if (e.dataTransfer.files[0]) loadSplitFile(e.dataTransfer.files[0]);
+  });
+
+  // 微調滑桿（含填充進度色）
+  function updateSliderFill(el) {
+    const min = +el.min, max = +el.max, v = +el.value;
+    const p = ((v - min) / (max - min)) * 100;
+    el.style.setProperty("--p", p + "%");
+  }
+  $("split-x").addEventListener("input", e => {
+    Split.offsetX = +e.target.value; $("split-x-val").textContent = e.target.value;
+    updateSliderFill(e.target); renderSplitPreview();
+  });
+  $("split-y").addEventListener("input", e => {
+    Split.offsetY = +e.target.value; $("split-y-val").textContent = e.target.value;
+    updateSliderFill(e.target); renderSplitPreview();
+  });
+  $("split-zoom").addEventListener("input", e => {
+    Split.zoom = +e.target.value/100; $("split-zoom-val").textContent = e.target.value + "%";
+    updateSliderFill(e.target); renderSplitPreview();
+  });
+  // 初始化填充
+  ["split-x","split-y","split-zoom"].forEach(id => updateSliderFill($(id)));
+
+  // 單顆歸零
+  $$(".reset-one").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const t = $(btn.dataset.target);
+      if (!t) return;
+      t.value = btn.dataset.default;
+      t.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+  });
+  // 全部歸零
+  $("split-reset-all").addEventListener("click", () => {
+    [["split-x","0"],["split-y","0"],["split-zoom","100"]].forEach(([id,v]) => {
+      const el = $(id); el.value = v;
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    toast("已歸零", "info");
+  });
+
+  $("split-confirm").addEventListener("click", confirmSplit);
+  $("split-reset").addEventListener("click", resetSplit);
+  $("split-reset-lines").addEventListener("click", () => {
+    if (!Split.sourceCanvas) return;
+    resetSplitLines();
+    renderSplitPreview();
+    toast("分割線已還原為等分", "info");
+  });
+  bindSplitCanvasInteraction();
+
+  // 步驟 2
+  $("bg-toggle").addEventListener("change", e => { Split.bgEnabled = e.target.checked; });
+  $("bg-tol").addEventListener("input", e => { Split.bgTolerance = +e.target.value; $("bg-tol-val").textContent = e.target.value; });
+  $("bg-execute").addEventListener("click", executeBgRemoval);
+
+  // 步驟 3
+  $("zip-start").addEventListener("input", () => {
+    updateZipPreviewName();
+    updateFrameLabels();
+  });
+  $("zip-download").addEventListener("click", downloadZip);
+  updateZipPreviewName();
+}
+
+function loadSplitFile(file) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement("canvas");
+      c.width = img.width; c.height = img.height;
+      c.getContext("2d", { willReadFrequently: true }).drawImage(img, 0, 0);
+      loadSplitFromCanvas(c);
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function loadSplitFromCanvas(canvas) {
+  Split.sourceCanvas = canvas;
+  Split.fullW = canvas.width;
+  Split.fullH = canvas.height;
+  Split.offsetX = 0; Split.offsetY = 0; Split.zoom = 1;
+  resetSplitLines();
+  Split.dragLine = null; Split.hoverLine = null;
+  $("split-x").value = 0; $("split-y").value = 0; $("split-zoom").value = 100;
+  $("split-x-val").textContent = "0"; $("split-y-val").textContent = "0"; $("split-zoom-val").textContent = "100%";
+  // 同步滑桿填充色
+  ["split-x","split-y","split-zoom"].forEach(id => {
+    const el = $(id), min = +el.min, max = +el.max, v = +el.value;
+    el.style.setProperty("--p", ((v - min)/(max - min)) * 100 + "%");
+  });
+
+  $("split-upload-zone").classList.add("hidden");
+  $("split-editor").classList.remove("hidden");
+  if (!canvas.matches || !canvas.matches(".not-direct")) {
+    // 提示尺寸是否符合
+    const expectedW = AppConfig.gridSpec.totalWidth;
+    const expectedH = AppConfig.gridSpec.totalHeight;
+    if (canvas.width !== expectedW || canvas.height !== expectedH) {
+      toast(`已載入 ${canvas.width}×${canvas.height}（建議 ${expectedW}×${expectedH}）`, "info");
+    }
+  }
+  renderSplitPreview();
+}
+
+// 綁定 canvas 上的分割線拖曳與 hover 行為（鼠標 + 觸控）
+function bindSplitCanvasInteraction() {
+  const canvas = $("split-canvas");
+
+  // 螢幕座標 → canvas 內部座標
+  function getCanvasCoords(e) {
+    const rect = canvas.getBoundingClientRect();
+    const cx = (e.touches && e.touches[0]) ? e.touches[0].clientX
+             : (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientX
+             : e.clientX;
+    const cy = (e.touches && e.touches[0]) ? e.touches[0].clientY
+             : (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0].clientY
+             : e.clientY;
+    return {
+      x: (cx - rect.left) * canvas.width / rect.width,
+      y: (cy - rect.top)  * canvas.height / rect.height,
+      scaleX: canvas.width  / rect.width,
+      scaleY: canvas.height / rect.height
+    };
+  }
+
+  // 點擊命中測試（傳回最近的線；同時命中時優先垂直）
+  function hitTest(c) {
+    if (!Split.colLines.length) return null;
+    const W = Split.fullW, H = Split.fullH;
+    // 顯示上 ~16px 的命中半徑
+    const tx = 16 * c.scaleX, ty = 16 * c.scaleY;
+    let best = null, bestD = Infinity;
+    Split.colLines.forEach((n, i) => {
+      const d = Math.abs(c.x - n*W);
+      if (d < tx && d < bestD) { best = { type: "col", index: i }; bestD = d; }
+    });
+    Split.rowLines.forEach((n, j) => {
+      const d = Math.abs(c.y - n*H);
+      if (d < ty && d < bestD) { best = { type: "row", index: j }; bestD = d; }
+    });
+    return best;
+  }
+
+  function applyDrag(c) {
+    if (!Split.dragLine) return;
+    const W = Split.fullW, H = Split.fullH;
+    const minGap = 0.04; // 相鄰兩線最小距離（佔 4%）
+    if (Split.dragLine.type === "col") {
+      const i = Split.dragLine.index, arr = Split.colLines;
+      const prev = i > 0 ? arr[i-1] : 0;
+      const next = i < arr.length - 1 ? arr[i+1] : 1;
+      arr[i] = Math.max(prev + minGap, Math.min(next - minGap, c.x / W));
+    } else {
+      const j = Split.dragLine.index, arr = Split.rowLines;
+      const prev = j > 0 ? arr[j-1] : 0;
+      const next = j < arr.length - 1 ? arr[j+1] : 1;
+      arr[j] = Math.max(prev + minGap, Math.min(next - minGap, c.y / H));
+    }
+  }
+
+  function onDown(e) {
+    if (!Split.sourceCanvas) return;
+    const c = getCanvasCoords(e);
+    const h = hitTest(c);
+    if (h) {
+      e.preventDefault();
+      Split.dragLine = h;
+      // 立刻吸附到指針
+      applyDrag(c);
+      renderSplitPreview();
+    }
+  }
+
+  function onMove(e) {
+    if (!Split.sourceCanvas) return;
+    const c = getCanvasCoords(e);
+    if (Split.dragLine) {
+      e.preventDefault();
+      applyDrag(c);
+      renderSplitPreview();
+    } else {
+      const h = hitTest(c);
+      const newCursor = h ? (h.type === "col" ? "col-resize" : "row-resize") : "";
+      if (canvas.style.cursor !== newCursor) canvas.style.cursor = newCursor;
+      const a = JSON.stringify(h), b = JSON.stringify(Split.hoverLine);
+      if (a !== b) { Split.hoverLine = h; renderSplitPreview(); }
+    }
+  }
+
+  function onUp() {
+    if (Split.dragLine) {
+      Split.dragLine = null;
+      renderSplitPreview();
+    }
+  }
+
+  canvas.addEventListener("mousedown", onDown);
+  window.addEventListener("mousemove", onMove);
+  window.addEventListener("mouseup", onUp);
+  canvas.addEventListener("touchstart", onDown, { passive: false });
+  canvas.addEventListener("touchmove", onMove, { passive: false });
+  canvas.addEventListener("touchend", onUp);
+  canvas.addEventListener("touchcancel", onUp);
+  canvas.addEventListener("mouseleave", () => {
+    if (!Split.dragLine && Split.hoverLine) {
+      Split.hoverLine = null;
+      canvas.style.cursor = "";
+      renderSplitPreview();
+    }
+  });
+}
+
+function renderSplitPreview() {
+  if (!Split.sourceCanvas) return;
+  const canvas = $("split-canvas");
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  const W = Split.fullW, H = Split.fullH;
+  canvas.width = W; canvas.height = H;
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, W, H);
+  // 畫帶 offset/zoom 的圖片
+  const dw = W * Split.zoom;
+  const dh = H * Split.zoom;
+  const dx = (W - dw)/2 + Split.offsetX;
+  const dy = (H - dh)/2 + Split.offsetY;
+  ctx.drawImage(Split.sourceCanvas, dx, dy, dw, dh);
+
+  // 確保分割線已初始化
+  if (!Split.colLines.length || !Split.rowLines.length) resetSplitLines();
+
+  // 畫可拖曳分割線（含中央把手）
+  const lw = Math.max(2, W/600);
+  const handleR = lw * 6;
+  ctx.save();
+
+  const drawLine = (isVertical, idx, n) => {
+    const isActive = Split.dragLine && Split.dragLine.type === (isVertical?"col":"row") && Split.dragLine.index === idx;
+    const isHover  = Split.hoverLine && Split.hoverLine.type === (isVertical?"col":"row") && Split.hoverLine.index === idx;
+    const color = isActive ? "#ffffff" : (isHover ? "#fbbf24" : "#f95f8e");
+
+    // 線
+    ctx.strokeStyle = color;
+    ctx.lineWidth = isActive || isHover ? lw*1.6 : lw;
+    ctx.setLineDash([lw*4, lw*3]);
+    ctx.beginPath();
+    if (isVertical) { ctx.moveTo(n*W, 0); ctx.lineTo(n*W, H); }
+    else            { ctx.moveTo(0, n*H); ctx.lineTo(W, n*H); }
+    ctx.stroke();
+
+    // 把手（兩個端點 + 中心，提升點擊命中率與可發現性）
+    ctx.setLineDash([]);
+    ctx.fillStyle = color;
+    ctx.strokeStyle = "rgba(0,0,0,.4)";
+    ctx.lineWidth = lw*0.6;
+    const hr = isActive || isHover ? handleR*1.3 : handleR;
+    const handlePts = isVertical
+      ? [[n*W, H*0.15], [n*W, H/2], [n*W, H*0.85]]
+      : [[W*0.15, n*H], [W/2, n*H], [W*0.85, n*H]];
+    handlePts.forEach(([px, py]) => {
+      ctx.beginPath(); ctx.arc(px, py, hr, 0, Math.PI*2);
+      ctx.fill(); ctx.stroke();
+    });
+  };
+
+  Split.colLines.forEach((n, i) => drawLine(true, i, n));
+  Split.rowLines.forEach((n, j) => drawLine(false, j, n));
+  ctx.restore();
+}
+
+function confirmSplit() {
+  if (!Split.sourceCanvas) return;
+  if (!Split.colLines.length) resetSplitLines();
+  const W = Split.fullW, H = Split.fullH;
+
+  // 從分割線推導每格邊界（含外框 0 與 1）
+  const xb = [0, ...Split.colLines.map(n => n * W), W].map(Math.round);
+  const yb = [0, ...Split.rowLines.map(n => n * H), H].map(Math.round);
+
+  // 把含 offset/zoom 的圖先畫到中介 canvas
+  const stage = document.createElement("canvas");
+  stage.width = W; stage.height = H;
+  const sctx = stage.getContext("2d", { willReadFrequently: true });
+  const dw = W * Split.zoom;
+  const dh = H * Split.zoom;
+  const dx = (W - dw)/2 + Split.offsetX;
+  const dy = (H - dh)/2 + Split.offsetY;
+  sctx.drawImage(Split.sourceCanvas, dx, dy, dw, dh);
+
+  Split.frames = [];
+  // 編號規則：col=1..N, row=1..N → "col-row"
+  for (let col = 0; col < xb.length - 1; col++) {
+    for (let row = 0; row < yb.length - 1; row++) {
+      const x = xb[col];
+      const y = yb[row];
+      const w = Math.max(1, xb[col+1] - x);
+      const h = Math.max(1, yb[row+1] - y);
+      const fc = document.createElement("canvas");
+      fc.width = w; fc.height = h;
+      fc.getContext("2d", { willReadFrequently: true }).drawImage(stage, x, y, w, h, 0, 0, w, h);
+      Split.frames.push({
+        canvas: fc,
+        col: col + 1,
+        row: row + 1,
+        label: `${col + 1}-${row + 1}`
+      });
+    }
+  }
+
+  // 啟用步驟 2，渲染預覽
+  $("split-step1").classList.add("done");
+  $("split-step2").classList.remove("disabled");
+  Split.framesNoBg = []; // 重置
+  renderFramePreview(false);
+  toast("已切割成 " + Split.frames.length + " 張影格", "success");
+  // 自動捲動到步驟 2
+  setTimeout(() => $("split-step2").scrollIntoView({behavior:"smooth", block:"start"}), 250);
+}
+
+function resetSplit() {
+  Split.sourceCanvas = null;
+  Split.frames = [];
+  Split.framesNoBg = [];
+  $("split-editor").classList.add("hidden");
+  $("split-upload-zone").classList.remove("hidden");
+  $("split-step1").classList.remove("done");
+  $("split-step2").classList.add("disabled");
+  $("split-step3").classList.add("disabled");
+  $("frame-preview").innerHTML = "";
+  $("split-file-input").value = "";
+}
+
+function renderFramePreview(useNoBg) {
+  const wrap = $("frame-preview");
+  wrap.innerHTML = "";
+  const arr = useNoBg ? Split.framesNoBg : Split.frames;
+  const hint = $("frame-hint");
+  if (hint) hint.style.display = arr.length ? "flex" : "none";
+  arr.forEach((f, idx) => {
+    const cell = document.createElement("div");
+    cell.className = "frame-cell";
+    cell.dataset.col = f.col;
+    cell.dataset.row = f.row;
+    const cnv = document.createElement("canvas");
+    cnv.width = f.canvas.width;
+    cnv.height = f.canvas.height;
+    cnv.getContext("2d").drawImage(f.canvas, 0, 0);
+    cell.appendChild(cnv);
+    const displayLabel = getDisplayLabel(f.col, f.row);
+    const lab = document.createElement("div");
+    lab.className = "frame-label";
+    lab.textContent = displayLabel;
+    cell.appendChild(lab);
+    // 單張下載按鈕（手機/平板/電腦皆可）
+    const dl = document.createElement("button");
+    dl.className = "frame-dl";
+    dl.type = "button";
+    dl.title = "下載這張";
+    dl.setAttribute("aria-label", `下載 ${displayLabel}`);
+    dl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>';
+    dl.addEventListener("click", ev => {
+      ev.stopPropagation();
+      downloadSingleFrame(f, useNoBg);
+    });
+    cell.appendChild(dl);
+    wrap.appendChild(cell);
+  });
+}
+
+// 計算依「起始編號」位移後的顯示／檔名編號
+function getDisplayLabel(col, row) {
+  const start = parseInt($("zip-start").value) || 1;
+  return `${start + col - 1}-${row}`;
+}
+
+// 即時更新所有 frame 標籤（不重繪 canvas，避免閃爍）
+function updateFrameLabels() {
+  $$("#frame-preview .frame-cell").forEach(cell => {
+    const col = parseInt(cell.dataset.col) || 1;
+    const row = parseInt(cell.dataset.row) || 1;
+    const label = getDisplayLabel(col, row);
+    const labEl = cell.querySelector(".frame-label");
+    if (labEl) labEl.textContent = label;
+    const dlBtn = cell.querySelector(".frame-dl");
+    if (dlBtn) dlBtn.setAttribute("aria-label", `下載 ${label}`);
+  });
+}
+
+// 取得目前的單張檔名（與 ZIP 內檔名規則一致）
+function getFrameFilename(f) {
+  return `${getDisplayLabel(f.col, f.row)}.png`;
+}
+
+// 判斷是否為觸控為主的裝置（手機/平板）
+// 桌機即使支援 navigator.canShare 也不走 share，避免分享面板取代真實下載
+function isTouchPrimaryDevice() {
+  try {
+    // Chromium 90+：最準確的識別
+    if (navigator.userAgentData && typeof navigator.userAgentData.mobile === "boolean") {
+      return navigator.userAgentData.mobile;
+    }
+    // 媒體查詢：主要指標裝置是否為粗指標（手指）
+    if (window.matchMedia && window.matchMedia("(pointer: coarse)").matches) return true;
+    // UA 後備
+    return /Android|iPhone|iPad|iPod|Mobile|Silk/i.test(navigator.userAgent);
+  } catch (e) {
+    return false;
+  }
+}
+
+// 單張下載：手機優先用 Web Share API，不支援則退回 <a download>
+async function downloadSingleFrame(f, useNoBg) {
+  const filename = getFrameFilename(f);
+  let blob;
+  try {
+    blob = await new Promise((res, rej) => {
+      f.canvas.toBlob(b => b ? res(b) : rej(new Error("toBlob 失敗")), "image/png");
+    });
+  } catch (e) {
+    toast("匯出失敗：" + e.message, "error");
+    return;
+  }
+  if (!blob) { toast("匯出失敗", "error"); return; }
+
+  // 1. 手機/平板優先嘗試 Web Share API（可儲存至相簿）
+  //    桌機一律跳過，因為桌機分享面板無法直接「下載到電腦」
+  if (isTouchPrimaryDevice() && typeof File !== "undefined" && navigator.canShare) {
+    try {
+      const file = new File([blob], filename, { type: "image/png" });
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: filename });
+        toast(`已分享 ${filename}`, "success");
+        return;
+      }
+    } catch (e) {
+      if (e && e.name === "AbortError") return; // 使用者取消
+      // 其他錯誤 → 退回標準下載
+    }
+  }
+
+  // 2. 標準下載（桌機與不支援 share 的行動瀏覽器）
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.rel = "noopener";
+  a.style.display = "none";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  toast(`已下載 ${filename}`, "success");
+}
+
+function executeBgRemoval() {
+  if (!Split.frames.length) { toast("請先完成步驟 1 切割", "error"); return; }
+  if (!Split.bgEnabled) {
+    Split.framesNoBg = Split.frames.map(f => ({ ...f, canvas: cloneCanvas(f.canvas) }));
+    renderFramePreview(true);
+    $("split-step2").classList.add("done");
+    $("split-step3").classList.remove("disabled");
+    toast("已啟用「不去背」模式", "info");
+    setTimeout(() => $("split-step3").scrollIntoView({behavior:"smooth", block:"start"}), 250);
+    return;
+  }
+
+  const tol = Split.bgTolerance;
+  Split.framesNoBg = Split.frames.map(f => {
+    const w = f.canvas.width, h = f.canvas.height;
+    const out = document.createElement("canvas");
+    out.width = w; out.height = h;
+    const octx = out.getContext("2d", { willReadFrequently: true });
+    octx.drawImage(f.canvas, 0, 0);
+    const imgData = octx.getImageData(0, 0, w, h);
+    const d = imgData.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const r = d[i], g = d[i+1], b = d[i+2];
+      // 綠幕判定：g 顯著高於 r, b
+      const greenness = g - Math.max(r, b);
+      if (greenness > tol) {
+        d[i+3] = 0;
+      } else if (greenness > tol * 0.4) {
+        // 邊緣半透明 + 去除溢色
+        const t = (greenness - tol * 0.4) / (tol * 0.6);
+        d[i+3] = Math.round(d[i+3] * (1 - t * 0.85));
+        // 抑制溢色
+        const target = (r + b) / 2;
+        d[i+1] = Math.min(g, target + 5);
+      }
+    }
+    octx.putImageData(imgData, 0, 0);
+    return { ...f, canvas: out };
+  });
+  renderFramePreview(true);
+  $("split-step2").classList.add("done");
+  $("split-step3").classList.remove("disabled");
+  toast("綠幕背景已去除", "success");
+  setTimeout(() => $("split-step3").scrollIntoView({behavior:"smooth", block:"start"}), 250);
+}
+
+function cloneCanvas(c) {
+  const n = document.createElement("canvas");
+  n.width = c.width; n.height = c.height;
+  n.getContext("2d").drawImage(c, 0, 0);
+  return n;
+}
+
+function updateZipPreviewName() {
+  const start = parseInt($("zip-start").value) || 1;
+  const end = start + 4;
+  $("zip-preview-name").textContent = `輸出檔名：${start}-1.png ~ ${end}-4.png`;
+}
+
+async function downloadZip() {
+  if (!Split.framesNoBg.length) { toast("請先完成去背處理", "error"); return; }
+  const start = parseInt($("zip-start").value) || 1;
+  const progress = $("zip-progress");
+  const fill = progress.querySelector(".fill");
+  progress.classList.remove("hidden");
+  fill.style.width = "0%";
+
+  // 將 20 張 canvas 轉 Uint8Array PNG
+  const files = [];
+  for (let i = 0; i < Split.framesNoBg.length; i++) {
+    const f = Split.framesNoBg[i];
+    const newCol = start + (f.col - 1);
+    const filename = `${newCol}-${f.row}.png`;
+    const blob = await new Promise(res => f.canvas.toBlob(res, "image/png"));
+    const buf = new Uint8Array(await blob.arrayBuffer());
+    files.push({ name: filename, data: buf });
+    fill.style.width = ((i + 1) / 20 * 80) + "%";
+    await new Promise(r => setTimeout(r, 0));
+  }
+
+  // 打包成 ZIP（stored 模式）
+  const zipBytes = createZip(files);
+  fill.style.width = "100%";
+  const blob = new Blob([zipBytes], { type: "application/zip" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `line_stickers_${start}-${start+4}.zip`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+  setTimeout(() => progress.classList.add("hidden"), 600);
+  toast("ZIP 已下載！", "success");
+}
+
+/* =========================================================================
+ * 純 JS ZIP 建構器（STORED / 不壓縮）
+ *   PNG 已是壓縮格式，再壓收益極低，stored 即可
+ * ======================================================================= */
+let _crcTable = null;
+function makeCrcTable() {
+  _crcTable = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    _crcTable[n] = c;
+  }
+}
+function crc32(data) {
+  if (!_crcTable) makeCrcTable();
+  let crc = 0xFFFFFFFF;
+  for (let i = 0; i < data.length; i++) {
+    crc = _crcTable[(crc ^ data[i]) & 0xFF] ^ (crc >>> 8);
+  }
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+function strToBytes(s) {
+  return new TextEncoder().encode(s);
+}
+function writeU16(arr, off, v) { arr[off] = v & 0xFF; arr[off+1] = (v >>> 8) & 0xFF; }
+function writeU32(arr, off, v) { arr[off] = v & 0xFF; arr[off+1] = (v >>> 8) & 0xFF; arr[off+2] = (v >>> 16) & 0xFF; arr[off+3] = (v >>> 24) & 0xFF; }
+
+function createZip(files) {
+  const localParts = [];
+  const centralParts = [];
+  let offset = 0;
+
+  files.forEach(f => {
+    const nameBytes = strToBytes(f.name);
+    const data = f.data;
+    const crc = crc32(data);
+    const size = data.length;
+
+    // Local file header (30 bytes + name)
+    const lh = new Uint8Array(30 + nameBytes.length);
+    writeU32(lh, 0, 0x04034b50);     // signature
+    writeU16(lh, 4, 20);              // version needed
+    writeU16(lh, 6, 0);               // flags
+    writeU16(lh, 8, 0);               // method = stored
+    writeU16(lh, 10, 0);              // mod time
+    writeU16(lh, 12, 0);              // mod date
+    writeU32(lh, 14, crc);            // crc32
+    writeU32(lh, 18, size);           // compressed size
+    writeU32(lh, 22, size);           // uncompressed size
+    writeU16(lh, 26, nameBytes.length);
+    writeU16(lh, 28, 0);              // extra length
+    lh.set(nameBytes, 30);
+    localParts.push(lh, data);
+
+    // Central directory entry (46 bytes + name)
+    const cd = new Uint8Array(46 + nameBytes.length);
+    writeU32(cd, 0, 0x02014b50);     // signature
+    writeU16(cd, 4, 20);              // version made by
+    writeU16(cd, 6, 20);              // version needed
+    writeU16(cd, 8, 0);               // flags
+    writeU16(cd, 10, 0);              // method
+    writeU16(cd, 12, 0);              // mod time
+    writeU16(cd, 14, 0);              // mod date
+    writeU32(cd, 16, crc);
+    writeU32(cd, 20, size);
+    writeU32(cd, 24, size);
+    writeU16(cd, 28, nameBytes.length);
+    writeU16(cd, 30, 0);              // extra
+    writeU16(cd, 32, 0);              // comment
+    writeU16(cd, 34, 0);              // disk number
+    writeU16(cd, 36, 0);              // internal attrs
+    writeU32(cd, 38, 0);              // external attrs
+    writeU32(cd, 42, offset);         // local header offset
+    cd.set(nameBytes, 46);
+    centralParts.push(cd);
+
+    offset += lh.length + data.length;
+  });
+
+  // 計算 central directory 區段大小
+  const cdSize = centralParts.reduce((a, b) => a + b.length, 0);
+  const cdOffset = offset;
+
+  // End of central directory record (22 bytes)
+  const eocd = new Uint8Array(22);
+  writeU32(eocd, 0, 0x06054b50);
+  writeU16(eocd, 4, 0);                   // disk
+  writeU16(eocd, 6, 0);                   // disk with cd
+  writeU16(eocd, 8, files.length);        // entries on this disk
+  writeU16(eocd, 10, files.length);       // total entries
+  writeU32(eocd, 12, cdSize);
+  writeU32(eocd, 16, cdOffset);
+  writeU16(eocd, 20, 0);                  // comment length
+
+  // 合併
+  const totalSize = offset + cdSize + 22;
+  const out = new Uint8Array(totalSize);
+  let p = 0;
+  localParts.forEach(part => { out.set(part, p); p += part.length; });
+  centralParts.forEach(part => { out.set(part, p); p += part.length; });
+  out.set(eocd, p);
+  return out;
+}
+
+/* =========================================================================
+ * Bootstrap
+ * ======================================================================= */
+document.addEventListener("DOMContentLoaded", () => {
+  initTabs();
+  initPromptTab();
+  initWatermarkTab();
+  initSplitTab();
+
+  // 監聽 Tab 切換 - 進入 Tab3 時更新「從步驟2複製」按鈕狀態
+  $$(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      $("split-from-step2").disabled = !WM.origImage;
+    });
+  });
+});
+</script>
+
+
+
+</body></html>
