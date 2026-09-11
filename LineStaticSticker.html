@@ -1157,99 +1157,107 @@ function toggleScenario(chip, txt) {
 }
 
 function buildPrompt() {
-  const charLine = PromptState.charSource === "reference"
-    ? "Use the uploaded reference image as the base character. Maintain its exact appearance, outfit, and identity across all 20 stickers."
-    : (PromptState.customChar.trim() || "[請於上方輸入角色描述]");
+  const style = PromptState.style;
 
-  const scenarios = Array.from(PromptState.scenarios);
-  const scenarioBlock = scenarios.length
-    ? scenarios.map((s,i) => `  ${i+1}. ${s}`).join("\n")
-    : "  (請至少選擇 1 個情境主題)";
+  // Aim 段：依角色來源決定描述
+  const aimSourceLine = PromptState.charSource === "reference"
+    ? "Transform the uploaded photo into 20 LINE stickers. Preserve the key features of the person or animal in the photo — including hairstyle, face shape, glasses, and clothing — and keep the character design consistent across all 20 stickers."
+    : (PromptState.customChar.trim()
+        ? `Generate 20 LINE stickers based on the following character setting: ${PromptState.customChar.trim()}. Keep the character design consistent across all 20 stickers.`
+        : "Transform the uploaded photo into 20 LINE stickers. Keep the character design consistent across all 20 stickers.");
 
-  const borderInst = PromptState.border
-    ? "\n- Add a clear white die-cut sticker border around the character (only around the character, not around the cells)."
+  // 情境清單：1【xxx】、2【yyy】... 使用中文全形頓號
+  const scenariosArr = Array.from(PromptState.scenarios);
+  const scenarioText = scenariosArr.length
+    ? scenariosArr.map((s, i) => `${i+1}【${s}】`).join("、")
+    : "(Please select at least 1 scenario topic above)";
+
+  // 邊框說明句
+  const borderLine = PromptState.border
+    ? "Each LINE sticker character has a white outline border. "
     : "";
 
-  const customAct = PromptState.customAction.trim()
-    ? `\n[Additional Custom Text Scenarios]\n${PromptState.customAction.trim()}\n`
+  // 自訂文字情境附加
+  const customLine = PromptState.customAction.trim()
+    ? `\nAdditional custom scenarios: ${PromptState.customAction.trim()}`
     : "";
 
-  return `# LINE Sticker Sheet Generation Prompt
+  return `Persona | Character
+You are an illustrator who specializes in character design and LINE sticker creation. Based on a photo of a person or animal, you can draw lively, adorable, and highly recognizable ${style} characters.
 
-## [Layout Settings]
-- Canvas size: 2560 x 1664 pixels
-- Grid: 5 columns x 4 rows = 20 stickers in total
-- Each cell focuses on a distinct facial expression and pose
-- Background: Solid Green Screen (#00FF00) — fully flat, no gradients, no shadows on background
-- Sticker count: 20 (filling every cell of the 5x4 grid)
+Aim | Purpose
+${aimSourceLine}
 
-## [Core Rules]
-- Composition: half-body or full-body, choose per pose to best convey the action
-- Strictly NO grid lines, NO white separators, NO borders between cells — cells must blend seamlessly into one solid green background
-- Optional Traditional Chinese (繁體中文) text on each sticker — text may be horizontal or vertical, hand-lettered or speech-bubble style
-- Maintain consistent character design (face shape, hair, outfit, palette) across all 20 stickers${borderInst}
+Recipients | Audience
+Intended for daily LINE chats with family, friends, colleagues, and classmates — the stickers should convey a variety of moods naturally.
 
-## [Character]
-${charLine}
+Theme | Theme
+The overall aesthetic is ${style}: characters have large heads and small bodies, clean rounded lines, gentle colors, vivid expressions, and clear actions. Small motifs such as hearts, sweat drops, tears, and stars may be added where appropriate to enhance emotion and interest.
 
 ## [Art Style]
-${PromptState.style}
+${style}
 
 ## [Sticker Scenarios]
-Generate exactly 20 stickers, each cell expressing one of the following actions / texts (use Traditional Chinese for any displayed text):
-${scenarioBlock}
-${customAct}
+Generate exactly ${scenariosArr.length || 20} stickers. Each cell expresses one of the following actions:
+${scenarioText}${customLine}
+${borderLine}If text is displayed, use Traditional Chinese (繁體中文). Text may be arranged vertically or horizontally. Do NOT include the 【】 brackets in the drawn text.
+
+Structure | Output
 ## [Output Requirements]
-- Single image, 2560x1664 px
-- Pure green background (#00FF00) outside the character silhouette
-- Each character occupies the cell with comfortable padding so cropping into 5x4 cells captures the full pose
+- Single image, 2560×1664 px
+- Solid green (#00FF00) background outside the character silhouette
+- Each character has comfortable padding within its cell so cropping into 5×4 preserves each full pose
 - High detail, sharp lines, sticker-optimized illustration`;
 }
 
-// 完全中文版本（內容對應 buildPrompt，便於不熟英文的使用者直接使用或對照）
+// 完全中文版本（PARTS 結構，內容依所選結果動態填入）
 function buildPromptZh() {
-  const charLine = PromptState.charSource === "reference"
-    ? "請以上方上傳的參考圖作為基準角色，所有 20 張貼圖須完全保留其外貌、服裝與身份特徵。"
-    : (PromptState.customChar.trim() || "[請於上方輸入角色描述]");
+  const style = PromptState.style;
 
-  const scenarios = Array.from(PromptState.scenarios);
-  const scenarioBlock = scenarios.length
-    ? scenarios.map((s,i) => `  ${i+1}. ${s}`).join("\n")
-    : "  （請至少選擇 1 個情境主題）";
+  // Aim 段：依角色來源決定描述
+  const aimSourceLine = PromptState.charSource === "reference"
+    ? "請將我上傳的照片轉化為 20 張 LINE 貼圖。保留照片人物或動物的主要特徵，包括髮型、臉型、眼鏡及服裝特色，並確保每張貼圖的人物造型一致。"
+    : (PromptState.customChar.trim()
+        ? `請根據以下角色設定生成 20 張 LINE 貼圖：${PromptState.customChar.trim()}。並確保每張貼圖的人物造型一致。`
+        : "請將我上傳的照片轉化為 20 張 LINE 貼圖。並確保每張貼圖的人物造型一致。");
 
-  const borderInst = PromptState.border
-    ? "\n- 為每位角色加上清晰的白色貼紙描邊（僅環繞角色本身，不在格子周圍加邊框）。"
+  // 情境清單：1【xxx】、2【yyy】...
+  const scenariosArr = Array.from(PromptState.scenarios);
+  const scenarioText = scenariosArr.length
+    ? scenariosArr.map((s, i) => `${i+1}【${s}】`).join("、")
+    : "（請至少從上方選擇 1 個情境主題）";
+
+  // 邊框說明句
+  const borderLine = PromptState.border
+    ? "每個 LINE 貼圖角色皆有白色邊框，"
     : "";
 
-  const customAct = PromptState.customAction.trim()
-    ? `\n[自訂文字情境]\n${PromptState.customAction.trim()}\n`
+  // 自訂文字情境附加
+  const customLine = PromptState.customAction.trim()
+    ? `\n額外自訂情境：${PromptState.customAction.trim()}`
     : "";
 
-  return `# LINE 貼圖大圖生成 Prompt
+  return `Persona｜角色
+你是一位擅長角色設計與 LINE 貼圖創作的插畫設計師，能依據人物或動物照片，繪製生動、可愛且具有辨識度的${style}角色。
 
-## [版面設定]
-- 畫布尺寸：2560 × 1664 像素
-- 網格：5 欄 × 4 列，共 20 張貼圖
-- 每格呈現不同的臉部表情與動作姿勢
-- 背景：純綠幕（#00FF00）— 完全平面色，不可有漸層或陰影
-- 貼圖總數：20 張（5×4 網格每一格皆需填滿）
+Aim｜目的
+${aimSourceLine}
 
-## [核心規則]
-- 構圖：依動作選擇半身或全身，以最能傳達該姿勢者為準
-- 嚴禁出現格線、白色分隔線、格與格之間的邊框 — 所有格子必須無縫融合於同一片綠色背景
-- 可在每張貼圖加入繁體中文文字 — 可橫向或直向書寫，手寫風或對話框樣式皆可
-- 所有 20 張貼圖必須維持一致的角色設計（臉型、髮型、服裝、配色）${borderInst}
+Recipients｜受眾
+適合與親友、同事及同學在 LINE 日常聊天時使用，讓貼圖能自然傳達各種心情。
 
-## [角色設定]
-${charLine}
+Theme｜主題
+整體採用${style}，人物頭大身小、線條簡潔圓潤、配色柔和，表情生動，動作清楚。可以適度加入愛心、汗滴、淚滴、星星等小元素，增添情緒與趣味。
 
 ## [畫風]
-${PromptState.style}
+${style}
 
 ## [貼圖情境]
-請生成正好 20 張貼圖，每一格表現以下其中一個動作 / 文字（如有顯示文字請使用繁體中文）：
-${scenarioBlock}
-${customAct}
+請生成正好 ${scenariosArr.length || 20} 張貼圖，每一格表現以下其中一個動作：
+${scenarioText}${customLine}
+${borderLine}有字的話用繁體中文寫，文字可以直放，也可以橫放，不用加【】
+
+Structure｜結構
 ## [輸出要求]
 - 單張圖片，2560×1664 px
 - 角色輪廓以外的部分為純綠色（#00FF00）背景
