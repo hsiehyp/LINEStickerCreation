@@ -1146,7 +1146,7 @@ textarea.input{resize:vertical;min-height:80px;line-height:1.5}
       <div class="brand-logo">🎨</div>
       <div>LINE 動態貼圖自動化助手</div>
       <span class="line-badge">LINE Ready</span>
-      <span class="version-badge" title="若版本號不是最新請強制重新整理 (Ctrl+Shift+R)">v2026.05.15e</span>
+      <span class="version-badge" title="若版本號不是最新請強制重新整理 (Ctrl+Shift+R)">v2026.05.16</span>
     </div>
     <nav class="tabs" id="tabsNav"></nav>
   </header>
@@ -1358,10 +1358,21 @@ textarea.input{resize:vertical;min-height:80px;line-height:1.5}
               </div>
               <div style="padding:10px;background:#0e1119;border-radius:6px;border:1px solid var(--c-border)">
                 <h4 style="margin-bottom:8px;font-size:13px">分割線調整</h4>
-                <p class="muted" style="margin-bottom:8px;font-size:11px">將滑鼠移到任一條粉紅虛線（接近時變實線），按住可拖曳調整位置。</p>
-                <button class="btn outline" id="splitResetLinesBtn" style="width:100%">↻ 重設為平均 5×4 格線</button>
+                <p class="muted" style="margin-bottom:8px;font-size:11px">
+                  拖曳粉紅虛線調整位置。<br>
+                  <b style="color:#f95f8e">雙擊線條</b>可刪除；<br>
+                  <b style="color:#f95f8e">雙擊格內空白處</b>可新增分割線。
+                </p>
+                <div class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:8px">
+                  <button class="btn outline" id="addVLineBtn" style="flex:1;min-width:0;font-size:12px">＋ 加垂直線</button>
+                  <button class="btn outline" id="addHLineBtn" style="flex:1;min-width:0;font-size:12px">＋ 加水平線</button>
+                </div>
+                <div class="row" style="gap:6px;margin-bottom:8px">
+                  <span class="muted mono" style="font-size:11px;flex:1" id="splitGridInfo">目前：5 欄 × 4 列 = 20 格</span>
+                </div>
+                <button class="btn outline" id="splitResetLinesBtn" style="width:100%">↻ 重設為 5×4 標準格線</button>
               </div>
-              <p class="muted" style="margin-top:10px;font-size:11px">提示：先用滑桿粗調整體位置/縮放，再用拖曳分割線精準對齊每張角色。</p>
+              <p class="muted" style="margin-top:10px;font-size:11px">提示：先用滑桿粗調整體位置/縮放，再用拖曳/新增/刪除分割線精準對齊每張角色。</p>
             </div>
           </div>
         </div>
@@ -1387,14 +1398,14 @@ textarea.input{resize:vertical;min-height:80px;line-height:1.5}
             <span class="label" style="margin-bottom:0">起始編號（組）</span>
             <input type="number" class="input mono" id="zipStartNum" value="1" min="1" style="width:70px" />
           </div>
-          <button class="btn line" id="downloadZipBtn">📦 下載完整 ZIP（20 張）</button>
+          <button class="btn line" id="downloadZipBtn">📦 下載完整 ZIP</button>
           <span style="width:1px;height:24px;background:var(--c-border)"></span>
           <button class="btn outline" id="selectAllFramesBtn">☑ 全選</button>
           <button class="btn outline" id="deselectAllFramesBtn">☐ 全不選</button>
           <button class="btn primary" id="copyToTab4Btn">📌 複製選取至「動態貼圖製作」</button>
           <span class="muted" id="selectedCountInfo">已選 0 張</span>
         </div>
-        <p class="muted" style="margin-bottom:8px;font-size:12px">提示：勾選需要的影格後可單獨複製到分頁 4；或直接「下載完整 ZIP」取得全部 20 張。</p>
+        <p class="muted" style="margin-bottom:8px;font-size:12px">提示：勾選需要的影格後可單獨複製到分頁 4；或直接「下載完整 ZIP」取得所有影格。</p>
 
         <div class="frames-grid" id="splitFramesGrid"></div>
       </div>
@@ -2667,8 +2678,13 @@ function setupSplitTab() {
     AppState.split.vLines = [0.2, 0.4, 0.6, 0.8];
     AppState.split.hLines = [0.25, 0.5, 0.75];
     drawSplitPreview();
-    toast("✅ 已重設為平均 5×4 格線", "success");
+    updateSplitGridInfo();
+    toast("✅ 已重設為 5×4 標準格線", "success");
   });
+
+  // Add-line buttons: insert into the widest existing gap so the new line sits in the middle of it
+  $("#addVLineBtn").addEventListener("click", () => insertLineIntoWidestGap("v"));
+  $("#addHLineBtn").addEventListener("click", () => insertLineIntoWidestGap("h"));
 
   // Start number — live updates labels everywhere
   $("#zipStartNum").addEventListener("input", e => {
@@ -2730,12 +2746,13 @@ function showSplitEditor() {
   AppState.split.vLines = [0.2, 0.4, 0.6, 0.8];
   AppState.split.hLines = [0.25, 0.5, 0.75];
   drawSplitPreview();
+  updateSplitGridInfo();
   setupSplitCanvasInteraction();
 }
 
-// Reusable: returns the source-canvas-coordinate boundaries (in px) for the 5x4 grid given current vLines/hLines.
-// boundaries.xs has 6 values: [0, vLine0, vLine1, vLine2, vLine3, W]
-// boundaries.ys has 5 values: [0, hLine0, hLine1, hLine2, H]
+// Reusable: returns the source-canvas-coordinate boundaries (in px) for the current grid given vLines/hLines.
+// xs has (vLines.length + 2) values: [0, ...vLines*W, W]
+// ys has (hLines.length + 2) values: [0, ...hLines*H, H]
 function getSplitBoundaries(W, H) {
   const xs = [0, ...AppState.split.vLines.map(p => p * W), W];
   const ys = [0, ...AppState.split.hLines.map(p => p * H), H];
@@ -2785,11 +2802,13 @@ function drawSplitPreview() {
   // Draw row/column number labels for visual reference (use live startNum)
   const { xs, ys } = getSplitBoundaries(cv.width, cv.height);
   const startNum = AppState.split.startNum;
+  const NCOL = xs.length - 1;
+  const NROW = ys.length - 1;
   ctx.font = "bold 13px 'JetBrains Mono', monospace";
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
-  for (let c = 0; c < 5; c++) {
-    for (let r = 0; r < 4; r++) {
+  for (let c = 0; c < NCOL; c++) {
+    for (let r = 0; r < NROW; r++) {
       const cellX = xs[c], cellY = ys[r];
       const label = `${startNum + c}-${r + 1}`;
       const padX = 4, padY = 4;
@@ -2824,11 +2843,87 @@ function drawSplitLine(ctx, x1, y1, x2, y2, active) {
   ctx.setLineDash([]);
 }
 
+/* ----- Split-line add / remove helpers ----- */
+
+// Update the "目前：N 欄 × M 列 = P 格" info label AND the confirm button count
+function updateSplitGridInfo() {
+  const ncol = AppState.split.vLines.length + 1;
+  const nrow = AppState.split.hLines.length + 1;
+  const total = ncol * nrow;
+  const infoEl = document.getElementById("splitGridInfo");
+  if (infoEl) infoEl.textContent = `目前：${ncol} 欄 × ${nrow} 列 = ${total} 格`;
+  const btn = document.getElementById("splitConfirmBtn");
+  if (btn) btn.textContent = `✂️ 確認切割（產生 ${total} 張影格）`;
+}
+
+// Insert a new line into the widest existing gap so the new line sits in the middle.
+// kind = "v" for vertical lines (splits columns), "h" for horizontal (splits rows).
+function insertLineIntoWidestGap(kind) {
+  const arr = kind === "v" ? AppState.split.vLines : AppState.split.hLines;
+  // Build gap boundaries including the two edges 0 and 1
+  const bounds = [0, ...arr, 1];
+  let widestGap = -1;
+  let widestIdx = -1;
+  for (let i = 0; i < bounds.length - 1; i++) {
+    const gap = bounds[i + 1] - bounds[i];
+    if (gap > widestGap) { widestGap = gap; widestIdx = i; }
+  }
+  const MIN_GAP = 0.04;   // require the widest gap to be at least 2× MIN_GAP so both halves survive MIN_GAP validation
+  if (widestGap < MIN_GAP * 2) {
+    toast(`格子已太小，無法再新增${kind === "v" ? "垂直" : "水平"}線`, "error");
+    return;
+  }
+  const newPos = (bounds[widestIdx] + bounds[widestIdx + 1]) / 2;
+  arr.push(newPos);
+  arr.sort((a, b) => a - b);
+  drawSplitPreview();
+  updateSplitGridInfo();
+  const ncol = AppState.split.vLines.length + 1;
+  const nrow = AppState.split.hLines.length + 1;
+  toast(`✅ 已新增${kind === "v" ? "垂直" : "水平"}分割線（現為 ${ncol}×${nrow} = ${ncol * nrow} 格）`, "success");
+}
+
+// Remove a specific line by kind + index; enforces minimum 1 column/row (i.e., can delete all lines).
+function removeSplitLine(kind, idx) {
+  const arr = kind === "v" ? AppState.split.vLines : AppState.split.hLines;
+  if (idx < 0 || idx >= arr.length) return;
+  arr.splice(idx, 1);
+  drawSplitPreview();
+  updateSplitGridInfo();
+  const ncol = AppState.split.vLines.length + 1;
+  const nrow = AppState.split.hLines.length + 1;
+  toast(`✅ 已刪除${kind === "v" ? "垂直" : "水平"}分割線（現為 ${ncol}×${nrow} = ${ncol * nrow} 格）`, "success");
+}
+
+// Insert a line at a specific normalized position (used by double-click on empty area)
+function insertSplitLineAt(kind, normPos) {
+  const arr = kind === "v" ? AppState.split.vLines : AppState.split.hLines;
+  const MIN_GAP = 0.04;
+  // Reject if too close to an edge or existing line
+  if (normPos < MIN_GAP || normPos > 1 - MIN_GAP) {
+    toast("位置太靠近邊緣", "error"); return;
+  }
+  for (const p of arr) {
+    if (Math.abs(p - normPos) < MIN_GAP) { toast("位置太靠近既有分割線", "error"); return; }
+  }
+  arr.push(normPos);
+  arr.sort((a, b) => a - b);
+  drawSplitPreview();
+  updateSplitGridInfo();
+  const ncol = AppState.split.vLines.length + 1;
+  const nrow = AppState.split.hLines.length + 1;
+  toast(`✅ 已新增${kind === "v" ? "垂直" : "水平"}分割線（現為 ${ncol}×${nrow} = ${ncol * nrow} 格）`, "success");
+}
+
 /* ----- Interactive line dragging ----- */
 const SplitInteract = {
   hover: null,    // {kind: "v"|"h", idx} or null
   drag: null,     // {kind, idx, dragging: bool}
-  HIT_PX: 8       // pixels around line to grab
+  HIT_PX: 8,      // pixels around line to grab
+  // Touch long-press support (touch devices have no "double-tap"; we detect long-press instead)
+  touchStartTime: 0,
+  touchStartPos: null,
+  LONG_PRESS_MS: 500
 };
 
 function setupSplitCanvasInteraction() {
@@ -2922,6 +3017,74 @@ function setupSplitCanvasInteraction() {
       drawSplitPreview();
     }
   });
+
+  // Double-click: delete line if hit, otherwise add a line at the click position.
+  // For "empty area" clicks, decide between vertical/horizontal by which axis has
+  // more room away from existing lines — picks the more useful split direction.
+  cv.addEventListener("dblclick", e => {
+    const { x, y } = getCanvasCoord(e);
+    const hit = findHit(x, y, SplitInteract.HIT_PX);
+    if (hit) {
+      removeSplitLine(hit.kind, hit.idx);
+    } else {
+      // Add a line — decide vertical vs horizontal based on which axis has fewer lines
+      // (so we help balance the grid), tiebreak by adding vertical
+      const vCount = AppState.split.vLines.length;
+      const hCount = AppState.split.hLines.length;
+      const kind = (hCount < vCount) ? "h" : "v";
+      const pos = kind === "v" ? (x / cv.width) : (y / cv.height);
+      insertSplitLineAt(kind, pos);
+    }
+  });
+
+  // Touch long-press = equivalent of double-click on touch devices
+  // (dblclick is unreliable on touch; long-press is the mobile convention for "context action")
+  cv.addEventListener("pointerdown", e => {
+    if (e.pointerType !== "touch") return;
+    SplitInteract.touchStartTime = Date.now();
+    SplitInteract.touchStartPos = getCanvasCoord(e);
+    // Set a timer that fires after LONG_PRESS_MS if the user hasn't moved (i.e., not dragging a line)
+    clearTimeout(SplitInteract._longPressTimer);
+    SplitInteract._longPressTimer = setTimeout(() => {
+      // Only trigger if we're not currently dragging a line
+      if (SplitInteract.drag) return;
+      const { x, y } = SplitInteract.touchStartPos;
+      const hit = findHit(x, y, 20);   // wider hit zone on touch
+      if (hit) {
+        removeSplitLine(hit.kind, hit.idx);
+      } else {
+        const vCount = AppState.split.vLines.length;
+        const hCount = AppState.split.hLines.length;
+        const kind = (hCount < vCount) ? "h" : "v";
+        const pos = kind === "v" ? (x / cv.width) : (y / cv.height);
+        insertSplitLineAt(kind, pos);
+      }
+    }, SplitInteract.LONG_PRESS_MS);
+  });
+  cv.addEventListener("pointermove", e => {
+    if (e.pointerType === "touch" && SplitInteract._longPressTimer) {
+      // Cancel long-press if the user starts moving significantly (they're dragging)
+      const cur = getCanvasCoord(e);
+      const dx = Math.abs(cur.x - SplitInteract.touchStartPos.x);
+      const dy = Math.abs(cur.y - SplitInteract.touchStartPos.y);
+      if (dx > 8 || dy > 8) {
+        clearTimeout(SplitInteract._longPressTimer);
+        SplitInteract._longPressTimer = null;
+      }
+    }
+  });
+  cv.addEventListener("pointerup", () => {
+    if (SplitInteract._longPressTimer) {
+      clearTimeout(SplitInteract._longPressTimer);
+      SplitInteract._longPressTimer = null;
+    }
+  });
+  cv.addEventListener("pointercancel", () => {
+    if (SplitInteract._longPressTimer) {
+      clearTimeout(SplitInteract._longPressTimer);
+      SplitInteract._longPressTimer = null;
+    }
+  });
 }
 
 function confirmSplit() {
@@ -2946,9 +3109,11 @@ function confirmSplit() {
   // Slice using user-defined line positions (in column-major order).
   // boundaries.xs[c] / xs[c+1] form column c's left/right; ys[r]/ys[r+1] form row r's top/bottom
   const { xs, ys } = getSplitBoundaries(W, H);
+  const NCOL = xs.length - 1;
+  const NROW = ys.length - 1;
   const frames = [];
-  for (let col = 0; col < 5; col++) {
-    for (let row = 0; row < 4; row++) {
+  for (let col = 0; col < NCOL; col++) {
+    for (let row = 0; row < NROW; row++) {
       const sx = Math.round(xs[col]);
       const sy = Math.round(ys[row]);
       const sw = Math.round(xs[col + 1] - xs[col]);
@@ -3032,7 +3197,7 @@ function runBackgroundRemoval() {
   $("#bgRmStatusTag").textContent = "✅ 已完成去背";
   $("#bgRmStatusTag").className = "tag success";
   renderSplitFramesGrid();
-  toast("✅ 已完成 20 張影格的綠幕去背", "success");
+  toast(`✅ 已完成 ${AppState.split.frames.length} 張影格的綠幕去背`, "success");
 }
 
 async function downloadSplitZip() {
