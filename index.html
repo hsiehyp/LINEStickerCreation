@@ -1146,7 +1146,7 @@ textarea.input{resize:vertical;min-height:80px;line-height:1.5}
       <div class="brand-logo">🎨</div>
       <div>LINE 動態貼圖自動化助手</div>
       <span class="line-badge">LINE Ready</span>
-      <span class="version-badge" title="若版本號不是最新請強制重新整理 (Ctrl+Shift+R)">v2026.05.16</span>
+      <span class="version-badge" title="若版本號不是最新請強制重新整理 (Ctrl+Shift+R)">v2026.05.16b</span>
     </div>
     <nav class="tabs" id="tabsNav"></nav>
   </header>
@@ -2173,77 +2173,71 @@ function renderPrompt() {
 function buildPromptEN() {
   const style = AppConfig.promptStyles.find(s => s.id === PromptState.style);
 
-  // Aim｜Purpose — subject source
-  let aimSubject;
+  let charLine;
   if (PromptState.source === "ref") {
-    aimSubject = "the subject (person / animal / plant) in the reference image I have attached";
+    charLine = "Use the reference image attached as the main character. (Please attach the reference image in the AI platform's UI when sending this prompt.)";
   } else {
-    aimSubject = PromptState.customText.trim() || "(please describe your character in the UI's custom-character field)";
+    charLine = PromptState.customText.trim()
+      ? "Character description: " + PromptState.customText.trim()
+      : "Character description: (please describe your character)";
   }
+  const borderLine = PromptState.border
+    ? "Add a clear white die-cut sticker border around the character on every cell."
+    : "";
 
-  // Theme｜Sticker scenarios — action list (5 columns of continuous animation)
   const customActs = PromptState.customActions.trim();
   const selectedActs = PromptState.selectedActions;
-  let sceneLine;
+  let actionLine;
   if (customActs) {
-    const list = customActs.split(/[,、,]/).map(s => s.trim()).filter(Boolean);
-    const padded = list.slice(0, 5);
-    while (padded.length < 5) padded.push("(AI to fill with a similar action)");
-    sceneLine = padded.map((a, i) => `Column ${i+1} 【${a}】`).join(" ｜ ");
+    actionLine = `Use EXACTLY these user-specified actions across the 5 columns (one action per column, in order, depict in Chinese context): ${customActs}。`;
+  } else if (selectedActs.length === 5) {
+    actionLine = `Use EXACTLY these 5 user-selected actions, ONE per column in order (depict in Chinese context, each column = one continuous-action sequence of 4 frames showing that action): ${selectedActs.join("、")}。`;
   } else if (selectedActs.length > 0) {
-    const padded = [...selectedActs].slice(0, 5);
-    while (padded.length < 5) padded.push("(AI to fill with a similar-tone action)");
-    sceneLine = padded.map((a, i) => `Column ${i+1} 【${a}】`).join(" ｜ ");
+    actionLine = `Distribute these ${selectedActs.length} user-selected action(s) meaningfully across the 5 columns; for any remaining columns, choose closely-related actions of similar emotional tone (depict in Chinese context): ${selectedActs.join("、")}。`;
   } else {
-    sceneLine = "(⚠ Not yet set — please select 1-5 action keywords or fill the custom-actions field in the UI.)";
+    actionLine = `(⚠ NOT YET SET — please select 1-5 action keywords or fill the custom-actions field in the UI before sending to Gemini.)`;
   }
 
-  const borderLine = PromptState.border
-    ? "- Sharp, clean, high-detail character lines. Each character has a WHITE die-cut sticker outline (following the character silhouette ONLY — NOT a cell border)."
-    : "- Sharp, clean, high-detail character lines. No outer border.";
+  return `# Animated Sticker Prompt (Continuous-Action Mode, NO TEXT)
 
-  return `## Persona｜Role
-You are an illustration designer who specialises in character design and LINE animated sticker creation. Based on a reference photo of a person, animal, or plant, you can draw lively, cute, and highly recognisable chibi (Q-version) characters and design them into smooth frame-by-frame animation sequences.
+[!!! CRITICAL — NO VISIBLE GRID LINES !!!]
+The "5×4 grid" is a LOGICAL LAYOUT CONCEPT for the AI to organize the composition.
+The output image MUST NOT contain any visible:
+  ✗ grid lines (white, black, or any color)
+  ✗ borders, frames, or boxes around individual cells
+  ✗ gutters, gaps, or separator strips between cells
+  ✗ panel dividers (like in a comic book or photo collage)
+  ✗ corner marks, crop marks, or registration marks
+The 20 sub-images must touch each other directly with NO visual separation.
+The viewer should NOT be able to tell where one cell ends and the next begins, except by the change in pose/character.
+A continuous green background fills the entire 2560×1664 canvas with NO interruption.
 
-## Aim｜Purpose
-Transform ${aimSubject} into 5 groups of animated LINE stickers, output as a single 5-column × 4-row = 20 sub-image storyboard:
-Each column is one sticker's 4-frame continuous animation (top → bottom), for 5 groups total.
-Preserve the subject's key features, including hairstyle, face shape, glasses, and clothing details.
+[Layout Specification]
+- Canvas size: 2560 x 1664 px (single uninterrupted image)
+- Logical arrangement: 5 columns × 4 rows = 20 sub-images (each conceptually ~512 × 416 px)
+- Each VERTICAL COLUMN represents ONE continuous animation sequence (4 frames per column, top → bottom).
+- 5 distinct continuous-action sequences in total.
+- IMPORTANT: This grid structure is INVISIBLE — only the AI uses it for composition; the rendered output shows only characters on a uniform green background.
 
-## Recipients｜Audience
-Designed for everyday LINE chats with friends, family, colleagues, and classmates,
-so that each 4-frame animation loop naturally conveys a distinct emotion or reaction.
+[Core Rules]
+- ABSOLUTELY NO TEXT, words, letters, numbers, captions, watermarks, or signatures anywhere.
+- ABSOLUTELY NO GRID LINES of any kind — no white lines, no black lines, no thin strokes, no faint guides. The 20 sub-images blend seamlessly into ONE flat green canvas.
+- Composition: half-body or full-body depending on the action; full character must remain inside its conceptual cell area.
+- Background: SOLID GREEN SCREEN (#00C800), perfectly flat and uniform across the ENTIRE 2560×1664 canvas, for easy chroma keying.
+- Subtle, expressive variation between frames within a column to create smooth animation.
 
-## Theme｜Style
-${style.en}: large-head chibi proportions, clean rounded outlines, soft harmonious colours, expressive faces, clear body gestures.
-Small accent elements (hearts, sweat drops, tears, stars, motion lines, etc.) may be added tastefully to enhance emotion and fun.
+[Creative Settings]
+- ${charLine}
+- ${actionLine}
+- Visual style: ${style.en}.
+${borderLine ? "- " + borderLine + "\n" : ""}- Lighting: clean, even, no harsh shadows that would interfere with chroma key.
+- Each column tells one micro-story (4 frames of a single motion). Different columns show different actions.
 
-### Sticker Scenarios (one action per column, in order)
-${sceneLine}
-
-### Text Rules
-Text is optional. If used, it MUST be **Traditional Chinese** (繁體中文), can be vertical or horizontal, and must NOT include 【】 brackets.
-**Avoid text on adjacent frames within a column** — differing text across neighbouring frames causes flicker, and shifted text positions cause jitter, both breaking the animation flow.
-Recommended: within each 4-frame column, add text to only 1 frame as a key moment; keep the other 3 frames text-free.
-
-## Structure｜Output Requirements
-
-### Layout Specification
-- Single image, 2560 × 1664 px; the 5-column × 4-row logical grid is INVISIBLE, used only for internal composition planning; each cell is approximately 512 × 416 px.
-- The final output must have NO visible grid lines, cell borders, panel dividers, gutters, or crop marks anywhere; the 20 sub-images must blend seamlessly into ONE flat green background. The viewer should not be able to distinguish cell boundaries except through pose variation.
-- No watermarks, signatures, or artist marks.
-
-### Character & Background
-${borderLine}
-- Non-character area is solid pure green #00FF00, perfectly flat and uniform across the entire canvas for easy chroma keying.
-- Lighting is clean and even, no harsh shadows that would interfere with chroma keying.
-- Each character has appropriate padding within its cell area, ensuring the pose is fully preserved after splitting into 5×4.
-
-### Hard Constraints
-- Exactly 20 sub-images (5 columns × 4 rows), no more, no less.
-- Character design (face, hair, glasses, outfit) must be IDENTICAL across all 20 sub-images.
-- Within a column, the 4 frames must show the SAME action progressing naturally (like animation keyframes), forming a smooth loop.
-- Between columns, actions must be COMPLETELY DIFFERENT — each column is an independent animated sticker.
+[Hard Constraints]
+- Output exactly 5×4 sub-images, no more, no less.
+- Do not draw anything outside the conceptual cell boundaries.
+- The green background MUST be visible around the character on every sub-image (no edge-to-edge fill).
+- ZERO visible grid lines, borders, frames, or panel dividers anywhere in the output. If you are tempted to draw a thin line to separate cells — DO NOT. The cells separate themselves naturally through the green negative space around each character.
 `;
 }
 
@@ -2251,78 +2245,71 @@ function buildPromptZH() {
   const style = AppConfig.promptStyles.find(s => s.id === PromptState.style);
   const styleZh = style.zh || style.en;
 
-  // Aim｜目的 — 主體來源
-  let aimSubject;
+  let charLine;
   if (PromptState.source === "ref") {
-    aimSubject = "我上傳照片中的主體（人物／動物／植物）";
+    charLine = "請以附加的參考圖作為主角。（送出時請於 AI 平台介面上傳參考圖）";
   } else {
-    aimSubject = PromptState.customText.trim() || "（請於介面「自訂角色」欄位填寫角色特徵）";
+    charLine = PromptState.customText.trim()
+      ? "角色描述：" + PromptState.customText.trim()
+      : "角色描述：（請填寫角色特徵）";
   }
+  const borderLine = PromptState.border
+    ? "在每一格的角色周圍加上清晰的白色貼圖邊框（die-cut sticker style）。"
+    : "";
 
-  // Theme｜貼圖情境 — 動作清單（5 欄連續動畫）
   const customActs = PromptState.customActions.trim();
   const selectedActs = PromptState.selectedActions;
-  let sceneLine;
+  let actionLine;
   if (customActs) {
-    const list = customActs.split(/[,、,]/).map(s => s.trim()).filter(Boolean);
-    const padded = list.slice(0, 5);
-    while (padded.length < 5) padded.push("（由 AI 補足相近動作）");
-    sceneLine = padded.map((a, i) => `第 ${i+1} 欄【${a}】`).join("｜");
+    actionLine = `請使用以下使用者指定的動作，每一欄對應一個動作（依序排列）：${customActs}。`;
+  } else if (selectedActs.length === 5) {
+    actionLine = `請完全採用以下 5 個使用者指定的動作，每一欄一個動作、按順序排列（每一欄 = 一組由 4 格組成的連續動作）：${selectedActs.join("、")}。`;
   } else if (selectedActs.length > 0) {
-    const padded = [...selectedActs].slice(0, 5);
-    while (padded.length < 5) padded.push("（由 AI 補足情緒相近動作）");
-    sceneLine = padded.map((a, i) => `第 ${i+1} 欄【${a}】`).join("｜");
+    actionLine = `請將以下 ${selectedActs.length} 個使用者指定的動作有意義地分配到 5 欄中；剩餘欄位請自行選擇情緒風格相近的動作填補：${selectedActs.join("、")}。`;
   } else {
-    sceneLine = "（⚠ 尚未設定 — 請先在介面選取 1-5 個動作關鍵字或填寫自訂動作欄位）";
+    actionLine = `（⚠ 尚未設定 — 請先在介面上選取 1-5 個動作關鍵字，或填寫自訂動作欄位。）`;
   }
 
-  // 角色與背景中的邊框說明
-  const borderLine = PromptState.border
-    ? "- 角色線條清晰銳利、高細節，每格角色周圍加上白色貼圖邊框（僅環繞角色輪廓，不是格子邊框）。"
-    : "- 角色線條清晰銳利、高細節，不加外框。";
+  return `# 動態貼圖生成指令（連續動作模式・絕對不出現文字）
 
-  return `## Persona｜角色
-你是一位擅長角色設計與 LINE 動態貼圖創作的插畫設計師，能依據人物、動物或植物照片，繪製生動、可愛且具辨識度的 Q 版角色，並設計成流暢的分鏡動畫。
+【!!! 最重要規則 — 絕對不可有任何可見的格線 !!!】
+所謂「5×4 網格」只是 AI 內部用來組織構圖的「邏輯排版概念」。
+最終輸出的圖片絕對不能包含任何可見的：
+  ✗ 格線（不論白、黑、或任何顏色）
+  ✗ 包圍每一格的邊框、框線或矩形
+  ✗ 各格之間的留白條、間隙或分隔條
+  ✗ 漫畫式或拼貼式的面板分隔線
+  ✗ 對齊標記、裁切線或定位標記
+20 張子圖必須直接相鄰，彼此之間沒有任何視覺分隔。
+觀看者除了角色姿勢的變化外，不應分辨得出一格在哪裡結束、下一格從哪裡開始。
+整張 2560×1664 畫布應由連續、毫無中斷的純綠色背景填滿。
 
-## Aim｜目的
-請將${aimSubject}轉化為 5 組動態 LINE 貼圖，輸出為單張 5 欄 × 4 列 = 20 張子圖的分鏡表：
-每一欄是一組貼圖的 4 格連續動畫（由上到下），共 5 組。
-保留主體特徵，包括髮型、臉型、眼鏡及服裝特色。
+【版面規格】
+- 畫布尺寸：2560 × 1664 px（單張不可中斷的完整圖）
+- 邏輯排版：5 欄 × 4 列 = 20 張子圖（每張概念上約 512 × 416 px）
+- 每一個垂直欄代表一組連續動畫（每欄 4 格，由上到下）
+- 共產生 5 組不同的連續動作序列
+- 重要：這個網格結構是「不可見的」—— 僅供 AI 用於構圖規劃，最終輸出只能看到角色和均勻綠色背景。
 
-## Recipients｜受眾
-適合與親友、同事及同學在 LINE 日常聊天時使用，
-讓每組 4 格動畫循環自然傳達不同的心情與情緒反應。
+【核心規則】
+- 絕對不可出現任何文字、字母、數字、標題、浮水印或簽名。
+- 絕對不可出現任何種類的格線 —— 不要白線、不要黑線、不要細線、不要淡淡的引導線。20 張子圖必須完美融合在同一張平坦綠色畫布上。
+- 構圖：依動作需求採半身或全身，完整角色須保持在其所屬概念格區域內。
+- 背景：純綠幕（#00C800），整張 2560×1664 畫布上必須完全平坦、均勻一致，以利後續去背。
+- 同一欄內 4 格之間應有細膩、生動的變化，以形成流暢動畫。
 
-## Theme｜主題
-${styleZh}：大頭身比例、線條簡潔圓潤、柔和粉嫩配色、表情生動、動作清楚。
-可適度加入愛心、汗滴、淚滴、星星、集中線等小元素，增添情緒與趣味。
+【創意設定】
+- ${charLine}
+- ${actionLine}
+- 視覺風格：${styleZh}。
+${borderLine ? "- " + borderLine + "\n" : ""}- 光照：乾淨、均勻，避免會干擾去背的強烈陰影。
+- 每一欄都是一個小故事（同一動作的 4 格分鏡），不同欄展示不同動作。
 
-### 貼圖情境（每欄一個動作，依序排列）
-${sceneLine}
-
-### 文字規則
-文字為選配。若加字，請用**繁體中文**，可直放或橫放，**不要加【】符號**。
-**同一欄 4 格避免相鄰格都有字**——相鄰格若文字內容不同會閃爍，位置不同會抖動，皆會破壞動畫流暢感。
-建議整欄 4 格中僅 1 格加字（作為關鍵瞬間），其餘 3 格保持純動作。
-
-## Structure｜結構
-
-### 版面規格
-- 單張圖片，2560 × 1664 px；邏輯網格 5 欄 × 4 列「不可見」，僅供內部構圖規劃，每格約 512 × 416 px。
-- 整張輸出不可有任何可見的格線、格子邊框、面板分隔線、留白條或裁切標記；20 張子圖必須無縫融合於同一片綠色背景，觀看者除了姿勢變化外，分辨不出格與格的交界。
-- 不可有浮水印、簽名或畫家標記。
-
-### 角色與背景
-${borderLine}
-- 角色輪廓以外為純綠色 #00FF00，整張畫布完全平坦、均勻一致，以利後續去背。
-- 光照乾淨均勻，避免會干擾去背的強烈陰影。
-- 每格角色四周留有適當留白，確保切割成 5×4 後仍能完整呈現姿勢。
-
-### 硬性限制
-- 恰好 20 張子圖（5 欄 × 4 列），不可多也不可少。
-- 20 張子圖的角色造型（臉部、髮型、眼鏡、服裝）必須完全一致。
-- 同一欄的 4 格為同一動作的自然連續變化（像動畫關鍵影格），可形成流暢循環。
-- 不同欄之間為完全不同的動作，各自獨立成一組動態貼圖。
+【硬性限制】
+- 輸出必須恰好為 5×4 = 20 張子圖，不可多也不可少。
+- 不可在概念格邊界外繪製任何元素。
+- 每一張子圖角色周圍都必須看得到綠色背景（不可貼齊填滿）。
+- 整張輸出不能有任何可見的格線、邊框、框線或面板分隔線。如果你（AI）想要畫一條細線來分隔格子 —— 請不要。每一格之間的分隔，應該透過角色周圍的綠色留白自然產生。
 `;
 }
 
