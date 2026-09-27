@@ -48,6 +48,14 @@ a{color:var(--accent)}
 .spec{font-family:var(--mono);font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid var(--line-strong);color:var(--muted);background:var(--panel-2);white-space:nowrap}
 .spec b{color:var(--ink);font-weight:500}
 
+.tabs{display:flex;gap:4px;max-width:1380px;margin:0 auto;padding:10px 20px 0}
+.tabs button{border:1px solid var(--line);border-bottom:0;background:var(--panel-2);color:var(--muted);border-radius:10px 10px 0 0;padding:9px 18px;font-size:14px;font-weight:700;cursor:pointer}
+.tabs button.on{background:var(--panel);color:var(--accent);box-shadow:inset 0 3px 0 var(--accent)}
+.tabs button:hover{color:var(--accent)}
+.tabbar{border-bottom:1px solid var(--line);background:linear-gradient(var(--bg),var(--bg))}
+.mitem .pv{aspect-ratio:auto;height:150px}
+.mitem .nm{font-family:var(--mono);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mitem .from{font-size:11px;color:var(--faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wrap{max-width:1380px;margin:0 auto;padding-inline:20px;padding-block:20px 60px;display:grid;gap:22px}
 .sec-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;margin-bottom:12px}
 .sec-head h2{font-size:16px;font-weight:700}
@@ -235,7 +243,12 @@ input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px}
   </div>
 </header>
 
+<div class="tabbar"><nav class="tabs" id="tabs" role="tablist">
+  <button type="button" data-tab="make" class="on" role="tab">製作貼圖</button>
+  <button type="button" data-tab="merge" role="tab">合併 ZIP</button>
+</nav></div>
 <main class="wrap">
+ <div id="tab-make">
   <section>
     <div class="sec-head"><h2><span class="step">1</span>素材影片</h2><p>上傳 AI 生成的圖板影片（MP4 / MOV / WebM），可放多支；輸出編號依影片順序累加。所有處理都在你的瀏覽器內完成，不會上傳。</p></div>
     <div class="src-row">
@@ -376,6 +389,9 @@ input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px}
       </div>
       <button class="btn sm" id="playAll" type="button">▶ 全部播放</button>
       <button class="btn sm" id="pauseAll" type="button">❚❚ 全部暫停</button>
+      <button class="btn sm danger" id="delAll" type="button">全部刪除</button>
+      <button class="btn sm" id="keepAll" type="button">全部還原</button>
+      <span class="note" id="selCount"></span>
       <button class="btn sm" id="regenAll" type="button">以目前設定重新產生全部</button>
       <div class="progress" id="progress" hidden><div class="bar"><i id="progBar"></i></div><span id="progTxt"></span></div>
     </div>
@@ -402,6 +418,35 @@ input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px}
       </div>
     </div>
   </details>
+ </div>
+
+ <div id="tab-merge" hidden>
+  <section>
+    <div class="sec-head"><h2><span class="step">1</span>匯入檔案</h2><p>把多包工坊產生的 ZIP（或單張 APNG）拖進來，合併成一包連號的上架檔。檔案一樣只在你的瀏覽器裡處理。</p></div>
+    <div class="src-row">
+      <label class="drop" id="mdrop" for="mfile"><strong>＋ 匯入 ZIP 或 PNG</strong><span>可一次選多個，或分次拖進來累加</span>
+        <input id="mfile" type="file" accept=".zip,.png,image/png,application/zip,application/x-zip-compressed" multiple hidden></label>
+      <div class="src-list" id="mSources"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2><span class="step">2</span>排序與挑選</h2><p>用 ◀ ▶ 調整順序，編號會依目前順序重排。</p></div>
+    <div class="res-bar">
+      <label class="field" style="max-width:150px">起始編號<input type="number" id="mStart" min="1" max="24" value="1"></label>
+      <button class="btn sm" id="mAll" type="button">全部選取</button>
+      <button class="btn sm danger" id="mNone" type="button">全部取消</button>
+      <button class="btn sm danger" id="mClear" type="button">清空匯入</button>
+      <span class="note" id="mCount"></span>
+    </div>
+    <div id="mList"></div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2><span class="step">3</span>匯出合併包</h2><p>輸出 01.png…、main.png、tab.png 的單一 ZIP。</p></div>
+    <div class="exp" id="mExport"></div>
+  </section>
+ </div>
 </main>
 <div class="toast" id="toast" hidden></div>
 
@@ -1022,7 +1067,7 @@ function stabOffsets(M, mode, strength) {
 const state = {
   videos: [], active: null, seq: 0,
   stab: { mode: 'auto', strength: 1 },
-  out: { size: 'fixed', margin: 10, colors: 256, indexed: true, denoise: true, loops: 'auto', maxKB: 300 },
+  out: { size: 'fixed', margin: 10, colors: 256, indexed: true, denoise: true, loops: 'auto', maxKB: 300, startNo: 1, withMainTab: true },
   previewBg: 'checker', main: null, tab: null, busy: false,
 };
 function newVideo(o) {
@@ -1526,7 +1571,7 @@ async function showFrame(t) {
   drawStage();
 }
 function globalNumbers() {
-  const map = new Map(); let n = 0;
+  const map = new Map(); let n = state.out.startNo - 1;
   for (const v of state.videos) {
     const cnt = v.grid.rows * v.grid.cols;
     for (let k = 0; k < cnt; k++) { const st = v.stickers[k]; if (st && !st.enabled) continue; map.set(v.id + ':' + k, ++n); }
@@ -1845,6 +1890,16 @@ function loopPlayers(t) {
   for (const P of players) if (P.playing) { P.step(t); any = true; }
   if (any) requestAnimationFrame(loopPlayers); else rafOn = false;
 }
+function setAllEnabled(on) {
+  const list = allStickers().filter(s => s.res);
+  if (!list.length) return;
+  list.forEach(s => s.enabled = on);
+  if (!on) { state.main = null; state.tab = null; }
+  renderResults(); renderExport(); renderSources(); drawStage();
+  toast(on ? '已還原全部貼圖' : '已全部刪除，點卡片上的「還原」逐一選回');
+}
+$('#delAll').onclick = () => setAllEnabled(false);
+$('#keepAll').onclick = () => setAllEnabled(true);
 $('#playAll').onclick = () => players.forEach(P => { P.plays = 0; P.play(); });
 $('#pauseAll').onclick = () => players.forEach(P => P.pause());
 $('#playSeg').addEventListener('click', e => {
@@ -1854,6 +1909,9 @@ $('#playSeg').addEventListener('click', e => {
 });
 function renderResults() {
   ensureMainTab();
+  const tot = allStickers().filter(s => s.res).length, sel = allStickers().filter(s => s.res && s.enabled).length;
+  $('#selCount').textContent = tot ? `已選 ${sel} / ${tot} 張` : '';
+  ['#delAll', '#keepAll'].forEach(id => $(id).disabled = !tot);
   const box = $('#results'); const all = allStickers().filter(s => s.res || !s.empty);
   if (!all.length) { box.innerHTML = '<div class="empty">產生後，每一格的 APNG 動態貼圖會出現在這裡。</div>'; return; }
   const nums = globalNumbers();
@@ -1924,7 +1982,12 @@ function renderExport() {
   const over = on.filter(s => s.res.size > 300 * 1024), longP = on.filter(s => s.res.total * s.res.loops > 4000 + 1), frameBad = on.filter(s => s.res.frames < 5 || s.res.frames > 20);
   const cut = state.videos.filter(v => v.stickers.length && crossesCut(v));
   const lines = [];
-  lines.push([ok ? '' : 'warn', ok ? `張數 ${n} 張，符合 LINE 的 8 / 16 / 24 張` : n === 0 ? '還沒有貼圖' : `目前 ${n} 張：LINE 只接受 8、16 或 24 張` + (next ? `，還差 ${next - n} 張到 ${next} 張` : '') + (prev && prev < n ? `，或刪掉 ${n - prev} 張成為 ${prev} 張` : '')]);
+  const last = state.out.startNo + n - 1;
+  if (state.out.startNo > 1) {
+    lines.push([last > 24 ? 'bad' : '', `接續編號：這批輸出 ${pad2(state.out.startNo)}～${pad2(last)}.png` + (last > 24 ? '，已超過 LINE 的 24 張上限' : '，整組湊滿 8／16／24 張才能送審')]);
+  } else {
+    lines.push([ok ? '' : 'warn', ok ? `張數 ${n} 張，符合 LINE 的 8 / 16 / 24 張` : n === 0 ? '還沒有貼圖' : `目前 ${n} 張：LINE 只接受 8、16 或 24 張` + (next ? `，還差 ${next - n} 張到 ${next} 張` : '') + (prev && prev < n ? `，或刪掉 ${n - prev} 張成為 ${prev} 張` : '')]);
+  }
   lines.push([over.length ? 'bad' : '', over.length ? `${over.length} 張超過 300KB：請調低色彩數、幀數或片段長度` : '每張 APNG 都在 300KB 以內']);
   const badT = on.filter(s => { const T = s.res.total * s.res.loops; return Math.abs(T - Math.round(T / 1000) * 1000) > 2 || T < 999 || T > 4001; });
   lines.push([badT.length ? 'bad' : '', badT.length ? `${badT.length} 張的播放總長不是 1／2／3／4 秒` : '播放總長剛好 1／2／3／4 秒（LINE 只接受整秒）']);
@@ -1932,10 +1995,16 @@ function renderExport() {
   lines.push(['', '尺寸 ≤ 320×270、高 270（至少一邊 ≥ 270）、透明背景']);
   if (cut.length) lines.push(['warn', '有影片的擷取片段跨越場景切換，動畫可能會跳格']);
   lines.push([state.main ? '' : 'warn', state.main ? '主圖 main.png（240×240）與標籤 tab.png（96×74）會在匯出時自動產生' : '請指定主圖']);
-  const files = n ? [...on.map((s, i) => pad2(i + 1) + '.png' + '  ' + kb(s.res.size) + ' KB'), 'main.png', 'tab.png'].join('\n') : '（尚無檔案）';
+  const S = state.out.startNo;
+  const files = n ? [...on.map((s, i) => pad2(S + i) + '.png' + '  ' + kb(s.res.size) + ' KB'), ...(state.out.withMainTab ? ['main.png', 'tab.png'] : [])].join('\n') : '（尚無檔案）';
   box.innerHTML = `
     <div>
       <div class="count"><b>${n}</b><span>張已選</span><span class="of">${target.map(t => `<span class="${t === n ? 'hit' : ''}">${t}</span>`).join('')}</span></div>
+      <div class="row2" style="max-width:340px;margin-top:12px">
+        <label class="field">起始編號<input type="number" id="startNo" min="1" max="24" value="${state.out.startNo}"></label>
+        <label class="check" style="align-items:center"><input type="checkbox" id="withMT" ${state.out.withMainTab ? 'checked' : ''}><span>ZIP 含 main／tab</span></label>
+      </div>
+      <p class="note">分批製作時，把起始編號設成接續的號碼，檔名就會從那一號開始，例如設 9 會輸出 09.png、10.png…</p>
       <ul class="checks">${lines.map(([c, t]) => `<li class="${c}"><span>${t}</span></li>`).join('')}</ul>
     </div>
     <div style="display:grid;gap:12px;align-content:start">
@@ -1951,6 +2020,8 @@ function renderExport() {
       <button class="btn primary block" id="zipBtn" type="button" ${n ? '' : 'disabled'}>下載 LINE 上架 ZIP</button>
       <div class="btns"><button class="btn sm" id="mainBtn" type="button" ${n ? '' : 'disabled'}>下載 main.png（240×240）</button><button class="btn sm" id="tabBtn" type="button" ${n ? '' : 'disabled'}>下載 tab.png（96×74）</button></div>
     </div>`;
+  $('#startNo').oninput = e => { state.out.startNo = clamp(Math.round(+e.target.value || 1), 1, 24); renderResults(); renderSources(); drawStage(); renderExport(); $('#startNo').focus(); };
+  $('#withMT').onchange = e => { state.out.withMainTab = e.target.checked; renderExport(); };
   $('#zipBtn').onclick = exportZip;
   $('#mainBtn').onclick = async () => { const s = state.main; if (!s) return; const c = compose(s, [240, 240], true), plan = s.v.plan; const e = await fitEncode(plan.seq.map(i => c.frames[i]), 240, 240, plan.delay, state.out.loops); saveFile('main.png', e.blob); };
   $('#tabBtn').onclick = async () => { const s = state.tab || state.main; if (!s) return; const c = compose(s, [96, 74], true); saveFile('tab.png', await encodePNG(c.frames[0], 96, 74)); };
@@ -1961,8 +2032,10 @@ async function exportZip() {
   const btn = $('#zipBtn'); btn.disabled = true; btn.textContent = '打包中…';
   try {
     const files = [];
-    for (let i = 0; i < on.length; i++) files.push({ name: pad2(i + 1) + '.png', data: new Uint8Array(await on[i].res.blob.arrayBuffer()) });
+    const S = state.out.startNo;
+    for (let i = 0; i < on.length; i++) files.push({ name: pad2(S + i) + '.png', data: new Uint8Array(await on[i].res.blob.arrayBuffer()) });
     const ms = state.main || on[0], ts = state.tab || ms;
+    if (state.out.withMainTab) {
     // main 240×240 APNG
     const mc = compose(ms, [240, 240], true), plan = ms.v.plan;
     const menc = await fitEncode(plan.seq.map(i => mc.frames[i]), 240, 240, plan.delay, state.out.loops);
@@ -1971,6 +2044,7 @@ async function exportZip() {
     const tc = compose(ts, [96, 74], true);
     const tb = await encodePNG(tc.frames[0], 96, 74);
     files.push({ name: 'tab.png', data: new Uint8Array(await tb.arrayBuffer()) });
+    }
     const zip = makeZip(files);
     await saveFile('line_animated_stickers.zip', zip);
   } catch (e) { console.error(e); toast('打包失敗：' + e.message); }
@@ -1983,6 +2057,185 @@ document.querySelectorAll('[data-copy]').forEach(b => b.onclick = async () => {
   try { await navigator.clipboard.writeText(t); toast('已複製 Prompt'); }
   catch (e) { const r = document.createRange(); r.selectNodeContents($('#' + b.dataset.copy)); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast('已選取文字，請按 Ctrl/⌘+C 複製'); }
 });
+
+
+/* ============================================================
+   Tab 2: merge several export ZIPs into one
+   ============================================================ */
+$('#tabs').addEventListener('click', e => {
+  const b = e.target.closest('[data-tab]'); if (!b) return;
+  [...$('#tabs').children].forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-selected', x === b); });
+  $('#tab-make').hidden = b.dataset.tab !== 'make';
+  $('#tab-merge').hidden = b.dataset.tab !== 'merge';
+  if (b.dataset.tab === 'merge') { stopPlay(); players.forEach(P => P.pause()); }
+  scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+async function inflateRaw(bytes) {
+  if (typeof DecompressionStream === 'undefined') throw new Error('此瀏覽器無法解壓縮這個 ZIP');
+  const st = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+  return new Uint8Array(await new Response(st).arrayBuffer());
+}
+/* minimal ZIP reader: central directory → entries (stored or deflated) */
+async function readZip(file) {
+  const buf = new Uint8Array(await file.arrayBuffer()), dv = new DataView(buf.buffer);
+  let eocd = -1;
+  for (let i = buf.length - 22; i >= Math.max(0, buf.length - 66000); i--) if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  if (eocd < 0) throw new Error('不是有效的 ZIP 檔');
+  const count = dv.getUint16(eocd + 10, true); let off = dv.getUint32(eocd + 16, true);
+  const dec = new TextDecoder(), out = [];
+  for (let k = 0; k < count; k++) {
+    if (dv.getUint32(off, true) !== 0x02014b50) break;
+    const method = dv.getUint16(off + 10, true), csize = dv.getUint32(off + 20, true);
+    const nLen = dv.getUint16(off + 28, true), eLen = dv.getUint16(off + 30, true), cLen = dv.getUint16(off + 32, true);
+    const lho = dv.getUint32(off + 42, true);
+    const name = dec.decode(buf.subarray(off + 46, off + 46 + nLen));
+    const lnLen = dv.getUint16(lho + 26, true), leLen = dv.getUint16(lho + 28, true);
+    const start = lho + 30 + lnLen + leLen;
+    const raw = buf.subarray(start, start + csize);
+    if (/\.png$/i.test(name) && !/(^|\/)__MACOSX\//.test(name)) {
+      out.push({ name: name.split('/').pop(), data: method === 8 ? await inflateRaw(raw) : raw.slice() });
+    }
+    off += 46 + nLen + eLen + cLen;
+  }
+  return out;
+}
+/* read an APNG's spec numbers straight from its chunks */
+function inspectPNG(b) {
+  if (b.length < 8 || b[0] !== 137 || b[1] !== 80) return null;
+  const dv = new DataView(b.buffer, b.byteOffset, b.byteLength);
+  let i = 8, w = 0, h = 0, frames = 1, plays = 1, dur = 0;
+  while (i + 8 <= b.length) {
+    const n = dv.getUint32(i), t = String.fromCharCode(b[i + 4], b[i + 5], b[i + 6], b[i + 7]), d = i + 8;
+    if (t === 'IHDR') { w = dv.getUint32(d); h = dv.getUint32(d + 4); }
+    else if (t === 'acTL') { frames = dv.getUint32(d); plays = dv.getUint32(d + 4); }
+    else if (t === 'fcTL') { const num = dv.getUint16(d + 20), den = dv.getUint16(d + 22) || 100; dur += num / den; }
+    else if (t === 'IEND') break;
+    i = d + n + 4;
+  }
+  const kb = b.length / 1024, play = dur * plays;
+  const sticker = { w, h, frames, plays, play, kb };
+  sticker.issues = [];
+  if (w > 320 || h > 270) sticker.issues.push('尺寸超過 320×270');
+  if (Math.max(w, h) < 270) sticker.issues.push('長邊不足 270');
+  if (frames < 5 || frames > 20) sticker.issues.push('幀數不在 5–20');
+  if (Math.abs(play - Math.round(play)) > 0.01 || play < 0.99 || play > 4.01) sticker.issues.push('播放總長不是 1/2/3/4 秒');
+  if (kb > 300) sticker.issues.push('超過 300KB');
+  return sticker;
+}
+const M = { sources: [], items: [], mains: [], tabs: [], main: null, tab: null, start: 1 };
+async function mAddFiles(files) {
+  const list = [...files]; let added = 0;
+  for (const f of list) {
+    try {
+      let entries;
+      if (/\.zip$/i.test(f.name) || /zip/.test(f.type)) entries = await readZip(f);
+      else if (/\.png$/i.test(f.name) || f.type === 'image/png') entries = [{ name: f.name, data: new Uint8Array(await f.arrayBuffer()) }];
+      else { toast('略過非 ZIP／PNG：' + f.name); continue; }
+      if (!entries.length) { toast(f.name + ' 裡沒有 PNG'); continue; }
+      const src = { name: f.name, n: 0 };
+      M.sources.push(src);
+      for (const e of entries) {
+        const info = inspectPNG(e.data);
+        const blob = new Blob([e.data], { type: 'image/png' });
+        const it = { id: 'm' + Math.random().toString(36).slice(2), name: e.name, src, blob, url: URL.createObjectURL(blob), info, enabled: true, role: /^main\.png$/i.test(e.name) ? 'main' : /^tab\.png$/i.test(e.name) ? 'tab' : 'sticker' };
+        if (it.role === 'main') { M.mains.push(it); if (!M.main) M.main = it; }
+        else if (it.role === 'tab') { M.tabs.push(it); if (!M.tab) M.tab = it; }
+        else M.items.push(it);
+        src.n++; added++;
+      }
+    } catch (err) { console.error(err); toast(f.name + '：' + err.message); }
+  }
+  if (added) toast('已匯入 ' + added + ' 個檔案');
+  mRender();
+}
+function mRender() {
+  $('#mSources').innerHTML = M.sources.map(s => `<div class="src" style="width:210px;grid-template-columns:1fr"><div><div class="nm">${esc(s.name)}</div><div class="meta">${s.n} 個 PNG</div></div></div>`).join('') || '';
+  const on = M.items.filter(i => i.enabled);
+  $('#mCount').textContent = M.items.length ? `已選 ${on.length} / ${M.items.length} 張` : '';
+  const box = $('#mList');
+  if (!M.items.length) { box.innerHTML = '<div class="empty">還沒有匯入貼圖。匯入的 main.png／tab.png 會自動辨識，不會混進編號。</div>'; mExport(); return; }
+  box.innerHTML = '<div class="grid"></div>'; const grid = box.firstChild;
+  let no = M.start - 1;
+  M.items.forEach((it, idx) => {
+    if (it.enabled) no++;
+    const i = it.info, bad = i ? i.issues : ['不是有效的 PNG'];
+    const card = document.createElement('article');
+    card.className = 'card mitem' + (it.enabled ? '' : ' off');
+    card.innerHTML = `
+      <div class="pv bg-${state.previewBg}"><img alt="${esc(it.name)}" src="${it.url}">
+        <span class="no">${it.enabled ? '#' + pad2(no) : '未選'}</span></div>
+      <div class="cbody">
+        <div class="nm">${esc(it.name)}</div><div class="from">來自 ${esc(it.src.name)}</div>
+        <dl class="kv">
+          <dt>尺寸</dt><dd>${i ? i.w + '×' + i.h : '—'}</dd>
+          <dt>幀・播放</dt><dd>${i ? i.frames + ' 幀 · ' + i.play.toFixed(2) + 's' : '—'}</dd>
+          <dt>檔案</dt><dd><span class="pill ${i && i.kb <= 300 ? 'good' : 'bad'}">${i ? kb(i.kb * 1024) : '?'} KB</span></dd>
+          ${bad.length ? `<dt>規格</dt><dd style="color:var(--bad);font-family:var(--sans)">${bad.join('、')}</dd>` : ''}
+        </dl>
+        <div class="cact">
+          <button class="btn sm" data-m="left" type="button" aria-label="往前">◀</button>
+          <button class="btn sm" data-m="right" type="button" aria-label="往後">▶</button>
+          <button class="btn sm ${it.enabled ? '' : 'on'}" data-m="tog" type="button" style="margin-left:auto">${it.enabled ? '取消' : '選取'}</button>
+        </div>
+      </div>`;
+    card.querySelector('[data-m=left]').onclick = () => { if (idx > 0) { M.items.splice(idx - 1, 0, M.items.splice(idx, 1)[0]); mRender(); } };
+    card.querySelector('[data-m=right]').onclick = () => { if (idx < M.items.length - 1) { M.items.splice(idx + 1, 0, M.items.splice(idx, 1)[0]); mRender(); } };
+    card.querySelector('[data-m=tog]').onclick = () => { it.enabled = !it.enabled; mRender(); };
+    grid.appendChild(card);
+  });
+  mExport();
+}
+function mExport() {
+  const on = M.items.filter(i => i.enabled), n = on.length, target = [8, 16, 24];
+  const S = M.start, last = S + n - 1;
+  const bad = on.filter(i => !i.info || i.info.issues.length);
+  const lines = [];
+  if (S > 1) lines.push([last > 24 ? 'bad' : '', `輸出 ${pad2(S)}～${pad2(last)}.png，共 ${n} 張`]);
+  else lines.push([target.includes(n) ? '' : 'warn', target.includes(n) ? `張數 ${n} 張，符合 LINE 的 8 / 16 / 24 張` : n ? `目前 ${n} 張：LINE 只接受 8、16 或 24 張` : '還沒有選取貼圖']);
+  lines.push([bad.length ? 'bad' : '', bad.length ? `${bad.length} 張不符合規格，請看卡片上的紅字` : '選取的貼圖都通過尺寸、幀數、播放長度與檔案大小檢查']);
+  lines.push([M.main ? '' : 'warn', M.main ? `主圖：${esc(M.main.src.name)} 的 main.png（${M.main.info ? M.main.info.w + '×' + M.main.info.h : '?'}）` : '匯入的檔案裡沒有 main.png']);
+  lines.push([M.tab ? '' : 'warn', M.tab ? `標籤：${esc(M.tab.src.name)} 的 tab.png（${M.tab.info ? M.tab.info.w + '×' + M.tab.info.h : '?'}）` : '匯入的檔案裡沒有 tab.png']);
+  const files = n ? [...on.map((it, i) => pad2(S + i) + '.png' + '  ← ' + it.name + '（' + it.src.name + '）'), ...(M.main ? ['main.png'] : []), ...(M.tab ? ['tab.png'] : [])].join('\n') : '（尚無檔案）';
+  const sel = (arr, cur, id, label) => arr.length > 1
+    ? `<label class="field">${label}來源<select id="${id}">${arr.map((o, i) => `<option value="${i}" ${o === cur ? 'selected' : ''}>${esc(o.src.name)}</option>`).join('')}</select></label>` : '';
+  $('#mExport').innerHTML = `
+    <div>
+      <div class="count"><b>${n}</b><span>張已選</span><span class="of">${target.map(t => `<span class="${t === n ? 'hit' : ''}">${t}</span>`).join('')}</span></div>
+      <ul class="checks">${lines.map(([c, t]) => `<li class="${c}"><span>${t}</span></li>`).join('')}</ul>
+    </div>
+    <div style="display:grid;gap:12px;align-content:start">
+      ${M.mains.length > 1 || M.tabs.length > 1 ? `<div class="row2">${sel(M.mains, M.main, 'mMainSel', '主圖')}${sel(M.tabs, M.tab, 'mTabSel', '標籤')}</div>` : ''}
+      <pre class="files">${files}</pre>
+      <button class="btn primary block" id="mZip" type="button" ${n ? '' : 'disabled'}>下載合併後的 ZIP</button>
+    </div>`;
+  const ms = $('#mMainSel'), ts = $('#mTabSel');
+  if (ms) ms.onchange = () => { M.main = M.mains[+ms.value]; mExport(); };
+  if (ts) ts.onchange = () => { M.tab = M.tabs[+ts.value]; mExport(); };
+  $('#mZip').onclick = mMakeZip;
+}
+async function mMakeZip() {
+  const on = M.items.filter(i => i.enabled); if (!on.length) return;
+  const btn = $('#mZip'); btn.disabled = true; btn.textContent = '打包中…';
+  try {
+    const files = [];
+    for (let i = 0; i < on.length; i++) files.push({ name: pad2(M.start + i) + '.png', data: new Uint8Array(await on[i].blob.arrayBuffer()) });
+    if (M.main) files.push({ name: 'main.png', data: new Uint8Array(await M.main.blob.arrayBuffer()) });
+    if (M.tab) files.push({ name: 'tab.png', data: new Uint8Array(await M.tab.blob.arrayBuffer()) });
+    await saveFile('line_stickers_merged.zip', makeZip(files));
+  } catch (e) { console.error(e); toast('合併失敗：' + e.message); }
+  btn.disabled = false; btn.textContent = '下載合併後的 ZIP';
+}
+$('#mfile').addEventListener('change', e => { mAddFiles(e.target.files); e.target.value = ''; });
+const mdrop = $('#mdrop');
+['dragenter', 'dragover'].forEach(t => mdrop.addEventListener(t, e => { e.preventDefault(); mdrop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(t => mdrop.addEventListener(t, e => { e.preventDefault(); mdrop.classList.remove('over'); }));
+mdrop.addEventListener('drop', e => mAddFiles(e.dataTransfer.files));
+$('#mStart').addEventListener('input', e => { M.start = clamp(Math.round(+e.target.value || 1), 1, 24); mRender(); $('#mStart').focus(); });
+$('#mAll').onclick = () => { M.items.forEach(i => i.enabled = true); mRender(); };
+$('#mNone').onclick = () => { M.items.forEach(i => i.enabled = false); mRender(); };
+$('#mClear').onclick = () => { [...M.items, ...M.mains, ...M.tabs].forEach(i => URL.revokeObjectURL(i.url)); M.items = []; M.sources = []; M.mains = []; M.tabs = []; M.main = null; M.tab = null; mRender(); };
+mRender();
 
 /* ============================================================
    Boot: open with the procedural demo already processed
