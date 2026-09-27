@@ -1,0 +1,1997 @@
+<title>動態貼圖工坊</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#F1F4EF; --panel:#FFFFFF; --panel-2:#F7F9F5; --ink:#18201B; --muted:#5B685F; --faint:#8A968D;
+  --line:#DBE2D8; --line-strong:#C3CDC0;
+  --accent:#0A8A43; --accent-ink:#FFFFFF; --accent-soft:#E2F2E7; --accent-line:#9ED5B0;
+  --warn:#A96400; --warn-soft:#FFF2D9; --bad:#BF3636; --bad-soft:#FCE6E4; --good:#0A8A43;
+  --stage:#1B211D; --grid:#3DF08A; --grid-dim:rgba(0,0,0,.55);
+  --shadow:0 1px 2px rgba(24,32,27,.06),0 6px 20px rgba(24,32,27,.06);
+  --r:12px;
+  --sans:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#101411; --panel:#181E1A; --panel-2:#1D2420; --ink:#E6ECE6; --muted:#9EAAA1; --faint:#6F7B72;
+    --line:#29322C; --line-strong:#39443D;
+    --accent:#35C774; --accent-ink:#06170D; --accent-soft:#16301F; --accent-line:#2B6B45;
+    --warn:#F0AE45; --warn-soft:#33260F; --bad:#F27B72; --bad-soft:#3A1917; --good:#35C774;
+    --stage:#0B0E0C; --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#101411; --panel:#181E1A; --panel-2:#1D2420; --ink:#E6ECE6; --muted:#9EAAA1; --faint:#6F7B72;
+  --line:#29322C; --line-strong:#39443D;
+  --accent:#35C774; --accent-ink:#06170D; --accent-soft:#16301F; --accent-line:#2B6B45;
+  --warn:#F0AE45; --warn-soft:#33260F; --bad:#F27B72; --bad-soft:#3A1917; --good:#35C774;
+  --stage:#0B0E0C; --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.55;margin:0}
+button,input,select{font:inherit;color:inherit}
+.num,.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+h1,h2,h3{margin:0;text-wrap:balance}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.top{padding-inline:20px;padding-block:18px 14px;border-bottom:1px solid var(--line);background:var(--panel)}
+.top-in{max-width:1380px;margin:0 auto;display:flex;flex-wrap:wrap;gap:14px 28px;align-items:center;justify-content:space-between}
+.brand{display:flex;gap:12px;align-items:center}
+.brand svg{flex:none}
+.brand h1{font-size:20px;font-weight:900;letter-spacing:.02em}
+.brand p{margin:0;color:var(--muted);font-size:13px}
+.specs{display:flex;flex-wrap:wrap;gap:6px}
+.spec{font-family:var(--mono);font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid var(--line-strong);color:var(--muted);background:var(--panel-2);white-space:nowrap}
+.spec b{color:var(--ink);font-weight:500}
+
+.wrap{max-width:1380px;margin:0 auto;padding-inline:20px;padding-block:20px 60px;display:grid;gap:22px}
+.sec-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;margin-bottom:12px}
+.sec-head h2{font-size:16px;font-weight:700}
+.sec-head h2 .step{font-family:var(--mono);color:var(--accent);font-weight:500;margin-right:8px}
+.sec-head p{margin:0;color:var(--muted);font-size:13px}
+.sec-head .grow{flex:1}
+
+/* sources */
+.src-row{display:grid;grid-template-columns:260px minmax(0,1fr);gap:12px}
+@media (max-width:760px){.src-row{grid-template-columns:1fr}}
+.drop{display:flex;flex-direction:column;justify-content:center;gap:4px;border:1.5px dashed var(--line-strong);border-radius:var(--r);padding:16px;cursor:pointer;background:var(--panel);min-height:92px;transition:border-color .15s,background .15s}
+.drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop strong{font-size:14px}
+.drop span{color:var(--muted);font-size:12px}
+.src-list{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px}
+.src{flex:none;width:250px;display:grid;grid-template-columns:84px 1fr;gap:10px;align-items:center;padding:8px;border-radius:var(--r);border:1px solid var(--line);background:var(--panel);cursor:pointer;text-align:left;position:relative}
+.src.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.src canvas{width:84px;height:48px;border-radius:6px;background:var(--stage);display:block;object-fit:cover}
+.src .nm{font-weight:500;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.src .meta{font-size:11.5px;color:var(--muted);font-family:var(--mono)}
+.src .rng{font-size:11.5px;color:var(--accent);font-family:var(--mono)}
+.src .x{position:absolute;top:4px;right:6px;border:0;background:none;color:var(--faint);cursor:pointer;font-size:16px;line-height:1;padding:2px}
+.src .x:hover{color:var(--bad)}
+.src .tag{font-size:10.5px;padding:0 6px;border-radius:4px;background:var(--warn-soft);color:var(--warn);margin-left:4px}
+
+/* workspace */
+.work{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:start}
+@media (max-width:980px){.work{grid-template-columns:1fr}}
+.stage-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px;box-shadow:var(--shadow);display:grid;gap:10px;min-width:0}
+.stage{position:relative;background:var(--stage);border-radius:8px;overflow:hidden;line-height:0}
+.stage canvas{width:100%;height:auto;display:block;touch-action:none}
+.stage.pick canvas{cursor:crosshair}
+.stage-msg{position:absolute;left:10px;bottom:10px;line-height:1.4;font-size:12px;color:#fff;background:rgba(0,0,0,.6);padding:4px 8px;border-radius:6px;pointer-events:none}
+.transport{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.transport .time{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-left:auto}
+.timeline{position:relative;height:34px;border-radius:6px;background:var(--panel-2);border:1px solid var(--line);cursor:pointer;overflow:hidden}
+.timeline .scene{position:absolute;top:0;bottom:0}
+.timeline .scene:nth-child(odd){background:color-mix(in srgb,var(--line) 70%,transparent)}
+.timeline .cut{position:absolute;top:0;bottom:0;width:2px;background:var(--warn)}
+.timeline .win{position:absolute;top:3px;bottom:3px;border-radius:4px;background:color-mix(in srgb,var(--accent) 28%,transparent);border:1.5px solid var(--accent)}
+.timeline .ph{position:absolute;top:0;bottom:0;width:2px;background:var(--ink)}
+.timeline .lbl{position:absolute;left:8px;top:8px;font-size:11px;color:var(--muted);pointer-events:none;font-family:var(--mono)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px;color:var(--muted)}
+.chip{border:1px solid var(--line-strong);background:var(--panel);border-radius:999px;padding:2px 10px;font-size:12px;cursor:pointer;font-family:var(--mono)}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.chip.on{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent)}
+
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.auto{padding:14px;border-bottom:1px solid var(--line);background:var(--accent-soft);display:grid;gap:8px}
+.auto p{margin:0;font-size:12px;color:var(--muted)}
+.auto .flow{display:flex;flex-wrap:wrap;gap:4px 6px;font-size:11.5px;color:var(--accent)}
+.auto .flow span+span::before{content:"→";margin-right:6px;color:var(--faint)}
+details.grp{border-bottom:1px solid var(--line)}
+details.grp>summary{list-style:none;cursor:pointer;padding:11px 14px;font-weight:700;font-size:13.5px;display:flex;align-items:center;gap:8px}
+details.grp>summary::-webkit-details-marker{display:none}
+details.grp>summary::after{content:"";margin-left:auto;width:7px;height:7px;border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);transform:rotate(45deg);transition:transform .15s}
+details.grp[open]>summary::after{transform:rotate(-135deg)}
+details.grp>summary .hint{font-weight:400;font-size:11.5px;color:var(--faint);font-family:var(--mono)}
+.gbody{padding:0 14px 14px;display:grid;gap:10px}
+.row{display:grid;grid-template-columns:92px minmax(0,1fr) auto;gap:8px;align-items:center;font-size:13px}
+.row>label:first-child{color:var(--muted)}
+.row output{font-family:var(--mono);font-size:12px;min-width:44px;text-align:right;color:var(--ink)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.field{display:grid;gap:3px;font-size:12px;color:var(--muted)}
+input[type=number],select{background:var(--panel-2);border:1px solid var(--line-strong);border-radius:8px;padding:5px 8px;font-size:13px;width:100%;min-width:0}
+input[type=range]{width:100%;accent-color:var(--accent)}
+input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px}
+.check{display:flex;gap:8px;align-items:flex-start;font-size:13px;cursor:pointer}
+.check small{display:block;color:var(--faint);font-size:11.5px}
+.note{font-size:12px;color:var(--muted);margin:0}
+.note.warn{color:var(--warn)}
+.btns{display:flex;flex-wrap:wrap;gap:6px}
+.btn{border:1px solid var(--line-strong);background:var(--panel);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:13px;font-weight:500;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.07);color:var(--accent-ink)}
+.btn.block{width:100%;justify-content:center;padding:10px 12px;font-size:14px}
+.btn.sm{padding:3px 8px;font-size:12px}
+.btn.on{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent)}
+.btn.danger:hover{border-color:var(--bad);color:var(--bad)}
+.gen{padding:14px;display:grid;gap:8px}
+.swatches{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.sw{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line-strong);border-radius:999px;padding:2px 8px 2px 3px;font-family:var(--mono);font-size:11px;background:var(--panel-2)}
+.sw i{width:16px;height:16px;border-radius:50%;border:1px solid rgba(128,128,128,.5);display:block}
+.sw button{border:0;background:none;cursor:pointer;color:var(--faint);padding:0 0 0 2px;font-size:13px;line-height:1}
+.sw button:hover{color:var(--bad)}
+.sw.auto{border-style:dashed}
+
+/* results */
+.res-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line-strong);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:var(--panel);padding:4px 10px;font-size:12px;cursor:pointer;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--accent-soft);color:var(--accent);font-weight:700}
+.progress{flex:1;min-width:200px;display:flex;gap:10px;align-items:center;font-size:12px;color:var(--muted)}
+.progress .bar{flex:1;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.progress .bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .15s}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),1fr));gap:12px;margin-top:12px}
+.card{min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr;box-shadow:var(--shadow)}
+.card.off{opacity:.45}
+.card.off .pv img{filter:grayscale(1)}
+.pv{position:relative;aspect-ratio:320/270;max-width:100%;display:grid;place-items:center;border-bottom:1px solid var(--line)}
+.pv img{width:auto;height:auto;max-width:100%;max-height:100%;display:block;image-rendering:auto}
+.pv .no{position:absolute;top:8px;left:8px;font-family:var(--mono);font-size:12px;font-weight:500;background:rgba(0,0,0,.66);color:#fff;border-radius:6px;padding:1px 7px}
+.pv .kind{position:absolute;top:8px;right:8px;font-size:11px;background:rgba(255,255,255,.9);color:#1b211d;border-radius:6px;padding:1px 7px}
+.pv canvas{width:auto;height:auto;max-width:100%;max-height:100%;display:block;cursor:pointer}
+.pv .bigplay{position:absolute;inset:0;margin:auto;width:52px;height:52px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:20px;cursor:pointer;display:grid;place-items:center;padding-left:4px}
+.pv .bigplay:hover{background:rgba(10,138,67,.9)}
+.player{display:grid;grid-template-columns:auto auto auto minmax(0,1fr) auto;gap:6px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--panel-2)}
+.player button{border:1px solid var(--line-strong);background:var(--panel);border-radius:7px;width:30px;height:28px;cursor:pointer;display:grid;place-items:center;font-size:12px;padding:0;line-height:1}
+.player button:hover{border-color:var(--accent);color:var(--accent)}
+.player button.pp{width:34px;background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.player input[type=range]{min-width:0}
+.player .fc{font-family:var(--mono);font-size:11.5px;color:var(--muted);min-width:44px;text-align:right}
+.pv .flags{position:absolute;bottom:8px;left:8px;display:flex;gap:4px}
+.pv .flags span{font-size:10.5px;background:var(--accent);color:var(--accent-ink);border-radius:4px;padding:0 6px;font-weight:700}
+.bg-checker{background-color:#fff;background-image:linear-gradient(45deg,#e2e6e0 25%,transparent 25%,transparent 75%,#e2e6e0 75%),linear-gradient(45deg,#e2e6e0 25%,transparent 25%,transparent 75%,#e2e6e0 75%);background-size:16px 16px;background-position:0 0,8px 8px}
+.bg-white{background:#fff}
+.bg-line{background:#8CABD8}
+.bg-dark{background:#22262A}
+.cbody{padding:10px 12px 12px;display:grid;gap:8px;font-size:12px}
+.kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:3px 10px;font-family:var(--mono);font-size:11.5px;margin:0}
+.kv dt{color:var(--muted);font-family:var(--sans);white-space:nowrap}
+.kv dd{margin:0;text-align:right;min-width:0;overflow-wrap:anywhere}
+.pill{display:inline-block;border-radius:999px;padding:0 7px;font-family:var(--mono);font-size:11.5px;font-weight:500}
+.pill.good{background:var(--accent-soft);color:var(--good)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.cact{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.cact select{width:auto;flex:1;min-width:0;font-size:12px;padding:3px 6px}
+.empty{border:1.5px dashed var(--line-strong);border-radius:var(--r);padding:28px;text-align:center;color:var(--muted);margin-top:12px}
+
+/* export */
+.exp{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:16px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;box-shadow:var(--shadow)}
+@media (max-width:860px){.exp{grid-template-columns:1fr}}
+.count{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.count b{font-family:var(--mono);font-size:34px;font-weight:500;line-height:1}
+.count .of{display:flex;gap:4px}
+.count .of span{font-family:var(--mono);font-size:12px;border:1px solid var(--line-strong);border-radius:6px;padding:1px 8px;color:var(--muted)}
+.count .of span.hit{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.checks{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:6px;font-size:13px}
+.checks li{display:grid;grid-template-columns:18px 1fr;gap:8px;align-items:start}
+.checks li::before{content:"";width:14px;height:14px;border-radius:50%;margin-top:3px;background:var(--good);-webkit-mask:radial-gradient(circle,#000 60%,transparent 62%);mask:radial-gradient(circle,#000 60%,transparent 62%)}
+.checks li.warn::before{background:var(--warn)}
+.checks li.bad::before{background:var(--bad)}
+.checks li small{color:var(--muted)}
+.mt{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center}
+.mt .thumbs{display:flex;gap:8px}
+.mt .thumbs figure{margin:0;display:grid;gap:3px;justify-items:center;font-size:11px;color:var(--muted)}
+.mt .thumbs .box{border:1px solid var(--line);border-radius:8px;display:grid;place-items:center;overflow:hidden}
+.files{font-family:var(--mono);font-size:12px;color:var(--muted);background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;max-height:120px;overflow:auto;white-space:pre-wrap;margin:0}
+
+/* prompts */
+.prompts{background:var(--panel);border:1px solid var(--line);border-radius:var(--r)}
+.prompts>summary{list-style:none;cursor:pointer;padding:14px 16px;font-weight:700;display:flex;gap:10px;align-items:baseline}
+.prompts>summary::-webkit-details-marker{display:none}
+.prompts>summary span{font-weight:400;color:var(--muted);font-size:13px}
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:0 16px 16px}
+@media (max-width:860px){.pgrid{grid-template-columns:1fr}}
+.pbox{border:1px solid var(--line);border-radius:10px;padding:12px;display:grid;gap:8px;background:var(--panel-2);align-content:start}
+.pbox h3{font-size:13.5px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pbox p.txt{margin:0;font-size:13px;line-height:1.7;white-space:pre-wrap}
+.tips{display:flex;flex-wrap:wrap;gap:6px}
+.tips span{font-size:11.5px;border:1px solid var(--line-strong);border-radius:999px;padding:1px 8px;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;z-index:10;box-shadow:var(--shadow)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<header class="top">
+  <div class="top-in">
+    <div class="brand">
+      <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true"><rect x="2" y="2" width="36" height="36" rx="10" fill="var(--accent)"/><rect x="8" y="8" width="11" height="11" rx="3" fill="var(--accent-ink)" opacity=".95"/><rect x="21" y="8" width="11" height="11" rx="3" fill="var(--accent-ink)" opacity=".55"/><rect x="8" y="21" width="11" height="11" rx="3" fill="var(--accent-ink)" opacity=".55"/><path d="M23 22.5 31 27 23 31.5Z" fill="var(--accent-ink)"/></svg>
+      <div><h1>動態貼圖工坊</h1><p>AI 圖板影片 → 切割・去背・穩定 → LINE 動態貼圖 APNG</p></div>
+    </div>
+    <div class="specs" aria-label="LINE 動態貼圖規格">
+      <span class="spec">貼圖 <b>≤320×270</b></span>
+      <span class="spec">主圖 <b>240×240</b></span>
+      <span class="spec">標籤 <b>96×74</b></span>
+      <span class="spec"><b>5–20</b> 幀</span>
+      <span class="spec">播放 <b>≤4 秒</b></span>
+      <span class="spec">單檔 <b>≤300KB</b></span>
+      <span class="spec"><b>8 / 16 / 24</b> 張</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section>
+    <div class="sec-head"><h2><span class="step">1</span>素材影片</h2><p>上傳 AI 生成的圖板影片（MP4 / MOV / WebM），可放多支；輸出編號依影片順序累加。所有處理都在你的瀏覽器內完成，不會上傳。</p></div>
+    <div class="src-row">
+      <label class="drop" id="drop" for="file">
+        <strong>＋ 上傳圖板影片</strong>
+        <span>拖曳到這裡，或點擊選擇檔案</span>
+        <input id="file" type="file" accept="video/*" multiple hidden>
+      </label>
+      <div class="src-list" id="srcList"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2><span class="step">2</span>校正與設定</h2><p>拖曳綠色格線對準每格貼圖；時間軸上的橘線是偵測到的場景切換，綠框是要擷取的片段。</p></div>
+    <div class="work">
+      <div class="stage-card">
+        <div class="stage" id="stageWrap"><canvas id="stage" width="1280" height="720"></canvas><div class="stage-msg" id="stageMsg" hidden></div></div>
+        <div class="transport">
+          <button class="btn sm" id="playBtn" type="button">▶ 播放片段</button>
+          <button class="btn sm" id="pickBtn" type="button" title="在畫面上點一下，把該顏色加入背景色">吸管取背景色</button>
+          <label class="check" style="font-size:12px;align-items:center"><input type="checkbox" id="showNums" checked>顯示編號</label>
+          <span class="time" id="timeLbl">0.00 / 0.00 s</span>
+        </div>
+        <div class="timeline" id="timeline" title="點擊設定片段起點"></div>
+        <div class="chips" id="sceneChips"></div>
+      </div>
+
+      <aside class="panel">
+        <div class="auto">
+          <button class="btn primary block" id="autoBtn" type="button">一鍵自動處理此影片</button>
+          <div class="flow"><span>偵測格線</span><span>避開場景切換</span><span>找最佳循環點</span><span>去背</span><span>動態穩定</span><span>輸出 APNG</span></div>
+        </div>
+
+        <details class="grp" open>
+          <summary>格線校正 <span class="hint" id="gridHint">2×5</span></summary>
+          <div class="gbody">
+            <div class="row2">
+              <label class="field">列（橫排數）<input type="number" id="rows" min="1" max="6" value="2"></label>
+              <label class="field">欄（直排數）<input type="number" id="cols" min="1" max="8" value="5"></label>
+            </div>
+            <div class="btns">
+              <button class="btn sm" id="detectBtn" type="button">自動偵測切割線</button>
+              <button class="btn sm" id="evenBtn" type="button">格線均分</button>
+              <button class="btn sm" id="resetBtn" type="button">重設外框</button>
+            </div>
+            <p class="note">外框與格線都可以直接在畫面上拖曳。角色被畫面邊緣切到的格子也可以輸出，之後在成果區刪除即可。</p>
+          </div>
+        </details>
+
+        <details class="grp" open>
+          <summary>擷取片段 <span class="hint" id="segHint"></span></summary>
+          <div class="gbody">
+            <div class="row"><label for="start">起始秒數</label><input type="range" id="start" min="0" max="10" step="0.01"><output id="startOut"></output></div>
+            <div class="row"><label for="dur">片段長度</label><input type="range" id="dur" min="0.5" max="4" step="0.05"><output id="durOut"></output></div>
+            <div class="row"><label for="frames">幀數</label><input type="range" id="frames" min="5" max="20" step="1"><output id="framesOut"></output></div>
+            <label class="check"><input type="checkbox" id="pingpong"><span>往返播放（乒乓循環）<small>正放再倒放，首尾一定接得上；播放時間變為片段的 2 倍</small></span></label>
+            <div class="btns"><button class="btn sm" id="loopBtn" type="button">自動找最佳循環點</button></div>
+            <p class="note" id="segNote"></p>
+          </div>
+        </details>
+
+        <details class="grp" open>
+          <summary>去背 <span class="hint" id="bgHint"></span></summary>
+          <div class="gbody">
+            <div class="swatches" id="swatches"></div>
+            <label class="check"><input type="checkbox" id="bgAuto" checked><span>自動偵測背景色<small>從每格四邊取樣；可辨識純色、黑底與假透明棋盤格</small></span></label>
+            <div class="row"><label for="tol">容許度</label><input type="range" id="tol" min="6" max="120" step="1"><output id="tolOut"></output></div>
+            <div class="row"><label for="feather">邊緣柔化</label><input type="range" id="feather" min="0" max="60" step="1"><output id="featherOut"></output></div>
+            <div class="row"><label for="despill">去色溢</label><input type="range" id="despill" min="0" max="100" step="5"><output id="despillOut"></output></div>
+            <div class="row"><label for="erode">內縮描邊</label><input type="range" id="erode" min="0" max="3" step="1"><output id="erodeOut"></output></div>
+            <div class="row"><label for="speck">清除雜點</label><input type="range" id="speck" min="0" max="400" step="10"><output id="speckOut"></output></div>
+            <div class="field">假透明棋盤格
+              <select id="checker"><option value="auto">自動偵測並移除</option><option value="off">關閉（背景不是棋盤格時）</option></select>
+            </div>
+            <div class="field">淡色角色保護
+              <select id="seal"><option value="auto">自動（淺色背景時開啟）</option><option value="on">開啟：封住深色輪廓的縫隙</option><option value="off">關閉</option></select>
+            </div>
+            <label class="check"><input type="checkbox" id="holes"><span>移除封閉區域的背景<small>例如手臂與身體之間、文字筆畫裡的空隙。綠幕／藍幕等彩色背景會自動採用同色全去，不需要勾選</small></span></label>
+          </div>
+        </details>
+
+        <details class="grp">
+          <summary>動態穩定（防抖） <span class="hint" id="stabHint"></span></summary>
+          <div class="gbody">
+            <div class="field">穩定方式
+              <select id="stabMode">
+                <option value="auto">自動分析動畫類型</option>
+                <option value="bottom">固定底部（坐姿、呼吸、點頭）</option>
+                <option value="center">固定中心（Zoom、晃動）</option>
+                <option value="smooth">去抖動、保留軌跡（走路、漂浮）</option>
+                <option value="off">關閉</option>
+              </select>
+            </div>
+            <div class="row"><label for="strength">穩定強度</label><input type="range" id="strength" min="0" max="100" step="5"><output id="strengthOut"></output></div>
+            <p class="note">逐幀量測角色的重心與腳底位置，把 AI 影片的抖動、漂移對齊回來；原本就穩的方向不會被移動。所有幀共用同一個縮放比例，角色不會忽大忽小。每張貼圖也可以在成果區個別改穩定方式。</p>
+          </div>
+        </details>
+
+        <details class="grp">
+          <summary>輸出規格 <span class="hint" id="outHint"></span></summary>
+          <div class="gbody">
+            <div class="row2">
+              <label class="field">畫布
+                <select id="outSize"><option value="fixed">320×270 固定</option><option value="fit">高 270，寬度貼合內容</option></select>
+              </label>
+              <label class="field">四周留白 px<input type="number" id="margin" min="0" max="40" value="10"></label>
+            </div>
+            <div class="row2">
+              <label class="field">色彩數
+                <select id="colors"><option>256</option><option>128</option><option>64</option><option>32</option></select>
+              </label>
+              <label class="field">循環次數
+                <select id="loops"><option value="auto">自動（總長 1/2/3/4 秒）</option><option>1</option><option>2</option><option>3</option><option>4</option></select>
+              </label>
+            </div>
+            <label class="check"><input type="checkbox" id="indexed" checked><span>索引色 PNG（8-bit 調色盤）<small>檔案約只有 RGBA 的三分之一，是符合 300KB 的關鍵；若 LINE 上架檢查不通過，取消勾選改輸出 RGBA</small></span></label>
+            <label class="check"><input type="checkbox" id="denoise" checked><span>降噪<small>抹平 AI 影片的壓縮雜訊，檔案更小、畫面更乾淨</small></span></label>
+            <p class="note">超過 300KB 時會自動依序降低色彩數、減少幀數，直到符合規定。</p>
+          </div>
+        </details>
+
+        <div class="gen">
+          <button class="btn primary block" id="genBtn" type="button">產生此影片的 APNG</button>
+          <p class="note" id="dirtyNote"></p>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2><span class="step">3</span>貼圖成果</h2><p>不合適的貼圖可以刪除，也能個別切換穩定方式；點「主圖」「標籤」指定上架用的代表圖。</p></div>
+    <div class="res-bar">
+      <div class="seg" id="bgSeg" role="group" aria-label="預覽背景">
+        <button type="button" data-bg="checker" class="on">透明格</button><button type="button" data-bg="white">白</button><button type="button" data-bg="line">聊天室</button><button type="button" data-bg="dark">深色</button>
+      </div>
+      <div class="seg" id="playSeg" role="group" aria-label="播放次數">
+        <button type="button" data-pm="loop" class="on" title="不停重複播放，方便檢查動作">連續循環</button><button type="button" data-pm="line" title="依輸出設定的循環次數播放後停在最後一幀，和 LINE 聊天室裡一樣">依上架次數</button>
+      </div>
+      <button class="btn sm" id="playAll" type="button">▶ 全部播放</button>
+      <button class="btn sm" id="pauseAll" type="button">❚❚ 全部暫停</button>
+      <button class="btn sm" id="regenAll" type="button">以目前設定重新產生全部</button>
+      <div class="progress" id="progress" hidden><div class="bar"><i id="progBar"></i></div><span id="progTxt"></span></div>
+    </div>
+    <div id="results"></div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2><span class="step">4</span>匯出上架包</h2><p>ZIP 內含 01.png…、main.png、tab.png，可直接上傳到 LINE Creators Market。</p></div>
+    <div class="exp" id="exportBox"></div>
+  </section>
+
+  <details class="prompts" id="promptBox">
+    <summary>AI 圖板與影片 Prompt <span>做出好切割、好去背的 2×5 圖板影片</span></summary>
+    <div class="pgrid">
+      <div class="pbox">
+        <h3>步驟 A｜生成 2×5 靜態圖板 <button class="btn sm" type="button" data-copy="pA">複製</button></h3>
+        <p class="txt" id="pA">請在 1280×720 px（16:9）畫布上，用［我的角色：外觀、髮型、服裝、顏色、比例、畫風］生成一張 2 列 × 5 欄、共 10 格的 LINE 貼圖圖板，每格固定 256×360 px。10 格分別是：［1. 開心揮手、2. 謝謝、3. 疑惑、4. 哭哭、5. 生氣、6. 睡覺、7. 愛心、8. OK、9. 加油、10. 驚訝］。每個角色置中並完整留在自己的格子內，四周各留約 10% 空白，不可跨越格線、不可碰到畫面邊緣。背景使用單一純色（純黑 #000000 或純綠 #00FF00），不要漸層、不要假透明棋盤格、不要白邊外框、不要發光或陰影光暈。角色要有清楚的深色輪廓線。不要加入文字、Logo、浮水印、編號或格線。</p>
+        <div class="tips"><span>角色要有深色描邊</span><span>純色背景</span><span>每格留白</span><span>不跨格</span></div>
+      </div>
+      <div class="pbox">
+        <h3>步驟 B｜把圖板轉成影片 <button class="btn sm" type="button" data-copy="pB">複製</button></h3>
+        <p class="txt" id="pB">讓這張圖板中的 10 個角色，各自在自己的格子裡做出符合該格情緒的小幅度循環動作（例如揮手、點頭、眨眼、身體輕微彈跳），約 1～2 秒完成一次動作並回到起始姿勢。固定鏡頭：不要推拉、平移、旋轉或轉場。保持原本 2×5 的排列、畫面比例與每格位置不變；角色不可移出或跨越自己的格子，特效不可覆蓋到其他格子。背景全程維持原本的純色，不要變成棋盤格、漸層或其他場景。不要新增角色、文字或字幕。</p>
+        <div class="tips"><span>固定鏡頭</span><span>保持排列</span><span>不改比例</span><span>背景不變</span><span>動作可循環</span></div>
+      </div>
+    </div>
+  </details>
+</main>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+"use strict";
+/* ============================================================
+   Utilities
+   ============================================================ */
+const $ = (s, r = document) => r.querySelector(s);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const tick = () => new Promise(r => setTimeout(r, 0));
+const mk = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
+const ctx2d = c => c.getContext('2d', { willReadFrequently: true });
+const pad2 = n => String(n).padStart(2, '0');
+const kb = b => (b / 1024).toFixed(b < 10240 ? 1 : 0);
+let toastT;
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2600); }
+
+/* ---------- CRC32 ---------- */
+const CRC_T = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(buf, crc = 0xFFFFFFFF) { for (let i = 0; i < buf.length; i++) crc = CRC_T[(crc ^ buf[i]) & 255] ^ (crc >>> 8); return crc; }
+const crcDone = c => (c ^ 0xFFFFFFFF) >>> 0;
+
+/* ---------- zlib via CompressionStream ---------- */
+async function zlib(bytes) {
+  const s = new Blob([bytes]).stream().pipeThrough(new CompressionStream('deflate'));
+  return new Uint8Array(await new Response(s).arrayBuffer());
+}
+
+/* ---------- PNG / APNG writer ---------- */
+function u32(v) { return [(v >>> 24) & 255, (v >>> 16) & 255, (v >>> 8) & 255, v & 255]; }
+function u16(v) { return [(v >>> 8) & 255, v & 255]; }
+function chunk(type, data) {
+  const len = data.length, out = new Uint8Array(12 + len);
+  out.set(u32(len), 0);
+  for (let i = 0; i < 4; i++) out[4 + i] = type.charCodeAt(i);
+  out.set(data, 8);
+  const c = crcDone(crc32(out.subarray(4, 8 + len)));
+  out.set(u32(c), 8 + len);
+  return out;
+}
+/* adaptive row filtering (RGBA, bpp 4) */
+function filterRGBA(px, w, h) {
+  const stride = w * 4, out = new Uint8Array((stride + 1) * h);
+  const cand = [new Uint8Array(stride), new Uint8Array(stride), new Uint8Array(stride), new Uint8Array(stride), new Uint8Array(stride)];
+  for (let y = 0; y < h; y++) {
+    const o = y * stride, p = (y - 1) * stride;
+    let best = 0, bestSum = Infinity;
+    for (let f = 0; f < 5; f++) {
+      const c = cand[f]; let sum = 0;
+      for (let i = 0; i < stride; i++) {
+        const x = px[o + i], a = i >= 4 ? px[o + i - 4] : 0, b = y > 0 ? px[p + i] : 0, cc = (i >= 4 && y > 0) ? px[p + i - 4] : 0;
+        let v;
+        if (f === 0) v = x;
+        else if (f === 1) v = x - a;
+        else if (f === 2) v = x - b;
+        else if (f === 3) v = x - ((a + b) >> 1);
+        else { const pp = a + b - cc, pa = Math.abs(pp - a), pb = Math.abs(pp - b), pc = Math.abs(pp - cc); v = x - (pa <= pb && pa <= pc ? a : pb <= pc ? b : cc); }
+        v &= 255; c[i] = v; sum += v < 128 ? v : 256 - v;
+        if (sum >= bestSum) break;
+      }
+      if (sum < bestSum) { bestSum = sum; best = f; }
+    }
+    // recompute chosen (candidate may be partial due to early break)
+    const c = cand[best];
+    for (let i = 0; i < stride; i++) {
+      const x = px[o + i], a = i >= 4 ? px[o + i - 4] : 0, b = y > 0 ? px[p + i] : 0, cc = (i >= 4 && y > 0) ? px[p + i - 4] : 0;
+      let v;
+      if (best === 0) v = x; else if (best === 1) v = x - a; else if (best === 2) v = x - b; else if (best === 3) v = x - ((a + b) >> 1);
+      else { const pp = a + b - cc, pa = Math.abs(pp - a), pb = Math.abs(pp - b), pc = Math.abs(pp - cc); v = x - (pa <= pb && pa <= pc ? a : pb <= pc ? b : cc); }
+      c[i] = v & 255;
+    }
+    out[y * (stride + 1)] = best;
+    out.set(c, y * (stride + 1) + 1);
+  }
+  return out;
+}
+function filterIndexed(ix, w, h) {
+  const out = new Uint8Array((w + 1) * h);
+  for (let y = 0; y < h; y++) { out[y * (w + 1)] = 0; out.set(ix.subarray(y * w, y * w + w), y * (w + 1) + 1); }
+  return out;
+}
+
+/* ---------- colour quantisation (median cut, shared palette) ---------- */
+function buildPalette(frames, maxColors) {
+  const total = frames.length * (frames[0].length >> 2);
+  const step = Math.max(1, Math.floor(total / 90000));
+  const S = [];
+  let k = 0;
+  for (const f of frames) for (let i = 0; i < f.length; i += 4) { if ((k++ % step) !== 0) continue; if (f[i + 3] >= 16) S.push(f[i], f[i + 1], f[i + 2], f[i + 3]); }
+  const n = S.length >> 2;
+  const pal = [[0, 0, 0, 0]];
+  if (!n) return pal;
+  const idx = new Uint32Array(n); for (let i = 0; i < n; i++) idx[i] = i;
+  const boxes = [{ s: 0, e: n }];
+  const stat = b => {
+    let mn = [255, 255, 255, 255], mx = [0, 0, 0, 0];
+    for (let i = b.s; i < b.e; i++) { const q = idx[i] * 4; for (let c = 0; c < 4; c++) { const v = S[q + c]; if (v < mn[c]) mn[c] = v; if (v > mx[c]) mx[c] = v; } }
+    let ch = 0, r = -1; for (let c = 0; c < 4; c++) { const rr = (mx[c] - mn[c]) * (c === 3 ? 1.2 : 1); if (rr > r) { r = rr; ch = c; } }
+    b.ch = ch; b.range = r; b.score = r * Math.sqrt(b.e - b.s);
+  };
+  stat(boxes[0]);
+  const tmp = new Uint32Array(n);
+  while (boxes.length < maxColors - 1) {
+    let bi = -1, bs = 0;
+    for (let i = 0; i < boxes.length; i++) if (boxes[i].e - boxes[i].s > 1 && boxes[i].range > 0 && boxes[i].score > bs) { bs = boxes[i].score; bi = i; }
+    if (bi < 0) break;
+    const b = boxes[bi], ch = b.ch, cnt = b.e - b.s;
+    const hist = new Uint32Array(256);
+    for (let i = b.s; i < b.e; i++) hist[S[idx[i] * 4 + ch]]++;
+    let acc = 0, m = 0; for (; m < 256; m++) { acc += hist[m]; if (acc >= cnt / 2) break; }
+    if (acc === cnt) { m--; while (m >= 0 && hist[m + 1] === 0) m--; }
+    // partition
+    let lo = b.s, hi = b.e - 1, t = 0;
+    for (let i = b.s; i < b.e; i++) tmp[t++] = idx[i];
+    let L = b.s, R = b.e - 1;
+    for (let i = 0; i < t; i++) { const q = tmp[i]; if (S[q * 4 + ch] <= m) idx[L++] = q; else idx[R--] = q; }
+    if (L === b.s || L === b.e) { b.range = 0; b.score = 0; continue; }
+    const b1 = { s: b.s, e: L }, b2 = { s: L, e: b.e };
+    stat(b1); stat(b2);
+    boxes.splice(bi, 1, b1, b2);
+  }
+  for (const b of boxes) {
+    let r = 0, g = 0, bl = 0, a = 0; const c = b.e - b.s;
+    for (let i = b.s; i < b.e; i++) { const q = idx[i] * 4; r += S[q]; g += S[q + 1]; bl += S[q + 2]; a += S[q + 3]; }
+    let A = Math.round(a / c); if (A >= 248) A = 255;
+    pal.push([Math.round(r / c), Math.round(g / c), Math.round(bl / c), A]);
+  }
+  return pal;
+}
+function mapToPalette(frames, pal) {
+  const cache = new Map(), out = [];
+  const P = pal.length;
+  for (const f of frames) {
+    const ix = new Uint8Array(f.length >> 2);
+    for (let i = 0, j = 0; i < f.length; i += 4, j++) {
+      const a = f[i + 3]; if (a < 16) { ix[j] = 0; continue; }
+      const r = f[i], g = f[i + 1], b = f[i + 2];
+      const key = ((r >> 2) << 18) | ((g >> 2) << 12) | ((b >> 2) << 6) | (a >> 2);
+      let v = cache.get(key);
+      if (v === undefined) {
+        let bd = Infinity; v = 1;
+        for (let p = 1; p < P; p++) { const c = pal[p]; const dr = c[0] - r, dg = c[1] - g, db = c[2] - b, da = c[3] - a; const d = dr * dr + dg * dg + db * db + 1.6 * da * da; if (d < bd) { bd = d; v = p; } }
+        cache.set(key, v);
+      }
+      ix[j] = v;
+    }
+    out.push(ix);
+  }
+  return out;
+}
+
+/* encode APNG from RGBA frames (Uint8ClampedArray W*H*4) */
+async function encodeAPNG(frames, W, H, delays, loops, colors, indexed) {
+  const pal = buildPalette(frames, colors);
+  const ixs = mapToPalette(frames, pal);
+  const parts = [new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10])];
+  parts.push(chunk('IHDR', new Uint8Array([...u32(W), ...u32(H), 8, indexed ? 3 : 6, 0, 0, 0])));
+  if (indexed) {
+    const plte = new Uint8Array(pal.length * 3), trns = [];
+    pal.forEach((c, i) => { plte[i * 3] = c[0]; plte[i * 3 + 1] = c[1]; plte[i * 3 + 2] = c[2]; trns.push(c[3]); });
+    while (trns.length && trns[trns.length - 1] === 255) trns.pop();
+    parts.push(chunk('PLTE', plte));
+    if (trns.length) parts.push(chunk('tRNS', new Uint8Array(trns)));
+  }
+  const multi = frames.length > 1;
+  if (multi) parts.push(chunk('acTL', new Uint8Array([...u32(frames.length), ...u32(loops)])));
+  let seq = 0;
+  // temporal snap: opaque pixels that barely changed keep last frame's colour
+  const SNAP = 22 * 22;
+  for (let f = 1; f < ixs.length; f++) {
+    const cur = ixs[f], pv = ixs[f - 1];
+    for (let j = 0; j < cur.length; j++) {
+      const a = cur[j], b = pv[j]; if (a === b || !a || !b) continue;
+      const ca = pal[a], cb = pal[b]; if (ca[3] !== 255 || cb[3] !== 255) continue;
+      const dr = ca[0] - cb[0], dg = ca[1] - cb[1], db = ca[2] - cb[2];
+      if (dr * dr + dg * dg + db * db < SNAP) cur[j] = b;
+    }
+  }
+  const regionBytes = (ix, x0, y0, w, h) => {
+    if (indexed) {
+      const sub = new Uint8Array(w * h);
+      for (let y = 0; y < h; y++) sub.set(ix.subarray((y0 + y) * W + x0, (y0 + y) * W + x0 + w), y * w);
+      return filterIndexed(sub, w, h);
+    }
+    const sub = new Uint8Array(w * h * 4);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const c = pal[ix[(y0 + y) * W + x0 + x]], o = (y * w + x) * 4; sub[o] = c[0]; sub[o + 1] = c[1]; sub[o + 2] = c[2]; sub[o + 3] = c[3]; }
+    return filterRGBA(sub, w, h);
+  };
+  for (let f = 0; f < frames.length; f++) {
+    let ix = ixs[f];
+    let x0 = 0, y0 = 0, w = W, h = H, blend = 0;
+    if (f > 0) {
+      const pv = ixs[f - 1]; let minX = W, minY = H, maxX = -1, maxY = -1, overOK = true;
+      for (let y = 0; y < H; y++) { const o = y * W; for (let x = 0; x < W; x++) if (ix[o + x] !== pv[o + x]) { if (x < minX) minX = x; if (x > maxX) maxX = x; if (y < minY) minY = y; if (y > maxY) maxY = y; if (pal[ix[o + x]][3] !== 255) overOK = false; } }
+      if (maxX < 0) { minX = 0; minY = 0; maxX = 0; maxY = 0; }
+      x0 = minX; y0 = minY; w = maxX - minX + 1; h = maxY - minY + 1;
+      if (overOK && maxX >= 0) {
+        // every changed pixel is opaque → paint only changes over the previous frame
+        const d = new Uint8Array(ix.length);
+        for (let j = 0; j < ix.length; j++) d[j] = ix[j] !== pv[j] ? ix[j] : 0;
+        ix = d; blend = 1;
+      }
+    }
+    if (multi) {
+      const d = delays[f] | 0;
+      parts.push(chunk('fcTL', new Uint8Array([...u32(seq++), ...u32(w), ...u32(h), ...u32(x0), ...u32(y0), ...u16(d), ...u16(1000), 0, blend])));
+    }
+    const z = await zlib(regionBytes(ix, x0, y0, w, h));
+    if (f === 0) parts.push(chunk('IDAT', z));
+    else { const d = new Uint8Array(4 + z.length); d.set(u32(seq++), 0); d.set(z, 4); parts.push(chunk('fdAT', d)); }
+  }
+  parts.push(chunk('IEND', new Uint8Array(0)));
+  const blob = new Blob(parts, { type: 'image/png' });
+  return { blob, colorsUsed: pal.length };
+}
+async function encodePNG(rgba, W, H) { // browser encoder: plain 8-bit RGBA PNG
+  const c = mk(W, H); c.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(rgba), W, H), 0, 0);
+  const b = await new Promise(res => c.toBlob(res, 'image/png'));
+  return b || (await encodeAPNG([rgba], W, H, [0], 0, 256, false)).blob;
+}
+
+/* ---------- ZIP (stored) ---------- */
+function makeZip(files) {
+  const enc = new TextEncoder(), chunks = [], central = [];
+  let off = 0;
+  const d = new Date(), time = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1), date = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+  const le16 = v => [v & 255, (v >>> 8) & 255], le32 = v => [v & 255, (v >>> 8) & 255, (v >>> 16) & 255, (v >>> 24) & 255];
+  for (const f of files) {
+    const name = enc.encode(f.name), crc = crcDone(crc32(f.data)), sz = f.data.length;
+    const lh = new Uint8Array([...le32(0x04034b50), ...le16(20), ...le16(0x0800), ...le16(0), ...le16(time), ...le16(date), ...le32(crc), ...le32(sz), ...le32(sz), ...le16(name.length), ...le16(0)]);
+    chunks.push(lh, name, f.data);
+    central.push(new Uint8Array([...le32(0x02014b50), ...le16(20), ...le16(20), ...le16(0x0800), ...le16(0), ...le16(time), ...le16(date), ...le32(crc), ...le32(sz), ...le32(sz), ...le16(name.length), ...le16(0), ...le16(0), ...le16(0), ...le16(0), ...le32(0), ...le32(off)]), name);
+    off += lh.length + name.length + sz;
+  }
+  const cdSize = central.reduce((a, b) => a + b.length, 0);
+  const end = new Uint8Array([...le32(0x06054b50), ...le16(0), ...le16(0), ...le16(files.length), ...le16(files.length), ...le32(cdSize), ...le32(off), ...le16(0)]);
+  return new Blob([...chunks, ...central, end], { type: 'application/zip' });
+}
+
+/* ---------- downloads (artifact runtime or plain browser) ---------- */
+const dlPromise = (window.claude && typeof window.claude.use === 'function') ? window.claude.use('downloads').catch(() => null) : Promise.resolve(null);
+async function saveFile(name, blob) {
+  let d = null;
+  try { d = await dlPromise; } catch (e) { d = null; }
+  if (d) {
+    try { await d.save({ filename: name, data: blob }); toast('已下載 ' + name); }
+    catch (e) { if (e && e.code === 'declined') toast('已取消下載'); else toast('無法下載：' + (e && e.message || e)); }
+    return;
+  }
+  const url = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+/* ---------- k-means / background palette ---------- */
+function kmeans(pts, k, iters = 10) { // pts: flat rgb array
+  const n = pts.length / 3; if (!n) return [];
+  k = Math.min(k, n);
+  const C = [];
+  // farthest-point init from the most common-ish (first) point
+  C.push([pts[0], pts[1], pts[2]]);
+  const dmin = new Float32Array(n).fill(Infinity);
+  while (C.length < k) {
+    const c = C[C.length - 1]; let bi = 0, bd = -1;
+    for (let i = 0; i < n; i++) { const dr = pts[i * 3] - c[0], dg = pts[i * 3 + 1] - c[1], db = pts[i * 3 + 2] - c[2]; const d = dr * dr + dg * dg + db * db; if (d < dmin[i]) dmin[i] = d; if (dmin[i] > bd) { bd = dmin[i]; bi = i; } }
+    if (bd <= 0) break;
+    C.push([pts[bi * 3], pts[bi * 3 + 1], pts[bi * 3 + 2]]);
+  }
+  const lab = new Uint8Array(n);
+  for (let it = 0; it < iters; it++) {
+    const acc = C.map(() => [0, 0, 0, 0]);
+    for (let i = 0; i < n; i++) {
+      let bd = Infinity, bi = 0;
+      for (let j = 0; j < C.length; j++) { const dr = pts[i * 3] - C[j][0], dg = pts[i * 3 + 1] - C[j][1], db = pts[i * 3 + 2] - C[j][2]; const d = dr * dr + dg * dg + db * db; if (d < bd) { bd = d; bi = j; } }
+      lab[i] = bi; const a = acc[bi]; a[0] += pts[i * 3]; a[1] += pts[i * 3 + 1]; a[2] += pts[i * 3 + 2]; a[3]++;
+    }
+    acc.forEach((a, j) => { if (a[3]) C[j] = [a[0] / a[3], a[1] / a[3], a[2] / a[3]]; });
+  }
+  return C;
+}
+/* segments: array of flat rgb arrays (each a strip of border pixels). Returns bg colours
+   that dominate a large share of the strips — objects touching a few edges are ignored. */
+function paletteFromStrips(strips) {
+  const all = []; let total = 0; strips.forEach(s => total += s.length / 3);
+  const step = Math.max(1, Math.floor(total / 7000));
+  let k = 0; for (const s of strips) for (let i = 0; i < s.length; i += 3) if ((k++ % step) === 0) all.push(s[i], s[i + 1], s[i + 2]);
+  const C = kmeans(all, 6, 10);
+  const cover = C.map(() => 0), share = C.map(() => 0);
+  for (const s of strips) {
+    const cnt = C.map(() => 0), m = s.length / 3;
+    for (let i = 0; i < m; i++) { let bd = Infinity, bi = 0; for (let j = 0; j < C.length; j++) { const dr = s[i * 3] - C[j][0], dg = s[i * 3 + 1] - C[j][1], db = s[i * 3 + 2] - C[j][2]; const d = dr * dr + dg * dg + db * db; if (d < bd) { bd = d; bi = j; } } cnt[bi]++; }
+    cnt.forEach((c, j) => { share[j] += c; if (c / m >= 0.14) cover[j]++; });
+  }
+  let keep = C.map((c, j) => ({ c, cov: cover[j] / strips.length, w: share[j] })).filter(o => o.cov >= 0.5).sort((a, b) => b.w - a.w);
+  if (!keep.length) { const j = share.indexOf(Math.max(...share)); keep = [{ c: C[j], w: share[j] }]; }
+  const merged = [];
+  for (const o of keep) {
+    const m = merged.find(q => Math.hypot(q.c[0] - o.c[0], q.c[1] - o.c[1], q.c[2] - o.c[2]) < 12);
+    if (m) { const t = m.w + o.w; m.c = m.c.map((v, i) => (v * m.w + o.c[i] * o.w) / t); m.w = t; } else merged.push({ c: o.c.slice(), w: o.w });
+  }
+  return merged.slice(0, 4).map(o => o.c.map(v => Math.round(v)));
+}
+const lum = c => 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2];
+const hex = c => '#' + c.map(v => pad2(clamp(Math.round(v), 0, 255).toString(16))).join('').toUpperCase();
+
+/* ============================================================
+   Background removal (edge flood fill with colour model)
+   ============================================================ */
+/* ============================================================
+   Fake "transparent" checkerboard model
+   ============================================================ */
+function detectChecker(list) { // list: [{d, w, h}]
+  const bins = new Map(); let scanned = 0;
+  const L = (d, q) => 0.299 * d[q] + 0.587 * d[q + 1] + 0.114 * d[q + 2];
+  const sat = (d, q) => Math.max(d[q], d[q + 1], d[q + 2]) - Math.min(d[q], d[q + 1], d[q + 2]);
+  for (const { d, w, h } of list) {
+    for (let y = 0; y < h; y += 2) for (let x = 1; x < w - 2; x++) {
+      scanned++;
+      const q0 = (y * w + x - 1) * 4, q1 = q0 + 4;
+      const a = L(d, q1); if (Math.abs(a - L(d, q0)) > 3) continue;
+      let q2 = -1, b = 0;
+      for (let k = 1; k <= 3 && x + k + 1 < w; k++) {
+        const qk = q1 + k * 4, bk = L(d, qk);
+        if (Math.abs(bk - L(d, qk + 4)) <= 3 && Math.abs(bk - a) >= 6) { q2 = qk; b = bk; break; }
+        if (k > 1 && Math.abs(bk - a) < Math.abs(L(d, qk - 4) - a)) break; // not monotonic
+      }
+      if (q2 < 0) continue;
+      const diff = b - a; if (Math.abs(diff) > 50) continue;
+      if (sat(d, q1) > 14 || sat(d, q2) > 14 || Math.min(a, b) < 100) continue;
+      // must be periodic: the first colour comes back within one square (≤80 px)
+      const xb = (q2 - q1) / 4 + x; let per = false;
+      for (let j = xb + 2; j < Math.min(w - 1, xb + 80); j++) { const lj = L(d, (y * w + j) * 4); if (Math.abs(lj - a) <= 3 && Math.abs(L(d, (y * w + j + 1) * 4) - a) <= 3) { per = true; break; } if (Math.abs(lj - b) > 12 && Math.abs(lj - a) > 12) break; }
+      if (!per) continue;
+      x = (q2 - q1) / 4 + x - 1;
+      const lo = diff > 0 ? q1 : q2, hi = diff > 0 ? q2 : q1;
+      const key = (Math.round(Math.min(a, b) / 4) << 8) | Math.round(Math.max(a, b) / 4);
+      let e = bins.get(key); if (!e) bins.set(key, e = { n: 0, lo: [0, 0, 0], hi: [0, 0, 0] });
+      e.n++; for (let c = 0; c < 3; c++) { e.lo[c] += d[lo + c]; e.hi[c] += d[hi + c]; }
+    }
+  }
+  let best = null, bn = 0;
+  for (const [k, e] of bins) {
+    let n = e.n; for (const dk of [-257, -256, -255, -1, 1, 255, 256, 257]) { const o = bins.get(k + dk); if (o) n += o.n * 0.5; }
+    if (n > bn) { bn = n; best = e; }
+  }
+  if (!best || best.n < Math.max(80, scanned * 0.0015)) return null;
+  const A = best.hi.map(v => v / best.n), B = best.lo.map(v => v / best.n);
+  const LA = lum(A), LB = lum(B);
+  // square size: median length of A / B runs bounded by the opposite colour
+  const tl = Math.max(2.5, (LA - LB) * 0.3), runs = [];
+  for (const { d, w, h } of list) for (let y = 0; y < h; y += 3) {
+    let prev = -1, cls = -1, len = 0, gap = 0;
+    for (let x = 0; x < w; x++) {
+      const v = L(d, (y * w + x) * 4), c = Math.abs(v - LA) <= tl ? 1 : Math.abs(v - LB) <= tl ? 2 : 0;
+      if (c === 0) { gap++; if (gap > 2) { prev = -1; cls = -1; len = 0; } continue; }
+      if (c === cls) { len += 1 + gap; gap = 0; continue; }
+      if (cls > 0 && prev > 0 && prev !== cls && len >= 2) runs.push(len + gap);
+      prev = cls; cls = c; len = 1; gap = 0;
+    }
+  }
+  const sq = runs.length > 20 ? median(runs) : 16;
+  return { A: A.map(Math.round), B: B.map(Math.round), LA, LB, s: clamp(sq, 3, 80), tolC: clamp((LA - LB) * 0.5, 7, 16) };
+}
+/* a pixel is checkerboard only if it matches a checker colour AND the other colour
+   appears within one square both horizontally and vertically — a solid white body
+   next to the checkerboard fails the vertical/horizontal test and is kept. */
+function checkerMask(src, w, h, C) {
+  const n = w * h, isA = new Uint8Array(n), isB = new Uint8Array(n), isM = new Uint8Array(n);
+  const t2 = C.tolC * C.tolC;
+  for (let i = 0, q = 0; i < n; i++, q += 4) {
+    const r = src[q], g = src[q + 1], b = src[q + 2];
+    if (Math.max(r, g, b) - Math.min(r, g, b) > 16) continue;
+    const da = (r - C.A[0]) ** 2 + (g - C.A[1]) ** 2 + (b - C.A[2]) ** 2, db = (r - C.B[0]) ** 2 + (g - C.B[1]) ** 2 + (b - C.B[2]) ** 2;
+    if (da < t2 && da <= db) isA[i] = 1; else if (db < t2) isB[i] = 1;
+    else { const l = 0.299 * r + 0.587 * g + 0.114 * b; if (l > C.LB - 3 && l < C.LA + 3) isM[i] = 1; }
+  }
+  const BIG = 1e4, S = Math.ceil(C.s) + 2;
+  const near = (ind) => { // distance to nearest indicator pixel along x and along y
+    const dx = new Uint16Array(n), dy = new Uint16Array(n);
+    for (let y = 0; y < h; y++) {
+      let last = -BIG; for (let x = 0; x < w; x++) { const i = y * w + x; if (ind[i]) last = x; dx[i] = Math.min(BIG, x - last); }
+      last = BIG * 2; for (let x = w - 1; x >= 0; x--) { const i = y * w + x; if (ind[i]) last = x; dx[i] = Math.min(dx[i], last - x); }
+    }
+    for (let x = 0; x < w; x++) {
+      let last = -BIG; for (let y = 0; y < h; y++) { const i = y * w + x; if (ind[i]) last = y; dy[i] = Math.min(BIG, y - last); }
+      last = BIG * 2; for (let y = h - 1; y >= 0; y--) { const i = y * w + x; if (ind[i]) last = y; dy[i] = Math.min(dy[i], last - y); }
+    }
+    return [dx, dy];
+  };
+  const [bx, by] = near(isB), [ax, ay] = near(isA);
+  const m = new Uint8Array(n);
+  for (let i = 0; i < n; i++) {
+    if (isA[i]) m[i] = bx[i] <= S && by[i] <= S ? 1 : 0;
+    else if (isB[i]) m[i] = ax[i] <= S && ay[i] <= S ? 1 : 0;
+    else if (isM[i]) m[i] = (ax[i] <= 3 && bx[i] <= 3) || (ay[i] <= 3 && by[i] <= 3) ? 1 : 0;
+  }
+  const ind = new Uint8Array(n); for (let i = 0; i < n; i++) ind[i] = isA[i] | isB[i] | isM[i];
+  return { m, ind };
+}
+function removeBg(src, w, h, pal, o) {
+  const n = w * h, d = new Float32Array(n), near = new Uint8Array(n);
+  const P = pal.length;
+  for (let i = 0, q = 0; i < n; i++, q += 4) {
+    const r = src[q], g = src[q + 1], b = src[q + 2]; let bd = Infinity, bi = 0;
+    for (let p = 0; p < P; p++) { const c = pal[p]; const dr = r - c[0], dg = g - c[1], db = b - c[2]; const dd = dr * dr + dg * dg + db * db; if (dd < bd) { bd = dd; bi = p; } }
+    d[i] = Math.sqrt(bd); near[i] = bi;
+  }
+  const tol = o.tol;
+  // seal: dark outline pixels (dilated by 1) block the flood
+  let block = null;
+  if (o.seal) {
+    block = new Uint8Array(n); const dark = new Uint8Array(n);
+    for (let i = 0, q = 0; i < n; i++, q += 4) if (0.299 * src[q] + 0.587 * src[q + 1] + 0.114 * src[q + 2] < 110) dark[i] = 1;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = y * w + x; if (dark[i] || (x > 0 && dark[i - 1]) || (x < w - 1 && dark[i + 1]) || (y > 0 && dark[i - w]) || (y < h - 1 && dark[i + w])) block[i] = 1; }
+  }
+  const es = o.edgeSides;
+  if (es && (es[0] || es[1] || es[2] || es[3])) {
+    if (!block) block = new Uint8Array(n);
+    if (es[0]) for (let x = 0; x < w; x++) block[x] = 1;
+    if (es[1]) for (let x = 0; x < w; x++) block[(h - 1) * w + x] = 1;
+    if (es[2]) for (let y = 0; y < h; y++) block[y * w] = 1;
+    if (es[3]) for (let y = 0; y < h; y++) block[y * w + w - 1] = 1;
+  }
+  const ckr = o.checker ? checkerMask(src, w, h, o.checker) : null, chk = ckr && ckr.m, cind = ckr && ckr.ind;
+  const cand = i => (d[i] < tol || (chk && chk[i])) && !(block && block[i]);
+  const bg = new Uint8Array(n), Q = new Int32Array(n * 2 + 8); let qh = 0, qt = 0;
+  let seed;
+  if (o.keyed) {
+    // green/blue screen: every pixel of the key colour is background, wherever it sits
+    for (let i = 0; i < n; i++) if (d[i] < tol) bg[i] = 1;
+  } else if (!chk) {
+    seed = i => { if (!bg[i] && cand(i)) { bg[i] = 1; Q[qt++] = i; } };
+    for (let x = 0; x < w; x++) { seed(x); seed((h - 1) * w + x); }
+    for (let y = 0; y < h; y++) { seed(y * w); seed(y * w + w - 1); }
+    while (qh < qt) {
+      const i = Q[qh++], x = i % w;
+      if (x > 0) seed(i - 1); if (x < w - 1) seed(i + 1); if (i >= w) seed(i - w); if (i < n - w) seed(i + w);
+    }
+  } else {
+    // two kinds of background: solid colour (spreads through solid + checker) and
+    // checker (spreads only through checker) — so a body the same colour as the
+    // outer margin is never reached through the checkerboard around it.
+    const sol = new Uint8Array(n), blk = i => block && block[i];
+    const solid = i => d[i] < tol && !cind[i] && !blk(i), ck = i => chk[i] && !blk(i);
+    const push = (j, viaSolid) => {
+      if (qt >= Q.length) return;
+      if (viaSolid && solid(j)) { if (!sol[j]) { sol[j] = 1; bg[j] = 1; Q[qt++] = j; } return; }
+      if (ck(j) && !bg[j]) { bg[j] = 1; Q[qt++] = j; }
+    };
+    for (let x = 0; x < w; x++) { push(x, true); push((h - 1) * w + x, true); }
+    for (let y = 0; y < h; y++) { push(y * w, true); push(y * w + w - 1, true); }
+    while (qh < qt) {
+      const i = Q[qh++], x = i % w, vs = !!sol[i];
+      if (x > 0) push(i - 1, vs); if (x < w - 1) push(i + 1, vs); if (i >= w) push(i - w, vs); if (i < n - w) push(i + w, vs);
+    }
+  }
+  // frame-edge lines were sealed: clear them where the pixel inside is background
+  if (es) {
+    const okE = i => d[i] < tol || (cind && cind[i]);
+    for (let x = 0; x < w; x++) { if (es[0] && okE(x) && bg[x + w]) bg[x] = 1; const b = (h - 1) * w + x; if (es[1] && okE(b) && bg[b - w]) bg[b] = 1; }
+    for (let y = 0; y < h; y++) { const l = y * w, r = l + w - 1; if (es[2] && okE(l) && bg[l + 1]) bg[l] = 1; if (es[3] && okE(r) && bg[r - 1]) bg[r] = 1; }
+  }
+  if (chk) { // enclosed checkerboard patches (between arms, ears…) are background too
+    const seen = new Uint8Array(n), minSize = Math.max(20, o.checker.s * o.checker.s * 0.8);
+    for (let s0 = 0; s0 < n; s0++) {
+      if (bg[s0] || seen[s0] || !chk[s0]) continue;
+      qh = 0; qt = 0; Q[qt++] = s0; seen[s0] = 1;
+      while (qh < qt) { const i = Q[qh++], x = i % w; const nb = [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, i >= w ? i - w : -1, i < n - w ? i + w : -1]; for (const j of nb) if (j >= 0 && !seen[j] && !bg[j] && chk[j]) { seen[j] = 1; Q[qt++] = j; } }
+      if (qt >= minSize) for (let t = 0; t < qt; t++) bg[Q[t]] = 1;
+    }
+  }
+  if (o.holes && !o.keyed) {
+    const seen = new Uint8Array(n), minSize = Math.max(30, n * 0.0025);
+    for (let s = 0; s < n; s++) {
+      if (bg[s] || seen[s] || !cand(s)) continue;
+      qh = 0; qt = 0; Q[qt++] = s; seen[s] = 1;
+      while (qh < qt) { const i = Q[qh++], x = i % w; const nb = [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, i >= w ? i - w : -1, i < n - w ? i + w : -1]; for (const j of nb) if (j >= 0 && !seen[j] && !bg[j] && cand(j)) { seen[j] = 1; Q[qt++] = j; } }
+      if (qt >= minSize) for (let t = 0; t < qt; t++) bg[Q[t]] = 1;
+    }
+  }
+  if (chk) { // smooth the cut line: fill 1–2 px bites, drop 1–2 px spurs
+    for (let pass = 0; pass < 2; pass++) {
+      const nb = new Uint8Array(bg);
+      for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
+        const i = y * w + x; let c = 0;
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if ((dx || dy) && bg[i + dy * w + dx]) c++;
+        if (bg[i] && c <= 2 && !cind[i]) nb[i] = 0; else if (!bg[i] && c >= 6 && cind[i]) nb[i] = 1;
+      }
+      bg.set(nb);
+    }
+  }
+  const out = new Uint8ClampedArray(src.length);
+  const fe = o.feather;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = y * w + x, q = i * 4;
+    if (bg[i]) continue; // stays 0
+    let a = 1;
+    if (fe > 0) {
+      const edge = (x > 0 && bg[i - 1]) || (x < w - 1 && bg[i + 1]) || (y > 0 && bg[i - w]) || (y < h - 1 && bg[i + w]) ||
+        (x > 0 && y > 0 && bg[i - w - 1]) || (x < w - 1 && y > 0 && bg[i - w + 1]) || (x > 0 && y < h - 1 && bg[i + w - 1]) || (x < w - 1 && y < h - 1 && bg[i + w + 1]);
+      if (edge) a = clamp((d[i] - tol * 0.6) / fe, 0, 1);
+    }
+    let r = src[q], g = src[q + 1], b = src[q + 2];
+    if (a < 1 && a > 0) { const c = pal[near[i]]; r = (r - (1 - a) * c[0]) / a; g = (g - (1 - a) * c[1]) / a; b = (b - (1 - a) * c[2]) / a; }
+    out[q] = r; out[q + 1] = g; out[q + 2] = b; out[q + 3] = Math.round(a * 255);
+  }
+  if (o.despill > 0) {
+    // colour spill: green/blue screens tint the edge pixels. Remove the component
+    // that points along the key colour's hue; a neutral background changes nothing.
+    const keys = [...pal.filter(c => c[0] >= 0), ...(o.checker ? [] : [])]
+      .map(c => { const g = (c[0] + c[1] + c[2]) / 3, u = [c[0] - g, c[1] - g, c[2] - g]; const len = Math.hypot(u[0], u[1], u[2]); return len > 12 ? u.map(v => v / len) : null; })
+      .filter(Boolean);
+    if (keys.length) {
+      const R = 14, dist = new Int16Array(n).fill(-1);
+      qh = 0; qt = 0;
+      for (let i = 0; i < n; i++) if (bg[i]) { dist[i] = 0; Q[qt++] = i; }
+      while (qh < qt) {
+        const i = Q[qh++], x = i % w; if (dist[i] >= R) continue;
+        const nb = [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, i >= w ? i - w : -1, i < n - w ? i + w : -1];
+        for (const j of nb) if (j >= 0 && dist[j] < 0) { dist[j] = dist[i] + 1; Q[qt++] = j; }
+      }
+      const st0 = o.despill / 100;
+      for (let i = 0; i < n; i++) {
+        const q = i * 4, a = out[q + 3]; if (!a || dist[i] <= 0) continue;
+        const st = st0 * (a < 250 || dist[i] <= 6 ? 1 : Math.max(0, (R - dist[i]) / 8));
+        if (st <= 0) continue;
+        const r = out[q], g = out[q + 1], b = out[q + 2], m = (r + g + b) / 3;
+        let bestP = 0, bu = null;
+        for (const u of keys) { const p = (r - m) * u[0] + (g - m) * u[1] + (b - m) * u[2]; if (p > bestP) { bestP = p; bu = u; } }
+        if (bu && bestP > 0) { out[q] = r - bu[0] * bestP * st; out[q + 1] = g - bu[1] * bestP * st; out[q + 2] = b - bu[2] * bestP * st; }
+      }
+    }
+  }
+  for (let e = 0; e < o.erode; e++) {
+    const kill = [];
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = y * w + x; if (!out[i * 4 + 3]) continue; if ((x > 0 && !out[(i - 1) * 4 + 3]) || (x < w - 1 && !out[(i + 1) * 4 + 3]) || (y > 0 && !out[(i - w) * 4 + 3]) || (y < h - 1 && !out[(i + w) * 4 + 3])) kill.push(i); }
+    for (const i of kill) out[i * 4 + 3] = 0;
+  }
+  if (o.speck > 0) {
+    const seen = new Uint8Array(n);
+    for (let s = 0; s < n; s++) {
+      if (seen[s] || out[s * 4 + 3] < 24) continue;
+      qh = 0; qt = 0; Q[qt++] = s; seen[s] = 1;
+      while (qh < qt) {
+        const i = Q[qh++], x = i % w;
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+          if (!dx && !dy) continue; const xx = x + dx; if (xx < 0 || xx >= w) continue; const j = i + dy * w + dx; if (j < 0 || j >= n) continue;
+          if (!seen[j] && out[j * 4 + 3] >= 24) { seen[j] = 1; Q[qt++] = j; }
+        }
+      }
+      let kill = qt < o.speck;
+      if (!kill && cind && qt < o.checker.s * o.checker.s * 4) { // leftover checker squares
+        let c = 0; for (let t = 0; t < qt; t++) if (cind[Q[t]]) c++;
+        kill = c / qt > 0.6;
+      }
+      if (kill) for (let t = 0; t < qt; t++) out[Q[t] * 4 + 3] = 0;
+    }
+  }
+  for (let i = 0; i < n; i++) if (out[i * 4 + 3] < 24) { out[i * 4] = out[i * 4 + 1] = out[i * 4 + 2] = out[i * 4 + 3] = 0; }
+  return out;
+}
+
+/* ============================================================
+   Stabiliser
+   ============================================================ */
+function measure(fg, w, h) {
+  let sa = 0, sx = 0, sy = 0; const rows = new Float64Array(h), cols = new Float64Array(w);
+  let bx0 = w, by0 = h, bx1 = -1, by1 = -1;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const a = fg[(y * w + x) * 4 + 3]; if (a < 40) continue;
+    sa += a; sx += a * x; sy += a * y; rows[y] += a; cols[x] += a;
+    if (x < bx0) bx0 = x; if (x > bx1) bx1 = x; if (y < by0) by0 = y; if (y > by1) by1 = y;
+  }
+  if (!sa) return null;
+  const pct = (arr, p) => { let acc = 0; const T = sa * p; for (let i = 0; i < arr.length; i++) { acc += arr[i]; if (acc >= T) return i; } return arr.length - 1; };
+  return { cx: sx / sa, cy: sy / sa, top: pct(rows, .01), bottom: pct(rows, .99), left: pct(cols, .01), right: pct(cols, .99), area: sa / 255, box: [bx0, by0, bx1, by1] };
+}
+const median = a => { const s = [...a].sort((x, y) => x - y); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+const std = a => { const m = a.reduce((x, y) => x + y, 0) / a.length; return Math.sqrt(a.reduce((x, y) => x + (y - m) * (y - m), 0) / a.length); };
+const TYPE_NAME = { still: '固定型', micro: '微動型', move: '大位移', float: '漂浮型', zoom: 'Zoom 動畫' };
+const MODE_NAME = { bottom: '固定底部', center: '固定中心', smooth: '去抖動', off: '關閉' };
+function classify(M, w, h) {
+  const cx = M.map(m => m.cx), cy = M.map(m => m.cy), hh = M.map(m => m.bottom - m.top), ww = M.map(m => m.right - m.left);
+  const H = median(hh) || 1, Wd = median(ww) || 1;
+  const rx = (Math.max(...cx) - Math.min(...cx)) / Wd, ry = (Math.max(...cy) - Math.min(...cy)) / H;
+  const sv = Math.max(std(hh) / H, std(ww) / Wd);
+  let type, mode;
+  if (rx > 0.14 || ry > 0.14) { type = rx >= ry ? 'move' : 'float'; mode = 'smooth'; }
+  else if (sv > 0.09) { type = 'zoom'; mode = 'center'; }
+  else if (rx < 0.035 && ry < 0.035) { type = 'still'; mode = 'bottom'; }
+  else { type = 'micro'; mode = 'bottom'; }
+  return { type, mode };
+}
+function stabOffsets(M, mode, strength) {
+  const n = M.length, off = M.map(() => [0, 0]);
+  if (mode === 'off' || strength <= 0) return off;
+  if (mode === 'smooth') {
+    const win = Math.max(1, Math.round(n / 6));
+    for (let i = 0; i < n; i++) {
+      let sx = 0, sy = 0, c = 0;
+      for (let k = -win; k <= win; k++) { const m = M[((i + k) % n + n) % n]; sx += m.cx; sy += m.cy; c++; }
+      off[i] = [(sx / c - M[i].cx) * strength, (sy / c - M[i].cy) * strength];
+    }
+    return off;
+  }
+  const ax = M.map(m => m.cx), ay = M.map(m => mode === 'bottom' ? m.bottom : m.cy);
+  const mx = median(ax), my = median(ay);
+  // deadband: an axis that already moves less than ~0.6 px is left alone (no resampling noise)
+  const fx = std(ax) < 0.6 ? 0 : strength, fy = std(ay) < 0.6 ? 0 : strength;
+  for (let i = 0; i < n; i++) off[i] = [(mx - ax[i]) * fx, (my - ay[i]) * fy];
+  return off;
+}
+
+/* ============================================================
+   State
+   ============================================================ */
+const state = {
+  videos: [], active: null, seq: 0,
+  stab: { mode: 'auto', strength: 1 },
+  out: { size: 'fixed', margin: 10, colors: 256, indexed: true, denoise: true, loops: 'auto', maxKB: 300 },
+  previewBg: 'checker', main: null, tab: null, busy: false,
+};
+function newVideo(o) {
+  return Object.assign({
+    id: ++state.seq, grid: { rows: 2, cols: 5, xs: [0, .2, .4, .6, .8, 1], ys: [0, .5, 1] },
+    seg: { start: 0, dur: 2, frames: 20, pingpong: false },
+    bg: { auto: true, detected: [], custom: [], tol: 42, feather: 14, erode: 0, speck: 60, seal: 'auto', holes: false, checker: 'auto', despill: 85 },
+    scenes: [], cuts: [], analyzed: false, dirty: 3, stickers: [], cells: null, uniqTimes: [], thumb: null,
+  }, o);
+}
+const V = () => state.active;
+
+/* ---------- drawing a source frame ---------- */
+async function seekVideo(el, t) {
+  if (el.readyState >= 2 && Math.abs(el.currentTime - t) < 0.0005) return;
+  await new Promise(res => {
+    let done = false; const fin = () => { if (done) return; done = true; el.removeEventListener('seeked', fin); res(); };
+    el.addEventListener('seeked', fin); el.currentTime = t; setTimeout(fin, 4000);
+  });
+}
+async function drawSource(v, t, c, W, H) {
+  await seekVideo(v.el, clamp(t, 0, Math.max(0, v.duration - 0.02)));
+  c.drawImage(v.el, 0, 0, W, H);
+}
+
+/* ---------- loading ---------- */
+function addFile(file) {
+  return new Promise((res, rej) => {
+    const el = document.createElement('video');
+    el.muted = true; el.playsInline = true; el.preload = 'auto'; el.crossOrigin = 'anonymous';
+    const url = URL.createObjectURL(file);
+    el.onloadeddata = () => {
+      const v = newVideo({ kind: 'video', name: file.name, el, url, w: el.videoWidth, h: el.videoHeight, duration: el.duration, sizeMB: file.size / 1048576 });
+      const ar = v.w / v.h;
+      if (ar < 1.2) v.grid = { rows: 3, cols: 4, xs: [0, .25, .5, .75, 1], ys: [0, 1 / 3, 2 / 3, 1] };
+      v.seg.dur = Math.min(2, v.duration);
+      state.videos.push(v); res(v);
+    };
+    el.onerror = () => rej(new Error('無法讀取影片：' + file.name));
+    el.src = url;
+  });
+}
+async function makeThumb(v) {
+  const c = mk(168, 96); await drawSource(v, Math.min(v.duration * 0.5, v.seg.start + 0.1), c.getContext('2d'), 168, 96); v.thumb = c;
+}
+
+/* ---------- scene analysis ---------- */
+async function analyzeScenes(v) {
+  const W = 48, H = 27, c = mk(W, H), x = ctx2d(c);
+  const step = 1 / 8;
+  const grays = [], times = [];
+  for (let t = 0; t < v.duration - 0.02; t += step) {
+    await drawSource(v, t, x, W, H);
+    const d = x.getImageData(0, 0, W, H).data, g = new Float32Array(W * H);
+    for (let i = 0; i < g.length; i++) g[i] = d[i * 4] * .3 + d[i * 4 + 1] * .59 + d[i * 4 + 2] * .11;
+    grays.push(g); times.push(t);
+  }
+  const diffs = [];
+  for (let i = 1; i < grays.length; i++) { let s = 0; for (let j = 0; j < grays[i].length; j++) s += Math.abs(grays[i][j] - grays[i - 1][j]); diffs.push(s / grays[i].length); }
+  const md = median(diffs.length ? diffs : [0]);
+  v.cuts = [];
+  diffs.forEach((d, i) => { if (d > Math.max(22, md * 4)) v.cuts.push((times[i] + times[i + 1]) / 2); });
+  const b = [0, ...v.cuts, v.duration];
+  v.scenes = []; for (let i = 0; i < b.length - 1; i++) v.scenes.push([b[i], b[i + 1]]);
+  v.analyzed = true;
+}
+function crossesCut(v) { const a = v.seg.start, b = a + v.seg.dur; return v.cuts.some(c => c > a + 0.01 && c < b - 0.01); }
+function sceneOf(v, t) { return v.scenes.find(s => t >= s[0] && t < s[1]) || [0, v.duration]; }
+function pickDefaultStart(v) {
+  const need = v.seg.dur + 0.15;
+  const s = v.scenes.find(s => s[1] - s[0] >= need) || [...v.scenes].sort((a, b) => (b[1] - b[0]) - (a[1] - a[0]))[0] || [0, v.duration];
+  v.seg.start = +(s[0] + (s[0] > 0 ? 0.08 : 0)).toFixed(2);
+  if (s[1] - s[0] < need) v.seg.dur = +Math.max(0.5, s[1] - s[0] - 0.12).toFixed(2);
+  clampSeg(v);
+}
+function clampSeg(v) {
+  const maxDur = v.seg.pingpong ? 2 : 4;
+  v.seg.dur = clamp(v.seg.dur, 0.5, Math.min(maxDur, v.duration));
+  v.seg.start = clamp(v.seg.start, 0, Math.max(0, v.duration - v.seg.dur));
+  v.seg.frames = clamp(Math.round(v.seg.frames), 5, 20);
+}
+
+/* ---------- grid detection ---------- */
+async function detectGrid(v) {
+  const W = 480, H = Math.round(W * v.h / v.w), c = mk(W, H), x = ctx2d(c);
+  const times = [0, .33, .66, .99].map(f => v.seg.start + f * v.seg.dur);
+  const frames = [];
+  for (const t of times) { await drawSource(v, t, x, W, H); frames.push(x.getImageData(0, 0, W, H).data); }
+  // strips: each frame edge split into 4 pieces
+  const strips = [];
+  for (const d of frames) {
+    for (let side = 0; side < 4; side++) for (let p = 0; p < 4; p++) {
+      const s = [];
+      const len = side < 2 ? W : H, a = Math.floor(p * len / 4), b = Math.floor((p + 1) * len / 4);
+      for (let k = a; k < b; k++) for (let dep = 0; dep < 2; dep++) {
+        const px = side === 0 ? k : side === 1 ? k : side === 2 ? dep : W - 1 - dep;
+        const py = side === 0 ? dep : side === 1 ? H - 1 - dep : k;
+        const q = (py * W + px) * 4; s.push(d[q], d[q + 1], d[q + 2]);
+      }
+      strips.push(s);
+    }
+  }
+  const pal = [...paletteFromStrips(strips), ...v.bg.custom];
+  v.bg.detected = pal.slice(0, 4);
+  // background = region flood-filled from the frame border (dark outlines seal light characters)
+  const C = checkerFor(v, frames.map(d => ({ d, w: W, h: H })));
+  const palD = stripChecker(pal, C);
+  const seal = v.bg.seal === 'on' || (v.bg.seal === 'auto' && [...palD.filter(c => c[0] >= 0), ...(C ? [C.A, C.B] : [])].every(c => lum(c) > 150));
+  const colR = new Float32Array(W), rowR = new Float32Array(H);
+  for (const d of frames) {
+    const m = removeBg(d, W, H, palD, { tol: Math.max(v.bg.tol, 30), feather: 0, erode: 0, speck: 0, holes: false, seal, checker: C, despill: 0, keyed: !C && palD.some(c => c[0] >= 0 && Math.max(...c) - Math.min(...c) > 55) });
+    for (let y = 0; y < H; y++) for (let xx = 0; xx < W; xx++) if (!m[(y * W + xx) * 4 + 3]) { colR[xx] += 1; rowR[y] += 1; }
+  }
+  for (let i = 0; i < W; i++) colR[i] /= H * frames.length;
+  for (let i = 0; i < H; i++) rowR[i] /= W * frames.length;
+  // contrast score: cut lines should sit on background, cell centres on characters
+  const scoreN = (R, N) => {
+    const L = R.length;
+    const winMax = (c0, win) => { let m = 0; for (let i = Math.max(0, Math.floor(c0 - win)); i <= Math.min(L - 1, Math.ceil(c0 + win)); i++) m = Math.max(m, R[i]); return m; };
+    const winMean = (c0, win) => { let s = 0, c = 0; for (let i = Math.max(0, Math.floor(c0 - win)); i <= Math.min(L - 1, Math.ceil(c0 + win)); i++) { s += R[i]; c++; } return c ? s / c : 1; };
+    let lines = 0, worst = 1; for (let k = 1; k < N; k++) { const m = winMax(k / N * L, 0.22 / N * L); lines += m; worst = Math.min(worst, m); }
+    lines /= Math.max(1, N - 1);
+    let centers = 0; for (let k = 0; k < N; k++) centers += winMean((k + 0.5) / N * L, 0.18 / N * L);
+    centers /= N;
+    return N === 1 ? 0.18 : (lines * 0.5 + worst * 0.5) - centers;
+  };
+  const choose = (R, maxN, cur) => {
+    let best = -1, pick = cur;
+    for (let N = 1; N <= maxN; N++) { const s = scoreN(R, N) - N * 0.004; if (s > best) { best = s; pick = N; } }
+    return best < 0.12 ? cur : pick;
+  };
+  v._dbg = { colR: Array.from(colR), rowR: Array.from(rowR), pal, seal, C };
+  // 1) find clean background bands directly (handles boards cropped by the video frame)
+  const bands = (R, maxN) => {
+    const L = R.length, sm = new Float32Array(L);
+    for (let i = 0; i < L; i++) { let a = 0, c = 0; for (let k = -2; k <= 2; k++) { const j = i + k; if (j >= 0 && j < L) { a += R[j]; c++; } } sm[i] = a / c; }
+    const e0 = Math.ceil(L * 0.04), e1 = Math.floor(L * 0.96);
+    let mx = 0; for (let i = e0; i < e1; i++) mx = Math.max(mx, sm[i]);
+    const thr = Math.max(0.8, mx - 0.07);
+    const out = [];
+    for (let i = e0; i < e1; i++) {
+      if (sm[i] < thr) continue;
+      let j = i; while (j + 1 < e1 && sm[j + 1] >= thr) j++;
+      const c = (i + j) / 2;
+      const last = out.length ? out[out.length - 1] : null;
+      if (last != null) { let dip = Infinity; for (let k = Math.floor(last); k <= Math.ceil(c); k++) dip = Math.min(dip, sm[k]); if (dip > thr - 0.15) { out[out.length - 1] = (last + c) / 2; i = j; continue; } }
+      out.push(c); i = j;
+    }
+    // the region before the first / after the last band must contain content too
+    const hasContent = (a, b) => { let dip = Infinity; for (let k = Math.max(0, Math.floor(a)); k <= Math.min(L - 1, Math.ceil(b)); k++) dip = Math.min(dip, sm[k]); return dip < thr - 0.15; };
+    while (out.length && !hasContent(0, out[0])) out.shift();
+    while (out.length && !hasContent(out[out.length - 1], L - 1)) out.pop();
+    if (!out.length || out.length + 1 > maxN || mx < 0.8) return null;
+    return out.map(c => (c + 0.5) / L);
+  };
+  const bx = bands(colR, 8), by = bands(rowR, 6);
+  if (bx || by) {
+    if (bx) { v.grid.cols = bx.length + 1; v.grid.xs = [0, ...bx, 1]; }
+    if (by) { v.grid.rows = by.length + 1; v.grid.ys = [0, ...by, 1]; }
+    if (bx && by) { v.dirty = 3; return; }
+  }
+  // 2) fallback: regular grid scored by line/centre contrast
+  const cols = bx ? v.grid.cols : choose(colR, 8, v.grid.cols), rows = by ? v.grid.rows : choose(rowR, 6, v.grid.rows);
+  if (bx) { v.grid.rows = rows; v.grid.ys = snap(rowR, rows, 0, 1); v.dirty = 3; return; }
+  if (by) { v.grid.cols = cols; v.grid.xs = snap(colR, cols, 0, 1); v.dirty = 3; return; }
+  function snap(R, N, a, b) {
+    const out = [a];
+    for (let k = 1; k < N; k++) {
+      const L = R.length, c0 = (a + (b - a) * k / N) * L, win = 0.28 * (b - a) / N * L;
+      const i0 = Math.max(0, Math.floor(c0 - win)), i1 = Math.min(L - 1, Math.ceil(c0 + win));
+      let m = -1; for (let i = i0; i <= i1; i++) m = Math.max(m, R[i]);
+      let best = c0, bd = Infinity;
+      for (let i = i0; i <= i1; i++) if (R[i] >= m - 0.015) { let s = i, e = i; while (e + 1 <= i1 && R[e + 1] >= m - 0.015) e++; const mid = (s + e) / 2; if (Math.abs(mid - c0) < bd) { bd = Math.abs(mid - c0); best = mid; } i = e; }
+      out.push((best + 0.5) / L);
+    }
+    out.push(b); return out;
+  }
+  v.grid.cols = cols; v.grid.rows = rows;
+  v.grid.xs = snap(colR, cols, v.grid.xs[0], v.grid.xs[v.grid.xs.length - 1]);
+  v.grid.ys = snap(rowR, rows, v.grid.ys[0], v.grid.ys[v.grid.ys.length - 1]);
+  v.dirty = 3;
+}
+function evenGrid(v) {
+  const g = v.grid, a = g.xs[0], b = g.xs[g.xs.length - 1], c = g.ys[0], d = g.ys[g.ys.length - 1];
+  g.xs = Array.from({ length: g.cols + 1 }, (_, i) => a + (b - a) * i / g.cols);
+  g.ys = Array.from({ length: g.rows + 1 }, (_, i) => c + (d - c) * i / g.rows);
+  v.dirty = 3;
+}
+
+/* ---------- best loop search ---------- */
+async function findBestLoop(v) {
+  const g = v.grid, W = 160, H = Math.round(W * v.h / v.w), c = mk(W, H), x = ctx2d(c);
+  const gx0 = Math.floor(g.xs[0] * W), gx1 = Math.ceil(g.xs[g.xs.length - 1] * W), gy0 = Math.floor(g.ys[0] * H), gy1 = Math.ceil(g.ys[g.ys.length - 1] * H);
+  const grab = async t => { await drawSource(v, t, x, W, H); const d = x.getImageData(gx0, gy0, gx1 - gx0, gy1 - gy0).data; const o = new Float32Array(d.length / 4 * 3); for (let i = 0, j = 0; i < d.length; i += 4) { o[j++] = d[i]; o[j++] = d[i + 1]; o[j++] = d[i + 2]; } return o; };
+  const s = v.seg.start, sc = sceneOf(v, s + 0.01);
+  const f0 = await grab(s);
+  const maxD = Math.min(v.seg.pingpong ? 2 : 4, sc[1] - s - 0.04, v.duration - s - 0.04);
+  const minD = Math.min(0.8, maxD);
+  let best = null;
+  const fps = 24;
+  for (let d = minD; d <= maxD + 1e-6; d += 1 / fps) {
+    const f = await grab(s + d); let sum = 0; for (let i = 0; i < f.length; i++) sum += Math.abs(f[i] - f0[i]);
+    const diff = sum / f.length - d * 0.15; // tiny bias towards longer loops
+    if (!best || diff < best.diff) best = { d, diff, raw: sum / f.length };
+  }
+  if (best) { v.seg.dur = +best.d.toFixed(3); clampSeg(v); v.loopMatch = clamp(100 - best.raw * 2.2, 0, 100); v.dirty = 3; }
+  return best;
+}
+
+/* ============================================================
+   Pipeline
+   ============================================================ */
+function segPlan(v) {
+  const { start, dur, frames, pingpong } = v.seg;
+  let uniq, seq, delay;
+  if (pingpong) {
+    const M = Math.max(3, Math.floor(frames / 2) + 1);
+    uniq = Array.from({ length: M }, (_, j) => start + j * dur / (M - 1));
+    seq = [...Array(M).keys(), ...Array.from({ length: M - 2 }, (_, j) => M - 2 - j)];
+    delay = dur * 1000 / (M - 1);
+  } else {
+    uniq = Array.from({ length: frames }, (_, i) => start + i * dur / frames);
+    seq = [...Array(frames).keys()];
+    delay = dur * 1000 / frames;
+  }
+  return { uniq: uniq.map(t => Math.min(t, v.duration - 0.02)), seq, delay };
+}
+function cellRects(v) {
+  const { xs, ys, rows, cols } = v.grid, R = [];
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+    const x0 = Math.round(xs[c] * v.w), x1 = Math.round(xs[c + 1] * v.w), y0 = Math.round(ys[r] * v.h), y1 = Math.round(ys[r + 1] * v.h);
+    const w = Math.max(4, x1 - x0), h = Math.max(4, y1 - y0), s = Math.min(1, 460 / Math.max(w, h));
+    R.push({ x: x0, y: y0, w, h, tw: Math.max(4, Math.round(w * s)), th: Math.max(4, Math.round(h * s)) });
+  }
+  return R;
+}
+function setProgress(p, txt) {
+  const el = $('#progress'); if (p == null) { el.hidden = true; return; }
+  el.hidden = false; $('#progBar').style.width = (p * 100).toFixed(1) + '%'; $('#progTxt').textContent = txt || '';
+}
+async function extractCells(v, onP) {
+  const plan = segPlan(v); v.plan = plan;
+  const full = mk(v.w, v.h), fx = ctx2d(full);
+  const rects = cellRects(v);
+  const cells = rects.map(() => []);
+  const cc = rects.map(r => { const c = mk(r.tw, r.th); return { c, x: ctx2d(c) }; });
+  for (let i = 0; i < plan.uniq.length; i++) {
+    await drawSource(v, plan.uniq[i], fx, v.w, v.h);
+    rects.forEach((r, k) => { const { c, x } = cc[k]; x.clearRect(0, 0, r.tw, r.th); x.drawImage(full, r.x, r.y, r.w, r.h, 0, 0, r.tw, r.th); cells[k].push(x.getImageData(0, 0, r.tw, r.th).data); });
+    onP && onP((i + 1) / plan.uniq.length);
+    await tick();
+  }
+  v.cells = cells; v.rects = rects;
+}
+function bgPalette(v) {
+  if (!v.cells) return v.bg.custom;
+  let pal = [];
+  if (v.bg.auto) {
+    const strips = [];
+    v.cells.forEach((frames, k) => {
+      const { tw: w, th: h } = v.rects[k];
+      const fsel = [0, Math.floor(frames.length / 2), frames.length - 1];
+      for (const fi of fsel) {
+        const d = frames[fi];
+        for (let side = 0; side < 4; side++) for (let p = 0; p < 3; p++) {
+          const s = [], len = side < 2 ? w : h, a = Math.floor(p * len / 3), b = Math.floor((p + 1) * len / 3);
+          for (let t = a; t < b; t += 2) for (let dep = 0; dep < 2; dep++) {
+            const px = side === 0 ? t : side === 1 ? t : side === 2 ? dep : w - 1 - dep;
+            const py = side === 0 ? dep : side === 1 ? h - 1 - dep : t;
+            const q = (py * w + px) * 4; s.push(d[q], d[q + 1], d[q + 2]);
+          }
+          strips.push(s);
+        }
+      }
+    });
+    pal = paletteFromStrips(strips);
+  }
+  v.bg.detected = pal;
+  const all = [...pal, ...v.bg.custom];
+  return all.length ? all : [[0, 0, 0]];
+}
+function checkerFor(v, list) {
+  if (v.bg.checker === 'off') return null;
+  const C = detectChecker(list);
+  return C;
+}
+function stripChecker(pal, C) {
+  if (!C) return pal;
+  // drop solid colours the checker already explains (its two colours, or a blend of them)
+  const lim = C.tolC * 1.3;
+  const out = pal.filter(c => {
+    if (Math.hypot(c[0] - C.A[0], c[1] - C.A[1], c[2] - C.A[2]) <= lim || Math.hypot(c[0] - C.B[0], c[1] - C.B[1], c[2] - C.B[2]) <= lim) return false;
+    const l = lum(c), sat = Math.max(...c) - Math.min(...c);
+    return !(sat <= 16 && l >= C.LB - 3 && l <= C.LA + 3);
+  });
+  return out.length ? out : [[-999, -999, -999]]; // nothing solid left: checker model alone
+}
+function keyStickers(v, onP) {
+  const C = checkerFor(v, v.cells.flatMap((frames, k) => [0, frames.length >> 1].map(fi => ({ d: frames[fi], w: v.rects[k].tw, h: v.rects[k].th }))));
+  v.checker = C;
+  const pal = stripChecker(bgPalette(v), C);
+  const seal = v.bg.seal === 'on' || (v.bg.seal === 'auto' && [...pal.filter(c => c[0] >= 0), ...(C ? [C.A, C.B] : [])].every(c => lum(c) > 150));
+  const keyed = !C && pal.some(c => c[0] >= 0 && Math.max(...c) - Math.min(...c) > 55);
+  v.sealUsed = seal; v.keyed = keyed;
+  const opts = { tol: v.bg.tol, feather: v.bg.feather, erode: v.bg.erode, speck: v.bg.speck, holes: v.bg.holes, seal, checker: C, despill: v.bg.despill, keyed };
+  const old = v.stickers || [];
+  v.stickers = v.cells.map((frames, k) => {
+    const { tw: w, th: h } = v.rects[k];
+    const R = v.rects[k], edgeSides = [R.y <= 1, R.y + R.h >= v.h - 1, R.x <= 1, R.x + R.w >= v.w - 1];
+    const fg = frames.map(f => removeBg(f, w, h, pal, { ...opts, edgeSides }));
+    // does the character get cut by the video frame?
+    let cutPx = 0, cutN = 0; const f0 = fg[0];
+    const probe = i => { cutN++; if (f0[i * 4 + 3] > 128) cutPx++; };
+    if (edgeSides[0]) for (let x = 0; x < w; x++) probe(x);
+    if (edgeSides[1]) for (let x = 0; x < w; x++) probe((h - 1) * w + x);
+    if (edgeSides[2]) for (let y = 0; y < h; y++) probe(y * w);
+    if (edgeSides[3]) for (let y = 0; y < h; y++) probe(y * w + w - 1);
+    let cov = 0; for (const f of fg) { let c = 0; for (let i = 3; i < f.length; i += 4) if (f[i] > 128) c++; cov += c / (w * h); }
+    cov /= fg.length;
+    const prev = old[k];
+    const st = { v, idx: k, w, h, fg, empty: cov < 0.006, cov, cut: cutN > 0 && cutPx / cutN > 0.08, mode: prev ? prev.mode : 'global', enabled: prev ? prev.enabled : true, res: null };
+    if (st.empty && !prev) st.enabled = false;
+    return st;
+  });
+}
+function outDims(ub, forMain) {
+  if (forMain) return [240, 240];
+  if (state.out.size === 'fixed') return [320, 270];
+  const m = state.out.margin, H = 270, ar = ub.w / Math.max(1, ub.h);
+  let W = Math.round((H - 2 * m) * ar) + 2 * m; W = clamp(W + (W % 2), 60, 320);
+  return [W, H];
+}
+function compose(st, W0, forMain) {
+  const { w, h, fg } = st, n = fg.length;
+  const M = fg.map(f => measure(f, w, h));
+  const valid = M.filter(Boolean);
+  let offs = fg.map(() => [0, 0]), cls = { type: 'still', mode: 'off' }, modeUsed = 'off';
+  if (valid.length === n && n > 2) {
+    cls = classify(M, w, h);
+    const want = st.mode === 'global' ? state.stab.mode : st.mode;
+    modeUsed = want === 'auto' ? cls.mode : want;
+    offs = stabOffsets(M, modeUsed, state.stab.strength);
+  }
+  // union bbox after offsets
+  let ux0 = Infinity, uy0 = Infinity, ux1 = -Infinity, uy1 = -Infinity;
+  M.forEach((m, i) => { if (!m) return; const [x0, y0, x1, y1] = m.box; ux0 = Math.min(ux0, x0 + offs[i][0]); uy0 = Math.min(uy0, y0 + offs[i][1]); ux1 = Math.max(ux1, x1 + 1 + offs[i][0]); uy1 = Math.max(uy1, y1 + 1 + offs[i][1]); });
+  if (!isFinite(ux0)) { ux0 = 0; uy0 = 0; ux1 = w; uy1 = h; }
+  const ub = { w: ux1 - ux0, h: uy1 - uy0 };
+  const [W, H] = W0 || outDims(ub, forMain);
+  const m = forMain ? 8 : state.out.margin;
+  const s = Math.min((W - 2 * m) / ub.w, (H - 2 * m) / ub.h, 2.5);
+  const tx = Math.round(W / 2 - s * (ux0 + ub.w / 2)), ty = Math.round(H / 2 - s * (uy0 + ub.h / 2));
+  // whole-pixel shifts keep still areas identical between frames (much smaller APNG)
+  offs = offs.map(o => [Math.round(o[0] * s) / s, Math.round(o[1] * s) / s]);
+  const src = mk(w, h), sx = ctx2d(src), out = mk(W, H), ox = ctx2d(out);
+  ox.imageSmoothingQuality = 'high';
+  const frames = fg.map((f, i) => {
+    sx.putImageData(new ImageData(new Uint8ClampedArray(f), w, h), 0, 0);
+    ox.setTransform(1, 0, 0, 1, 0, 0); ox.clearRect(0, 0, W, H);
+    ox.setTransform(s, 0, 0, s, tx + s * offs[i][0], ty + s * offs[i][1]);
+    ox.drawImage(src, 0, 0);
+    const d = ox.getImageData(0, 0, W, H).data;
+    for (let q = 3; q < d.length; q += 4) if (d[q] < 20) { d[q - 3] = d[q - 2] = d[q - 1] = d[q] = 0; }
+    return state.out.denoise ? denoise(d, W, H) : d;
+  });
+  // metrics (output px)
+  let met = null;
+  if (valid.length === n) {
+    const anchorY = modeUsed === 'bottom' ? M.map(q => q.bottom) : M.map(q => q.cy);
+    const bx = std(M.map(q => q.cx)) * s, by = std(anchorY) * s;
+    const ax = std(M.map((q, i) => q.cx + offs[i][0])) * s, ay = std(anchorY.map((y, i) => y + offs[i][1])) * s;
+    const hh = M.map(q => q.bottom - q.top); const sv = std(hh) / (median(hh) || 1) * 100;
+    met = { bx, by, ax, ay, sv };
+  }
+  return { frames, W, H, cls, modeUsed, met };
+}
+/* edge-preserving 3×3 smoothing of opaque pixels: removes video compression grain */
+function denoise(d, W, H) {
+  const o = new Uint8ClampedArray(d), T = 30 * 30;
+  for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) {
+    const q = (y * W + x) * 4; if (d[q + 3] < 250) continue;
+    let r = 0, g = 0, b = 0, c = 0;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      const p = q + (dy * W + dx) * 4; if (d[p + 3] < 250) continue;
+      const dr = d[p] - d[q], dg = d[p + 1] - d[q + 1], db = d[p + 2] - d[q + 2];
+      if (dr * dr + dg * dg + db * db > T) continue;
+      r += d[p]; g += d[p + 1]; b += d[p + 2]; c++;
+    }
+    o[q] = r / c; o[q + 1] = g / c; o[q + 2] = b / c;
+  }
+  return o;
+}
+function loopMatch(a, b) {
+  let s = 0, c = 0;
+  for (let i = 0; i < a.length; i += 16) { const aa = a[i + 3] / 255, ba = b[i + 3] / 255; s += Math.abs(a[i] * aa - b[i] * ba) + Math.abs(a[i + 1] * aa - b[i + 1] * ba) + Math.abs(a[i + 2] * aa - b[i + 2] * ba) + Math.abs(a[i + 3] - b[i + 3]); c += 4; }
+  return clamp(100 - (s / c) * 3, 0, 100);
+}
+/* LINE accepts a total playback time of exactly 1, 2, 3 or 4 seconds, so the
+   per-loop length must divide evenly: 0.25 / 0.5 / 0.75 / 1 / 1.5 / 2 / 3 / 4 s. */
+const TIMINGS = [[1, 1], [2, 1], [3, 1], [4, 1], [1, 2], [2, 2], [3, 2], [4, 2], [3, 3], [1, 4], [2, 4], [3, 4], [4, 4]];
+function chooseTiming(perLoopMs, loopsWanted) {
+  const opts = TIMINGS.filter(([T, L]) => loopsWanted === 'auto' || L === +loopsWanted);
+  const list = opts.length ? opts : TIMINGS;
+  let best = null;
+  for (const [T, L] of list) {
+    const ms = T * 1000 / L;
+    const d = Math.abs(ms - perLoopMs);
+    if (!best || d < best.d) best = { d, ms, loops: L, total: T * 1000 };
+  }
+  return best;
+}
+async function fitEncode(frames, W, H, delay, loopsWanted) {
+  const limit = state.out.maxKB * 1024;
+  let fr = frames, dl = delay, notes = [];
+  const colorSteps = [256, 128, 64, 48, 32].filter(c => c <= state.out.colors);
+  // RGBA first when that is the chosen mode, then 8-bit palette as the fallback that
+  // keeps the frames instead of throwing them away
+  const modes = state.out.indexed ? [true] : [false, true];
+  let last = null;
+  for (let round = 0; round < 6; round++) {
+    const t = chooseTiming(fr.length * dl, loopsWanted);
+    const total = t.ms, loops = t.loops;
+    const delays = distribute(total, fr.length);
+    for (const ix of modes) for (const c of colorSteps) {
+      const r = await encodeAPNG(fr, W, H, delays, loops, c, ix);
+      last = { ...r, frames: fr.length, fr, delays, loops, total, colors: c, indexed: ix, notes };
+      if (r.blob.size <= limit) {
+        if (c !== state.out.colors) notes.push('色彩 ' + c);
+        if (ix !== state.out.indexed) notes.push('改用索引色');
+        return last;
+      }
+    }
+    // drop frames
+    const n2 = Math.max(5, Math.round(fr.length * 0.75));
+    const pick = Array.from({ length: n2 }, (_, i) => Math.floor(i * fr.length / n2));
+    if (n2 === fr.length) break;
+    const tot = fr.length * dl; fr = pick.map(i => fr[i]); dl = tot / n2;
+    notes = ['減為 ' + n2 + ' 幀'];
+  }
+  if (last) { last.notes = [...notes, '仍超過 ' + state.out.maxKB + 'KB']; return last; }
+}
+function distribute(totalMs, n) { const out = []; let acc = 0; for (let i = 0; i < n; i++) { const t = Math.floor(totalMs * (i + 1) / n) - Math.floor(totalMs * i / n); out.push(t); acc += t; } return out; }
+async function processSticker(st) {
+  const v = st.v, plan = v.plan;
+  const c = compose(st);
+  const seqFrames = plan.seq.map(i => c.frames[i]);
+  const enc = await fitEncode(seqFrames, c.W, c.H, plan.delay, state.out.loops);
+  if (st.res && st.res.url) URL.revokeObjectURL(st.res.url);
+  st.res = { fr: enc.fr, delays: enc.delays, blob: enc.blob, url: URL.createObjectURL(enc.blob), size: enc.blob.size, frames: enc.frames, loops: enc.loops, total: enc.total, W: c.W, H: c.H, colors: enc.colors, notes: enc.notes, cls: c.cls, mode: c.modeUsed, met: c.met, loop: loopMatch(seqFrames[seqFrames.length - 1], seqFrames[0]), first: c.frames[0] };
+}
+async function generate(v, from) {
+  if (state.busy) return; state.busy = true; setBusy(true);
+  try {
+    const level = Math.max(from || 0, v.dirty || 0, v.cells ? 0 : 3);
+    if (level >= 3) { setProgress(0, '擷取影格…'); await extractCells(v, p => setProgress(p * 0.35, '擷取影格 ' + Math.round(p * 100) + '%')); }
+    if (level >= 2 || !v.stickers.length) { setProgress(0.36, '去背中…'); await tick(); keyStickers(v); }
+    const list = v.stickers;
+    for (let i = 0; i < list.length; i++) {
+      setProgress(0.4 + 0.6 * i / list.length, '穩定與編碼 APNG ' + (i + 1) + ' / ' + list.length);
+      await tick();
+      if (!list[i].empty || list[i].enabled) await processSticker(list[i]);
+    }
+    v.dirty = 0;
+    setProgress(1, '完成'); setTimeout(() => setProgress(null), 900);
+  } catch (e) { console.error(e); toast('處理失敗：' + e.message); setProgress(null); }
+  state.busy = false; setBusy(false);
+  renderSources(); renderResults(); renderExport(); syncPanel();
+}
+function setBusy(b) { ['#genBtn', '#autoBtn', '#regenAll', '#detectBtn', '#loopBtn'].forEach(s => $(s).disabled = b); }
+
+async function autoAll(v) {
+  if (state.busy) return;
+  state.busy = true; setBusy(true);
+  try {
+    stopPlay();
+    if (!v.analyzed) { setProgress(0.02, '分析場景切換…'); await analyzeScenes(v); }
+    pickDefaultStart(v);
+    setProgress(0.06, '偵測格線…'); await detectGrid(v);
+    setProgress(0.1, '尋找最佳循環點…'); await findBestLoop(v);
+    v.seg.frames = clamp(Math.round(v.seg.dur * (v.seg.pingpong ? 2 : 1) * 12), 8, 20); // ≈12 fps
+    syncPanel(); await showFrame(v.seg.start);
+  } catch (e) { console.error(e); toast('自動處理失敗：' + e.message); }
+  state.busy = false; setBusy(false);
+  await generate(v, 3);
+}
+
+/* ============================================================
+   Stage (grid calibration canvas)
+   ============================================================ */
+const stage = $('#stage'), sctx = stage.getContext('2d');
+const frameC = mk(1280, 720), fctx = ctx2d(frameC);
+let curT = 0, playing = false, rafId = 0, pickMode = false, drag = null;
+function sizeStage(v) {
+  const W = Math.min(1280, v.w), H = Math.round(W * v.h / v.w);
+  if (stage.width !== W || stage.height !== H) { stage.width = W; stage.height = H; frameC.width = W; frameC.height = H; }
+}
+async function showFrame(t) {
+  const v = V(); if (!v) return;
+  curT = clamp(t, 0, v.duration);
+  await drawSource(v, curT, fctx, frameC.width, frameC.height);
+  drawStage();
+}
+function globalNumbers() {
+  const map = new Map(); let n = 0;
+  for (const v of state.videos) {
+    const cnt = v.grid.rows * v.grid.cols;
+    for (let k = 0; k < cnt; k++) { const st = v.stickers[k]; if (st && !st.enabled) continue; map.set(v.id + ':' + k, ++n); }
+  }
+  return map;
+}
+function drawStage() {
+  const v = V(); if (!v) return;
+  const W = stage.width, H = stage.height, g = v.grid;
+  sctx.clearRect(0, 0, W, H);
+  sctx.drawImage(frameC, 0, 0);
+  const X = g.xs.map(x => x * W), Y = g.ys.map(y => y * H);
+  sctx.fillStyle = 'rgba(0,0,0,.55)';
+  sctx.fillRect(0, 0, W, Y[0]); sctx.fillRect(0, Y[Y.length - 1], W, H - Y[Y.length - 1]);
+  sctx.fillRect(0, Y[0], X[0], Y[Y.length - 1] - Y[0]); sctx.fillRect(X[X.length - 1], Y[0], W - X[X.length - 1], Y[Y.length - 1] - Y[0]);
+  const lw = Math.max(1.5, W / 640);
+  sctx.lineWidth = lw; sctx.strokeStyle = '#3DF08A'; sctx.setLineDash([]);
+  X.forEach((x, i) => { sctx.globalAlpha = (drag && drag.t === 'x' && drag.i === i) ? 1 : .9; sctx.beginPath(); sctx.moveTo(x, Y[0]); sctx.lineTo(x, Y[Y.length - 1]); sctx.stroke(); });
+  Y.forEach((y, i) => { sctx.globalAlpha = (drag && drag.t === 'y' && drag.i === i) ? 1 : .9; sctx.beginPath(); sctx.moveTo(X[0], y); sctx.lineTo(X[X.length - 1], y); sctx.stroke(); });
+  sctx.globalAlpha = 1;
+  // handles
+  sctx.fillStyle = '#3DF08A';
+  const hs = Math.max(5, W / 160);
+  X.forEach(x => { const y = (Y[0] + Y[Y.length - 1]) / 2; sctx.fillRect(x - hs / 2, y - hs * 1.5, hs, hs * 3); });
+  Y.forEach(y => { const x = (X[0] + X[X.length - 1]) / 2; sctx.fillRect(x - hs * 1.5, y - hs / 2, hs * 3, hs); });
+  if ($('#showNums').checked) {
+    const nums = globalNumbers(); const fs = Math.max(12, Math.round(W / 60));
+    sctx.font = '600 ' + fs + 'px "IBM Plex Mono", monospace'; sctx.textBaseline = 'top';
+    for (let r = 0; r < g.rows; r++) for (let c = 0; c < g.cols; c++) {
+      const k = r * g.cols + c, n = nums.get(v.id + ':' + k); const st = v.stickers[k];
+      const label = n ? pad2(n) : '✕';
+      const x = X[c] + 6, y = Y[r] + 6, tw = sctx.measureText(label).width + 10;
+      sctx.fillStyle = n ? 'rgba(10,138,67,.92)' : 'rgba(120,120,120,.85)'; sctx.fillRect(x, y, tw, fs + 6);
+      sctx.fillStyle = '#fff'; sctx.fillText(label, x + 5, y + 3);
+    }
+  }
+  $('#timeLbl').textContent = curT.toFixed(2) + ' / ' + v.duration.toFixed(2) + ' s';
+  renderTimelineHead();
+}
+function canvasPt(e) { const r = stage.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height, sx: stage.width / r.width }; }
+stage.addEventListener('pointerdown', e => {
+  const v = V(); if (!v) return;
+  const p = canvasPt(e);
+  if (pickMode) {
+    const d = fctx.getImageData(clamp(Math.floor(p.x * stage.width), 0, stage.width - 1), clamp(Math.floor(p.y * stage.height), 0, stage.height - 1), 1, 1).data;
+    if (v.bg.custom.length >= 4) v.bg.custom.shift();
+    v.bg.custom.push([d[0], d[1], d[2]]); markDirty(v, 2);
+    pickMode = false; $('#pickBtn').classList.remove('on'); $('#stageWrap').classList.remove('pick');
+    renderSwatches(); toast('已加入背景色 ' + hex([d[0], d[1], d[2]])); return;
+  }
+  const g = v.grid, r = stage.getBoundingClientRect(), tolPx = 10 / r.width;
+  let best = null;
+  const inY = p.y >= g.ys[0] - .02 && p.y <= g.ys[g.ys.length - 1] + .02, inX = p.x >= g.xs[0] - .02 && p.x <= g.xs[g.xs.length - 1] + .02;
+  if (inY) g.xs.forEach((x, i) => { const d = Math.abs(p.x - x); if (d < tolPx && (!best || d < best.d)) best = { t: 'x', i, d }; });
+  if (inX) g.ys.forEach((y, i) => { const d = Math.abs(p.y - y) * (r.height / r.width); if (d < tolPx && (!best || d < best.d)) best = { t: 'y', i, d }; });
+  if (best) { drag = best; stage.setPointerCapture(e.pointerId); drawStage(); }
+});
+stage.addEventListener('pointermove', e => {
+  const v = V(); if (!v) return;
+  const p = canvasPt(e);
+  if (!drag) {
+    if (pickMode) return;
+    const g = v.grid, r = stage.getBoundingClientRect(), tolPx = 10 / r.width;
+    const nx = g.xs.some(x => Math.abs(p.x - x) < tolPx), ny = g.ys.some(y => Math.abs(p.y - y) * (r.height / r.width) < tolPx);
+    stage.style.cursor = nx ? 'ew-resize' : ny ? 'ns-resize' : 'default'; return;
+  }
+  const arr = drag.t === 'x' ? v.grid.xs : v.grid.ys, val = drag.t === 'x' ? p.x : p.y;
+  const lo = drag.i > 0 ? arr[drag.i - 1] + 0.02 : 0, hi = drag.i < arr.length - 1 ? arr[drag.i + 1] - 0.02 : 1;
+  arr[drag.i] = clamp(val, lo, hi);
+  markDirty(v, 3, true); drawStage();
+});
+const endDrag = () => { if (drag) { drag = null; drawStage(); syncPanel(); } };
+stage.addEventListener('pointerup', endDrag); stage.addEventListener('pointercancel', endDrag);
+
+function playLoop() {
+  const v = V(); if (!v || !playing) return;
+  const { start, dur } = v.seg;
+  const el = v.el;
+  if (el.currentTime >= start + dur || el.ended || el.currentTime < start - 0.05) { el.currentTime = start; }
+  curT = el.currentTime; fctx.drawImage(el, 0, 0, frameC.width, frameC.height);
+  drawStage(); rafId = requestAnimationFrame(playLoop);
+}
+let playT0 = 0;
+async function startPlay() {
+  const v = V(); if (!v || state.busy) return;
+  playing = true; $('#playBtn').textContent = '❚❚ 暫停'; playT0 = performance.now();
+  await seekVideo(v.el, v.seg.start); try { await v.el.play(); } catch (e) { }
+  playLoop();
+}
+function stopPlay() {
+  playing = false; cancelAnimationFrame(rafId); $('#playBtn').textContent = '▶ 播放片段';
+  const v = V(); if (v) v.el.pause();
+}
+
+/* ---------- timeline ---------- */
+function renderTimeline() {
+  const v = V(), tl = $('#timeline'); if (!v) { tl.innerHTML = ''; return; }
+  const D = v.duration, pct = t => (t / D * 100) + '%';
+  let h = '';
+  v.scenes.forEach(s => h += `<div class="scene" style="left:${pct(s[0])};width:${pct(s[1] - s[0])}"></div>`);
+  v.cuts.forEach(c => h += `<div class="cut" style="left:${pct(c)}"></div>`);
+  h += `<div class="win" id="tlWin"></div><div class="ph" id="tlPh"></div><div class="lbl">${v.analyzed ? (v.cuts.length ? v.cuts.length + ' 個場景切換' : '無場景切換') : '分析場景中…'}</div>`;
+  tl.innerHTML = h; renderTimelineHead();
+  const chips = $('#sceneChips');
+  if (v.scenes.length > 1) {
+    chips.innerHTML = '<span>場景：</span>' + v.scenes.map((s, i) => `<button class="chip ${v.seg.start >= s[0] - 1e-3 && v.seg.start < s[1] ? 'on' : ''}" data-sc="${i}" type="button">${s[0].toFixed(2)}–${s[1].toFixed(2)}s</button>`).join('');
+  } else chips.innerHTML = '';
+}
+function renderTimelineHead() {
+  const v = V(); const w = $('#tlWin'), p = $('#tlPh'); if (!v || !w) return;
+  const D = v.duration; w.style.left = (v.seg.start / D * 100) + '%'; w.style.width = (v.seg.dur / D * 100) + '%';
+  w.style.borderColor = crossesCut(v) ? 'var(--warn)' : ''; p.style.left = (curT / D * 100) + '%';
+}
+$('#timeline').addEventListener('click', e => {
+  const v = V(); if (!v) return; const r = e.currentTarget.getBoundingClientRect();
+  v.seg.start = +((e.clientX - r.left) / r.width * v.duration - v.seg.dur / 2).toFixed(2); clampSeg(v); markDirty(v, 3); syncPanel(); stopPlay(); showFrame(v.seg.start);
+});
+$('#sceneChips').addEventListener('click', e => {
+  const b = e.target.closest('[data-sc]'); const v = V(); if (!b || !v) return;
+  const s = v.scenes[+b.dataset.sc]; v.seg.start = +(s[0] + (s[0] > 0 ? 0.08 : 0)).toFixed(2);
+  if (s[1] - v.seg.start < v.seg.dur) v.seg.dur = Math.max(0.5, +(s[1] - v.seg.start - 0.04).toFixed(2));
+  clampSeg(v); markDirty(v, 3); syncPanel(); stopPlay(); showFrame(v.seg.start);
+});
+
+/* ============================================================
+   Panel binding
+   ============================================================ */
+function markDirty(v, level, quiet) { v.dirty = Math.max(v.dirty || 0, level); if (!quiet) syncDirty(); else syncDirty(); }
+function markAll(level) { state.videos.forEach(v => { if (v.stickers.length) v.dirty = Math.max(v.dirty || 0, level); }); syncDirty(); }
+function syncDirty() {
+  const v = V(); const n = $('#dirtyNote'); if (!v) { n.textContent = ''; return; }
+  if (!v.stickers.length) n.textContent = '尚未產生。';
+  else if (v.dirty >= 1) { n.textContent = '設定已變更，按上方按鈕重新產生' + (v.dirty === 1 ? '（只需重新穩定與編碼，很快）' : '') + '。'; n.className = 'note warn'; return; }
+  else n.textContent = '已是最新結果。';
+  n.className = 'note';
+}
+function syncPanel() {
+  const v = V(); if (!v) return;
+  const g = v.grid;
+  $('#rows').value = g.rows; $('#cols').value = g.cols; $('#gridHint').textContent = g.rows + '×' + g.cols + ' = ' + g.rows * g.cols + ' 格';
+  const st = $('#start'); st.max = Math.max(0, v.duration - v.seg.dur).toFixed(2); st.value = v.seg.start; $('#startOut').textContent = v.seg.start.toFixed(2) + 's';
+  const du = $('#dur'); du.max = Math.min(v.seg.pingpong ? 2 : 4, v.duration).toFixed(2); du.value = v.seg.dur; $('#durOut').textContent = v.seg.dur.toFixed(2) + 's';
+  $('#frames').value = v.seg.frames; $('#pingpong').checked = v.seg.pingpong;
+  const plan = segPlan(v); const raw = plan.seq.length * plan.delay;
+  const t = chooseTiming(raw, state.out.loops), total = t.ms, loops = t.loops;
+  $('#framesOut').textContent = plan.seq.length + ' 幀';
+  $('#segHint').textContent = plan.seq.length + '幀 · ' + (total / 1000) + 's × ' + loops;
+  const notes = [];
+  notes.push(`輸出：每幀 ${Math.round(total / plan.seq.length)} ms（約 ${(plan.seq.length / (total / 1000)).toFixed(1)} fps），單次 ${(total / 1000)} 秒 × ${loops} 次 = 總長 ${t.total / 1000} 秒。`);
+  if (Math.abs(raw - total) > 40) notes.push(`LINE 只接受總長 1／2／3／4 秒，所以播放速度從 ${(raw / 1000).toFixed(2)}s 微調為 ${(total / 1000)}s。`);
+  if (crossesCut(v)) notes.push('⚠ 這個片段跨越了場景切換，輸出的動畫會跳格，建議移到單一場景內。');
+  if (v.loopMatch != null) notes.push('首尾相似度 ' + v.loopMatch.toFixed(0) + '%。');
+  $('#segNote').textContent = notes.join(' '); $('#segNote').className = 'note' + (crossesCut(v) ? ' warn' : '');
+  $('#bgAuto').checked = v.bg.auto;
+  $('#tol').value = v.bg.tol; $('#tolOut').textContent = v.bg.tol;
+  $('#feather').value = v.bg.feather; $('#featherOut').textContent = v.bg.feather;
+  $('#despill').value = v.bg.despill; $('#despillOut').textContent = v.bg.despill + '%';
+  $('#erode').value = v.bg.erode; $('#erodeOut').textContent = v.bg.erode + 'px';
+  $('#speck').value = v.bg.speck; $('#speckOut').textContent = v.bg.speck ? v.bg.speck + 'px' : '關';
+  $('#seal').value = v.bg.seal; $('#checker').value = v.bg.checker; $('#holes').checked = v.bg.holes;
+  $('#stabMode').value = state.stab.mode; $('#strength').value = Math.round(state.stab.strength * 100); $('#strengthOut').textContent = Math.round(state.stab.strength * 100) + '%';
+  $('#stabHint').textContent = $('#stabMode').selectedOptions[0].text.replace(/（.*/, '');
+  $('#outSize').value = state.out.size; $('#margin').value = state.out.margin; $('#colors').value = String(state.out.colors); $('#loops').value = state.out.loops; $('#indexed').checked = state.out.indexed; $('#denoise').checked = state.out.denoise;
+  $('#outHint').textContent = (state.out.size === 'fixed' ? '320×270' : '高270') + ' · ' + (state.out.indexed ? '索引色' : 'RGBA');
+  renderSwatches(); renderTimeline(); syncDirty();
+}
+function renderSwatches() {
+  const v = V(); if (!v) return;
+  const ck = v.checker ? [`<span class="sw auto" title="偵測到假透明棋盤格"><i style="background:conic-gradient(${hex(v.checker.A)} 25%,${hex(v.checker.B)} 0 50%,${hex(v.checker.A)} 0 75%,${hex(v.checker.B)} 0)"></i>棋盤格 · 格寬 ${Math.round(v.checker.s)}px</span>`] : [];
+  const a = v.bg.auto ? v.bg.detected.map(c => `<span class="sw auto" title="自動偵測"><i style="background:${hex(c)}"></i>${hex(c)}</span>`) : [];
+  const b = v.bg.custom.map((c, i) => `<span class="sw"><i style="background:${hex(c)}"></i>${hex(c)}<button type="button" data-rm="${i}" aria-label="移除">×</button></span>`);
+  $('#swatches').innerHTML = [...ck, ...a, ...b].join('') || '<span class="note">尚未偵測背景色</span>';
+  $('#bgHint').textContent = (v.checker ? '棋盤格 · ' : v.keyed ? '去色幕 · ' : '') + (v.bg.detected.length + v.bg.custom.length) + ' 色' + (v.sealUsed ? ' · 輪廓保護' : '');
+}
+$('#swatches').addEventListener('click', e => { const b = e.target.closest('[data-rm]'); const v = V(); if (!b || !v) return; v.bg.custom.splice(+b.dataset.rm, 1); markDirty(v, 2); renderSwatches(); });
+
+const onIn = (id, fn) => $(id).addEventListener('input', fn);
+onIn('#rows', e => { const v = V(); if (!v) return; v.grid.rows = clamp(+e.target.value || 1, 1, 6); evenGrid(v); v.stickers = []; markDirty(v, 3); syncPanel(); drawStage(); });
+onIn('#cols', e => { const v = V(); if (!v) return; v.grid.cols = clamp(+e.target.value || 1, 1, 8); evenGrid(v); v.stickers = []; markDirty(v, 3); syncPanel(); drawStage(); });
+$('#evenBtn').onclick = () => { const v = V(); if (!v) return; evenGrid(v); syncPanel(); drawStage(); };
+$('#resetBtn').onclick = () => { const v = V(); if (!v) return; v.grid.xs[0] = 0; v.grid.xs[v.grid.xs.length - 1] = 1; v.grid.ys[0] = 0; v.grid.ys[v.grid.ys.length - 1] = 1; evenGrid(v); syncPanel(); drawStage(); };
+$('#detectBtn').onclick = async () => { const v = V(); if (!v) return; stopPlay(); setBusy(true); await detectGrid(v); setBusy(false); syncPanel(); await showFrame(curT); toast('已偵測為 ' + v.grid.rows + '×' + v.grid.cols); };
+let startDeb;
+onIn('#start', e => { const v = V(); if (!v) return; v.seg.start = +e.target.value; clampSeg(v); markDirty(v, 3); $('#startOut').textContent = v.seg.start.toFixed(2) + 's'; renderTimelineHead(); stopPlay(); clearTimeout(startDeb); startDeb = setTimeout(() => { showFrame(v.seg.start); syncPanel(); }, 60); });
+onIn('#dur', e => { const v = V(); if (!v) return; v.seg.dur = +e.target.value; clampSeg(v); v.loopMatch = null; markDirty(v, 3); syncPanel(); });
+onIn('#frames', e => { const v = V(); if (!v) return; v.seg.frames = +e.target.value; markDirty(v, 3); syncPanel(); });
+onIn('#pingpong', e => { const v = V(); if (!v) return; v.seg.pingpong = e.target.checked; clampSeg(v); markDirty(v, 3); syncPanel(); });
+$('#loopBtn').onclick = async () => { const v = V(); if (!v) return; stopPlay(); setBusy(true); if (!v.analyzed) await analyzeScenes(v); const b = await findBestLoop(v); setBusy(false); syncPanel(); showFrame(v.seg.start); if (b) toast('最佳循環長度 ' + v.seg.dur.toFixed(2) + ' 秒'); };
+onIn('#bgAuto', e => { const v = V(); if (!v) return; v.bg.auto = e.target.checked; markDirty(v, 2); renderSwatches(); });
+onIn('#tol', e => { const v = V(); if (!v) return; v.bg.tol = +e.target.value; $('#tolOut').textContent = v.bg.tol; markDirty(v, 2); });
+onIn('#feather', e => { const v = V(); if (!v) return; v.bg.feather = +e.target.value; $('#featherOut').textContent = v.bg.feather; markDirty(v, 2); });
+onIn('#despill', e => { const v = V(); if (!v) return; v.bg.despill = +e.target.value; $('#despillOut').textContent = v.bg.despill + '%'; markDirty(v, 2); });
+onIn('#erode', e => { const v = V(); if (!v) return; v.bg.erode = +e.target.value; $('#erodeOut').textContent = v.bg.erode + 'px'; markDirty(v, 2); });
+onIn('#speck', e => { const v = V(); if (!v) return; v.bg.speck = +e.target.value; $('#speckOut').textContent = v.bg.speck ? v.bg.speck + 'px' : '關'; markDirty(v, 2); });
+onIn('#seal', e => { const v = V(); if (!v) return; v.bg.seal = e.target.value; markDirty(v, 2); });
+onIn('#checker', e => { const v = V(); if (!v) return; v.bg.checker = e.target.value; markDirty(v, 2); });
+onIn('#holes', e => { const v = V(); if (!v) return; v.bg.holes = e.target.checked; markDirty(v, 2); });
+onIn('#stabMode', e => { state.stab.mode = e.target.value; markAll(1); syncPanel(); });
+onIn('#strength', e => { state.stab.strength = +e.target.value / 100; $('#strengthOut').textContent = e.target.value + '%'; markAll(1); });
+onIn('#outSize', e => { state.out.size = e.target.value; markAll(1); syncPanel(); });
+onIn('#margin', e => { state.out.margin = clamp(+e.target.value || 0, 0, 40); markAll(1); });
+onIn('#colors', e => { state.out.colors = +e.target.value; markAll(1); });
+onIn('#loops', e => { state.out.loops = e.target.value; markAll(1); syncPanel(); });
+onIn('#indexed', e => { state.out.indexed = e.target.checked; markAll(1); syncPanel(); });
+onIn('#denoise', e => { state.out.denoise = e.target.checked; markAll(1); });
+$('#showNums').addEventListener('change', drawStage);
+$('#playBtn').onclick = () => playing ? stopPlay() : startPlay();
+$('#pickBtn').onclick = () => { if (!V()) return; pickMode = !pickMode; $('#pickBtn').classList.toggle('on', pickMode); $('#stageWrap').classList.toggle('pick', pickMode); if (pickMode) { stopPlay(); toast('在畫面上點一下背景'); } };
+$('#genBtn').onclick = () => { const v = V(); if (v) { stopPlay(); generate(v); } };
+$('#autoBtn').onclick = () => { const v = V(); if (v) autoAll(v); };
+$('#regenAll').onclick = async () => { stopPlay(); for (const v of state.videos) if (v.stickers.length || v.dirty) { await generate(v); } };
+
+/* ============================================================
+   Sources list
+   ============================================================ */
+function renderSources() {
+  const nums = globalNumbers();
+  $('#srcList').innerHTML = '';
+  state.videos.forEach(v => {
+    const ids = [...nums.entries()].filter(([k]) => k.startsWith(v.id + ':')).map(([, n]) => n);
+    const rng = ids.length ? '輸出 ' + pad2(Math.min(...ids)) + (ids.length > 1 ? '～' + pad2(Math.max(...ids)) : '') : '尚未輸出';
+    const b = document.createElement('div');
+    b.className = 'src' + (v === V() ? ' on' : ''); b.tabIndex = 0; b.setAttribute('role', 'button');
+    b.innerHTML = `<div class="th"></div><div style="min-width:0"><div class="nm">${esc(v.name)}</div><div class="meta">${v.w}×${v.h} · ${v.duration.toFixed(1)}s${v.sizeMB ? ' · ' + v.sizeMB.toFixed(1) + 'MB' : ''}</div><div class="rng">${rng}</div></div><button class="x" type="button" aria-label="移除影片">×</button>`;
+    if (v.thumb) { const c = mk(168, 96); c.getContext('2d').drawImage(v.thumb, 0, 0); b.querySelector('.th').replaceWith(c); }
+    b.onclick = e => { if (e.target.closest('.x')) return; setActive(v); };
+    b.onkeydown = e => { if (e.key === 'Enter') setActive(v); };
+    b.querySelector('.x').onclick = () => removeVideo(v);
+    $('#srcList').appendChild(b);
+  });
+}
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+function removeVideo(v) {
+  if (state.busy) return;
+  const i = state.videos.indexOf(v); if (i < 0) return;
+  state.videos.splice(i, 1);
+  v.stickers.forEach(s => s.res && URL.revokeObjectURL(s.res.url));
+  if (v.url) URL.revokeObjectURL(v.url);
+  if (state.main && state.main.v === v) state.main = null;
+  if (state.tab && state.tab.v === v) state.tab = null;
+  if (V() === v) { state.active = null; if (state.videos.length) setActive(state.videos[0]); else { sctx.clearRect(0, 0, stage.width, stage.height); $('#timeline').innerHTML = ''; $('#sceneChips').innerHTML = ''; msg('上傳圖板影片後，這裡會顯示格線校正與片段選擇'); setBusy(true); } }
+  renderSources(); renderResults(); renderExport();
+}
+function msg(t) { const m = $('#stageMsg'); m.hidden = !t; m.textContent = t || ''; }
+async function setActive(v) {
+  stopPlay(); setBusy(false); state.active = v; sizeStage(v); msg('');
+  renderSources(); syncPanel(); await showFrame(v.seg.start);
+  if (!v.analyzed) { await analyzeScenes(v); if (V() === v) { renderTimeline(); syncPanel(); } }
+}
+async function handleFiles(files) {
+  const list = [...files].filter(f => f.type.startsWith('video/') || /\.(mp4|mov|webm|m4v)$/i.test(f.name));
+  if (!list.length) { toast('請選擇影片檔（MP4 / MOV / WebM）'); return; }
+  let last = null;
+  for (const f of list) {
+    try { last = await addFile(f); await makeThumb(last); } catch (e) { toast(e.message); }
+  }
+  if (last) { renderSources(); await setActive(last); autoAll(last); }
+}
+$('#file').addEventListener('change', e => { handleFiles(e.target.files); e.target.value = ''; });
+const drop = $('#drop');
+['dragenter', 'dragover'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', e => handleFiles(e.dataTransfer.files));
+
+/* ============================================================
+   Results
+   ============================================================ */
+$('#bgSeg').addEventListener('click', e => { const b = e.target.closest('[data-bg]'); if (!b) return; state.previewBg = b.dataset.bg; [...$('#bgSeg').children].forEach(x => x.classList.toggle('on', x === b)); document.querySelectorAll('.pv').forEach(p => p.className = 'pv bg-' + state.previewBg); });
+function allStickers() { const a = []; state.videos.forEach(v => v.stickers.forEach(s => a.push(s))); return a; }
+function ensureMainTab() {
+  const on = allStickers().filter(s => s.enabled && s.res);
+  if (!state.main || !state.main.enabled || !state.main.res) state.main = on.find(s => !s.cut) || on[0] || null;
+  if (!state.tab || !state.tab.enabled || !state.tab.res) state.tab = state.main;
+}
+/* ---------- per-card animation player ---------- */
+const players = [];
+state.playMode = 'loop';
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function attachPlayer(s, card) {
+  const r = s.res, cv = card.querySelector('.pv canvas'), cx = cv.getContext('2d');
+  const imgs = r.fr.map(f => new ImageData(new Uint8ClampedArray(f), r.W, r.H));
+  const pp = card.querySelector('[data-p=pp]'), range = card.querySelector('.player input'), fc = card.querySelector('.fc'), big = card.querySelector('.bigplay');
+  const P = { s, i: 0, playing: false, acc: 0, plays: 0, last: 0 };
+  const draw = () => { cx.putImageData(imgs[P.i], 0, 0); range.value = P.i; fc.textContent = (P.i + 1) + '/' + imgs.length; };
+  const ui = () => { pp.textContent = P.playing ? '❚❚' : '▶'; big.hidden = P.playing; };
+  P.play = () => { if (P.playing) return; if (state.playMode === 'line' && P.plays >= r.loops) { P.plays = 0; P.i = 0; draw(); } P.playing = true; P.last = performance.now(); P.acc = 0; ui(); kick(); };
+  P.pause = () => { P.playing = false; ui(); };
+  P.step = t => {
+    P.acc += t - P.last; P.last = t;
+    let guard = 0;
+    while (P.playing && P.acc >= r.delays[P.i] && guard++ < 50) {
+      P.acc -= r.delays[P.i];
+      if (P.i === imgs.length - 1) {
+        P.plays++;
+        if (state.playMode === 'line' && P.plays >= r.loops) { P.pause(); P.acc = 0; break; }
+        P.i = 0;
+      } else P.i++;
+      draw();
+    }
+  };
+  P.seek = i => { P.pause(); P.i = clamp(i, 0, imgs.length - 1); P.plays = 0; draw(); };
+  pp.onclick = () => P.playing ? P.pause() : P.play();
+  big.onclick = () => P.play();
+  cv.onclick = () => P.playing ? P.pause() : P.play();
+  card.querySelector('[data-p=prev]').onclick = () => P.seek((P.i - 1 + imgs.length) % imgs.length);
+  card.querySelector('[data-p=next]').onclick = () => P.seek((P.i + 1) % imgs.length);
+  range.oninput = () => P.seek(+range.value);
+  draw(); ui();
+  players.push(P);
+  if (!reduceMotion && s.enabled) P.play();
+}
+let rafOn = false;
+function kick() { if (!rafOn) { rafOn = true; requestAnimationFrame(loopPlayers); } }
+function loopPlayers(t) {
+  let any = false;
+  for (const P of players) if (P.playing) { P.step(t); any = true; }
+  if (any) requestAnimationFrame(loopPlayers); else rafOn = false;
+}
+$('#playAll').onclick = () => players.forEach(P => { P.plays = 0; P.play(); });
+$('#pauseAll').onclick = () => players.forEach(P => P.pause());
+$('#playSeg').addEventListener('click', e => {
+  const b = e.target.closest('[data-pm]'); if (!b) return;
+  state.playMode = b.dataset.pm; [...$('#playSeg').children].forEach(x => x.classList.toggle('on', x === b));
+  players.forEach(P => { P.plays = 0; P.play(); });
+});
+function renderResults() {
+  ensureMainTab();
+  const box = $('#results'); const all = allStickers().filter(s => s.res || !s.empty);
+  if (!all.length) { box.innerHTML = '<div class="empty">產生後，每一格的 APNG 動態貼圖會出現在這裡。</div>'; return; }
+  const nums = globalNumbers();
+  players.length = 0;
+  box.innerHTML = '<div class="grid"></div>'; const grid = box.firstChild;
+  for (const s of allStickers()) {
+    if (!s.res) continue;
+    const r = s.res, n = nums.get(s.v.id + ':' + s.idx);
+    const sizeCls = r.size <= 300 * 1024 ? (r.size <= 270 * 1024 ? 'good' : 'warn') : 'bad';
+    const play = r.total * r.loops;
+    const m = r.met;
+    const card = document.createElement('article');
+    card.className = 'card' + (s.enabled ? '' : ' off');
+    card.innerHTML = `
+      <div class="pv bg-${state.previewBg}"><canvas width="${r.W}" height="${r.H}" role="img" aria-label="貼圖 ${n ? pad2(n) : ''} 動畫預覽，點擊播放或暫停"></canvas><button class="bigplay" type="button" aria-label="播放" hidden>▶</button>
+        <span class="no">${s.enabled ? '#' + pad2(n) : '已刪除'}</span><span class="kind">${TYPE_NAME[r.cls.type] || ''}</span>
+        <span class="flags">${state.main === s ? '<span>主圖</span>' : ''}${state.tab === s ? '<span>標籤</span>' : ''}${s.empty ? '<span style="background:var(--warn)">空白格</span>' : ''}${s.cut ? '<span style="background:var(--warn)">被畫面切到</span>' : ''}</span></div>
+      <div class="player">
+        <button type="button" class="pp" data-p="pp" aria-label="播放／暫停">▶</button>
+        <button type="button" data-p="prev" aria-label="上一幀">◀︎</button>
+        <button type="button" data-p="next" aria-label="下一幀">▶︎</button>
+        <input type="range" min="0" max="${r.frames - 1}" value="0" step="1" aria-label="影格位置">
+        <span class="fc">1/${r.frames}</span>
+      </div>
+      <div class="cbody">
+        <dl class="kv">
+          <dt>檔案</dt><dd><span class="pill ${sizeCls}">${kb(r.size)} KB</span></dd>
+          <dt>幀數</dt><dd>${r.frames} 幀 · ${Math.round(r.total / r.frames)}ms</dd><dt>播放</dt><dd>${(r.total / 1000).toFixed(2)}s × ${r.loops} = ${(play / 1000).toFixed(1)}s</dd>
+          <dt>穩定方式</dt><dd>${MODE_NAME[r.mode] || '—'}</dd>
+          ${m ? `<dt>X 漂移</dt><dd>${m.bx.toFixed(1)} → <b>${m.ax.toFixed(1)}</b> px</dd><dt>Y 漂移</dt><dd>${m.by.toFixed(1)} → <b>${m.ay.toFixed(1)}</b> px</dd><dt>大小變動</dt><dd>${m.sv.toFixed(1)}%</dd>` : ''}
+          <dt>首尾吻合</dt><dd><span class="pill ${r.loop >= 85 ? 'good' : r.loop >= 70 ? 'warn' : 'bad'}">${r.loop.toFixed(0)}%</span></dd>
+          ${r.loop < 60 && !s.v.seg.pingpong ? `<dt>建議</dt><dd style="color:var(--warn);font-family:var(--sans)">首尾差異大，可開啟往返播放</dd>` : ''}
+          ${r.notes.length ? `<dt>自動壓縮</dt><dd>${r.notes.join('、')}</dd>` : ''}
+        </dl>
+        <div class="cact">
+          <select aria-label="此張的穩定方式">
+            <option value="global">穩定：跟隨全域</option><option value="auto">自動</option><option value="bottom">固定底部</option><option value="center">固定中心</option><option value="smooth">去抖動</option><option value="off">關閉</option>
+          </select>
+        </div>
+        <div class="cact">
+          <button class="btn sm ${state.main === s ? 'on' : ''}" data-a="main" type="button">主圖</button>
+          <button class="btn sm ${state.tab === s ? 'on' : ''}" data-a="tab" type="button">標籤</button>
+          <button class="btn sm" data-a="dl" type="button">下載</button>
+          <button class="btn sm danger" data-a="del" type="button" style="margin-left:auto">${s.enabled ? '刪除' : '還原'}</button>
+        </div>
+      </div>`;
+    attachPlayer(s, card);
+    const sel = card.querySelector('select'); sel.value = s.mode;
+    sel.onchange = async () => { s.mode = sel.value; sel.disabled = true; await processSticker(s); renderResults(); renderExport(); };
+    card.querySelector('[data-a=main]').onclick = () => { if (!s.enabled) return; state.main = s; renderResults(); renderExport(); };
+    card.querySelector('[data-a=tab]').onclick = () => { if (!s.enabled) return; state.tab = s; renderResults(); renderExport(); };
+    card.querySelector('[data-a=dl]').onclick = () => saveFile((n ? pad2(n) : 'sticker') + '.png', r.blob);
+    card.querySelector('[data-a=del]').onclick = () => { s.enabled = !s.enabled; renderResults(); renderExport(); renderSources(); drawStage(); };
+    grid.appendChild(card);
+  }
+}
+
+/* ============================================================
+   Export
+   ============================================================ */
+function renderExport() {
+  ensureMainTab();
+  const on = allStickers().filter(s => s.enabled && s.res);
+  const n = on.length, target = [8, 16, 24];
+  const box = $('#exportBox');
+  const next = target.find(t => t >= n), prev = [...target].reverse().find(t => t <= n);
+  const ok = target.includes(n);
+  const over = on.filter(s => s.res.size > 300 * 1024), longP = on.filter(s => s.res.total * s.res.loops > 4000 + 1), frameBad = on.filter(s => s.res.frames < 5 || s.res.frames > 20);
+  const cut = state.videos.filter(v => v.stickers.length && crossesCut(v));
+  const lines = [];
+  lines.push([ok ? '' : 'warn', ok ? `張數 ${n} 張，符合 LINE 的 8 / 16 / 24 張` : n === 0 ? '還沒有貼圖' : `目前 ${n} 張：LINE 只接受 8、16 或 24 張` + (next ? `，還差 ${next - n} 張到 ${next} 張` : '') + (prev && prev < n ? `，或刪掉 ${n - prev} 張成為 ${prev} 張` : '')]);
+  lines.push([over.length ? 'bad' : '', over.length ? `${over.length} 張超過 300KB：請調低色彩數、幀數或片段長度` : '每張 APNG 都在 300KB 以內']);
+  const badT = on.filter(s => { const T = s.res.total * s.res.loops; return Math.abs(T - Math.round(T / 1000) * 1000) > 2 || T < 999 || T > 4001; });
+  lines.push([badT.length ? 'bad' : '', badT.length ? `${badT.length} 張的播放總長不是 1／2／3／4 秒` : '播放總長剛好 1／2／3／4 秒（LINE 只接受整秒）']);
+  lines.push([frameBad.length ? 'bad' : '', frameBad.length ? '有貼圖幀數不在 5–20 之間' : '每張 5–20 幀']);
+  lines.push(['', '尺寸 ≤ 320×270、高 270（至少一邊 ≥ 270）、透明背景']);
+  if (cut.length) lines.push(['warn', '有影片的擷取片段跨越場景切換，動畫可能會跳格']);
+  lines.push([state.main ? '' : 'warn', state.main ? '主圖 main.png（240×240）與標籤 tab.png（96×74）會在匯出時自動產生' : '請指定主圖']);
+  const files = n ? [...on.map((s, i) => pad2(i + 1) + '.png' + '  ' + kb(s.res.size) + ' KB'), 'main.png', 'tab.png'].join('\n') : '（尚無檔案）';
+  box.innerHTML = `
+    <div>
+      <div class="count"><b>${n}</b><span>張已選</span><span class="of">${target.map(t => `<span class="${t === n ? 'hit' : ''}">${t}</span>`).join('')}</span></div>
+      <ul class="checks">${lines.map(([c, t]) => `<li class="${c}"><span>${t}</span></li>`).join('')}</ul>
+    </div>
+    <div style="display:grid;gap:12px;align-content:start">
+      <div class="mt">
+        <div class="thumbs">
+          <figure><div class="box bg-${state.previewBg === 'checker' ? 'checker' : state.previewBg}" style="width:80px;height:80px">${state.main ? `<img alt="主圖" src="${state.main.res.url}" style="max-width:76px;max-height:76px">` : ''}</div>主圖 240×240</figure>
+          <figure><div class="box bg-${state.previewBg === 'checker' ? 'checker' : state.previewBg}" style="width:64px;height:50px">${state.tab ? `<img alt="標籤" src="${state.tab.res.url}" style="max-width:60px;max-height:46px">` : ''}</div>標籤 96×74</figure>
+        </div>
+        <p class="note">在貼圖卡片上按「主圖」「標籤」即可更換。</p>
+      </div>
+      <pre class="files">${files}</pre>
+      <p class="note warn">main 與 tab 欄位不能放貼圖檔：貼圖是 320×270，main 必須剛好 240×240、tab 必須剛好 96×74，尺寸不符 LINE 會顯示「錯誤」。請上傳整包 ZIP，或用下面的按鈕單獨下載這兩個檔。</p>
+      <button class="btn primary block" id="zipBtn" type="button" ${n ? '' : 'disabled'}>下載 LINE 上架 ZIP</button>
+      <div class="btns"><button class="btn sm" id="mainBtn" type="button" ${n ? '' : 'disabled'}>下載 main.png（240×240）</button><button class="btn sm" id="tabBtn" type="button" ${n ? '' : 'disabled'}>下載 tab.png（96×74）</button></div>
+    </div>`;
+  $('#zipBtn').onclick = exportZip;
+  $('#mainBtn').onclick = async () => { const s = state.main; if (!s) return; const c = compose(s, [240, 240], true), plan = s.v.plan; const e = await fitEncode(plan.seq.map(i => c.frames[i]), 240, 240, plan.delay, state.out.loops); saveFile('main.png', e.blob); };
+  $('#tabBtn').onclick = async () => { const s = state.tab || state.main; if (!s) return; const c = compose(s, [96, 74], true); saveFile('tab.png', await encodePNG(c.frames[0], 96, 74)); };
+}
+async function exportZip() {
+  const on = allStickers().filter(s => s.enabled && s.res);
+  if (!on.length) return;
+  const btn = $('#zipBtn'); btn.disabled = true; btn.textContent = '打包中…';
+  try {
+    const files = [];
+    for (let i = 0; i < on.length; i++) files.push({ name: pad2(i + 1) + '.png', data: new Uint8Array(await on[i].res.blob.arrayBuffer()) });
+    const ms = state.main || on[0], ts = state.tab || ms;
+    // main 240×240 APNG
+    const mc = compose(ms, [240, 240], true), plan = ms.v.plan;
+    const menc = await fitEncode(plan.seq.map(i => mc.frames[i]), 240, 240, plan.delay, state.out.loops);
+    files.push({ name: 'main.png', data: new Uint8Array(await menc.blob.arrayBuffer()) });
+    // tab 96×74 static
+    const tc = compose(ts, [96, 74], true);
+    const tb = await encodePNG(tc.frames[0], 96, 74);
+    files.push({ name: 'tab.png', data: new Uint8Array(await tb.arrayBuffer()) });
+    const zip = makeZip(files);
+    await saveFile('line_animated_stickers.zip', zip);
+  } catch (e) { console.error(e); toast('打包失敗：' + e.message); }
+  btn.disabled = false; btn.textContent = '下載 LINE 上架 ZIP';
+}
+
+/* ---------- prompts ---------- */
+document.querySelectorAll('[data-copy]').forEach(b => b.onclick = async () => {
+  const t = $('#' + b.dataset.copy).textContent;
+  try { await navigator.clipboard.writeText(t); toast('已複製 Prompt'); }
+  catch (e) { const r = document.createRange(); r.selectNodeContents($('#' + b.dataset.copy)); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast('已選取文字，請按 Ctrl/⌘+C 複製'); }
+});
+
+/* ============================================================
+   Boot: open with the procedural demo already processed
+   ============================================================ */
+(function boot() {
+  if (typeof CompressionStream === 'undefined') toast('此瀏覽器不支援 APNG 編碼，請使用最新版 Chrome、Edge 或 Safari');
+  renderSources(); renderResults(); renderExport();
+  msg('上傳圖板影片後，這裡會顯示格線校正與片段選擇');
+  setBusy(true);
+})();
+window.__enc = encodeAPNG; window.__app = { state, generate, autoAll, addFile, setActive, exportZip, compose, fitEncode, encodePNG, makeZip };
+</script>
