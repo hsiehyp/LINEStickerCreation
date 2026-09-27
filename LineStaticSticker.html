@@ -1180,7 +1180,7 @@ function buildPrompt() {
     ? `\n[Additional Custom Text Scenarios]\n${PromptState.customAction.trim()}\n`
     : "";
 
-  return `# LINE Sticker Sheet Generation Prompt
+  return `# You are a professional LINE sticker character designer
 
 ## [Layout Settings]
 - Canvas size: 2560 × 1664 pixels
@@ -1201,7 +1201,7 @@ ${style}
 ## [Sticker Scenarios]
 Generate exactly ${scenariosArr.length || 20} stickers. Each cell expresses one of the following actions:
 ${scenarioText}${customAct}
-Text is optional and not required for every sticker. If text is displayed, use Traditional Chinese (繁體中文). Text may be arranged vertically or horizontally. Do NOT include the 【】 brackets in the drawn text.
+If the character's expression, action, or scene already clearly conveys the meaning and emotion of the sticker, do NOT add any text. Only add corresponding Traditional Chinese (繁體中文) text when the visual alone cannot express the meaning clearly. Text may be arranged vertically or horizontally.
 
 ## [Output Requirements]
 ${noGridRule}${borderRule}- Single image, 2560×1664 px
@@ -1235,7 +1235,7 @@ function buildPromptZh() {
     ? `\n[自訂文字情境]\n${PromptState.customAction.trim()}\n`
     : "";
 
-  return `# LINE 貼圖大圖生成 Prompt
+  return `# 你是一位專業的 LINE 貼圖角色設計師
 
 ## [版面設定]
 - 畫布尺寸：2560 × 1664 像素
@@ -1256,7 +1256,7 @@ ${style}
 ## [貼圖情境]
 請生成正好 ${scenariosArr.length || 20} 張貼圖，每一格表現以下其中一個動作：
 ${scenarioText}${customAct}
-不一定要有字，但有字的話用繁體中文寫，文字可以直放，也可以橫放，不用加【】
+若貼圖角色的表情、動作或情境已能清楚傳達該貼圖的語意與情緒，請不要加入任何文字；若單靠畫面無法明確表達意思時，才加入對應的繁體中文字，文字可以直放，也可以橫放
 
 ## [輸出要求]
 ${noGridRule}${borderRule}- 單張圖片，2560×1664 px
