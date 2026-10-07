@@ -903,7 +903,12 @@
           <div class="row" style="margin-bottom:10px">
             <button class="btn" id="split-auto-lines">🔍 自動偵測分割線</button>
             <button class="btn secondary" id="split-reset-lines">📐 還原分割線等分</button>
-            <button class="btn secondary" id="split-magnify">🔎 放大檢視</button>
+          </div>
+          <div class="row" style="margin-bottom:10px">
+            <span class="form-label" style="margin-bottom:0">檢視大小 <span id="split-view-val">1×</span></span>
+            <button class="btn secondary" id="split-view-in">➕ 放大</button>
+            <button class="btn secondary" id="split-view-out" disabled>➖ 縮小</button>
+            <button class="btn ghost" id="split-view-reset" disabled>↺ 原大小</button>
           </div>
           <div class="hint hidden" id="split-magnify-hint" style="margin:0 0 10px">已放大：用手指在圖片空白處滑動可移動畫面，按住粉色分割線或圓點可拖曳。</div>
           <div class="split-canvas-wrap">
@@ -2047,9 +2052,19 @@ function setSplitViewZoom(z) {
   wrap.classList.toggle("zoomed", z > 1);
   wrap.style.setProperty("--view-zoom", z);
   if (z === 1) { wrap.scrollLeft = 0; wrap.scrollTop = 0; }
-  $("split-magnify").textContent = z > 1 ? `🔎 放大檢視（${z}×）` : "🔎 放大檢視";
+  $("split-view-val").textContent = z + "×";
+  $("split-view-in").disabled = z >= SPLIT_VIEW_ZOOMS[SPLIT_VIEW_ZOOMS.length - 1];
+  $("split-view-out").disabled = z <= 1;
+  $("split-view-reset").disabled = z <= 1;
   $("split-magnify-hint").classList.toggle("hidden", z === 1);
   if (Split.sourceCanvas) renderSplitOverlay();
+}
+
+const SPLIT_VIEW_ZOOMS = [1, 1.5, 2, 3, 4];
+function stepSplitViewZoom(dir) {
+  const i = SPLIT_VIEW_ZOOMS.indexOf(Split.viewZoom);
+  const next = SPLIT_VIEW_ZOOMS[Math.max(0, Math.min(SPLIT_VIEW_ZOOMS.length - 1, (i < 0 ? 0 : i) + dir))];
+  setSplitViewZoom(next);
 }
 
 function initSplitTab() {
@@ -2126,10 +2141,10 @@ function initSplitTab() {
     renderSplitPreview();
     toast(moved ? `已自動調整 ${moved} 條分割線，請確認後再切割` : "分割線已在貼圖間的空白處，無需調整", moved ? "success" : "info");
   });
-  // 放大檢視：1× → 2× → 3× 循環
-  $("split-magnify").addEventListener("click", () => {
-    setSplitViewZoom(Split.viewZoom >= 3 ? 1 : Split.viewZoom + 1);
-  });
+  // 檢視大小：放大 / 縮小 / 回到原大小
+  $("split-view-in").addEventListener("click", () => stepSplitViewZoom(1));
+  $("split-view-out").addEventListener("click", () => stepSplitViewZoom(-1));
+  $("split-view-reset").addEventListener("click", () => setSplitViewZoom(1));
   $("split-reset-lines").addEventListener("click", () => {
     if (!Split.sourceCanvas) return;
     resetSplitLines();
