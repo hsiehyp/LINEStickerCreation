@@ -11,7 +11,7 @@
 <title>LINE 貼圖自動化助手</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root{
     --primary:#f95f8e;
@@ -33,9 +33,67 @@
     --radius-sm:8px;
     --radius:12px;
     --radius-lg:18px;
+    --header-bg:rgba(26,30,41,.85);
   }
+  /* 淺色主題（預設）：只覆寫顏色變數，其餘樣式共用 */
+  :root[data-theme="light"]{
+    --primary:#d63a72;
+    --primary-soft:rgba(214,58,114,.10);
+    --primary-dim:#b02c5b;
+    --secondary:#e8ebf2;
+    --secondary-hover:#d9deea;
+    --text:#1f2430;
+    --text-dim:#2f3747;
+    --text-mute:#4f586b;
+    --bg:#f4f6fa;
+    --panel:#ffffff;
+    --panel-2:#f0f2f7;
+    --border:#d0d6e2;
+    --success:#15803d;
+    --warning:#f59e0b;
+    --danger:#dc2626;
+    --shadow:0 6px 18px rgba(30,40,70,.10);
+    --header-bg:rgba(255,255,255,.9);
+  }
+  :root[data-theme="light"] .pill:not(.active),
+  :root[data-theme="light"] .chip:not(.active),
+  :root[data-theme="light"] .tab-btn:not(.active){background:#fff;border-color:#b9c1d1;color:var(--text)}
+  :root[data-theme="light"] .pill:not(.active):hover,
+  :root[data-theme="light"] .chip:not(.active):hover,
+  :root[data-theme="light"] .tab-btn:not(.active):hover{background:var(--secondary)}
+  :root[data-theme="light"] .btn.success,
+  :root[data-theme="light"] .step-card.done .step-icon{color:#fff}
+  :root[data-theme="light"] .btn.success:hover{background:#166534}
+  :root[data-theme="light"] .alert.info{color:#3730a3}
+  :root[data-theme="light"] .alert.success{color:#166534}
+  :root[data-theme="light"] .alert.warning{color:#854d0e}
+  :root[data-theme="light"] .toast.error{color:#b91c1c}
+  :root[data-theme="light"] .track-mark{background:rgba(0,0,0,.2)}
+  :root[data-theme="light"] .sub-tab:not(.active) .tag{background:rgba(0,0,0,.06)}
+  .theme-toggle{
+    margin-left:auto;flex:none;
+    background:var(--secondary);color:var(--text);
+    border:1px solid var(--border);border-radius:999px;
+    padding:8px 14px;font-family:inherit;font-size:14px;font-weight:700;
+    cursor:pointer;white-space:nowrap;
+  }
+  .theme-toggle:hover{background:var(--secondary-hover)}
+  .bg-color-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  .bg-color-row input[type="color"]{
+    width:52px;height:38px;padding:2px;flex:none;
+    background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;
+  }
+  .bg-color-row .hex{font-family:"JetBrains Mono",monospace;font-size:13px;font-weight:700}
+  .bg-check{display:flex;align-items:flex-start;gap:8px;font-size:13px;line-height:1.5;color:var(--text-dim);margin-bottom:14px;cursor:pointer}
+  .bg-check input{margin-top:3px;flex:none}
+  .frame-grid.picking canvas{cursor:crosshair}
+  /* 預覽底色：用來檢查去背結果（LINE 聊天室預設底色為灰藍色） */
+  .preview-bg-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:16px}
+  .frame-grid[data-bg="line"] .frame-cell{background:#8cabd8}
+  .frame-grid[data-bg="white"] .frame-cell{background:#fff}
+  .frame-grid[data-bg="black"] .frame-cell{background:#000}
   *{box-sizing:border-box;margin:0;padding:0}
-  html,body{background:var(--bg);color:var(--text);font-family:"M PLUS Rounded 1c","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;-webkit-font-smoothing:antialiased;font-weight:500}
+  html,body{background:var(--bg);color:var(--text);font-family:"PingFang TC","Microsoft JhengHei","Noto Sans TC",system-ui,sans-serif;-webkit-font-smoothing:antialiased;font-weight:500}
   body{
     min-height:100vh;
     background:
@@ -48,7 +106,7 @@
   header.app-header{
     display:flex;align-items:center;gap:14px;
     padding:14px 22px;border-bottom:1px solid var(--border);
-    position:sticky;top:0;background:rgba(26,30,41,.85);backdrop-filter:blur(12px);
+    position:sticky;top:0;background:var(--header-bg);backdrop-filter:blur(12px);
     z-index:50;
   }
   .logo{
@@ -96,18 +154,18 @@
     display:inline-flex;align-items:center;justify-content:center;
     font-size:14px;font-weight:800;
   }
-  .panel .desc{color:var(--text-dim);font-size:13px;margin-bottom:16px;line-height:1.6}
+  .panel .desc{color:var(--text-dim);font-size:14px;margin-bottom:16px;line-height:1.6}
 
   .form-group{margin-bottom:18px}
   .form-label{font-weight:700;font-size:14px;margin-bottom:10px;display:block;color:var(--text)}
-  .hint{font-size:12px;color:var(--text-mute);margin-top:6px;line-height:1.5}
+  .hint{font-size:13px;color:var(--text-mute);margin-top:6px;line-height:1.5}
 
   .toggle-group{display:flex;gap:8px;flex-wrap:wrap}
   .pill{
     background:var(--secondary);color:var(--text-dim);
     border:1px solid transparent;
     padding:8px 14px;border-radius:999px;
-    font-family:inherit;font-size:13px;font-weight:600;
+    font-family:inherit;font-size:15px;font-weight:600;
     cursor:pointer;transition:.15s;user-select:none;
   }
   .pill:hover{background:var(--secondary-hover);color:var(--text)}
@@ -117,7 +175,7 @@
     background:var(--secondary);color:var(--text-dim);
     border:1px solid transparent;
     padding:6px 12px;border-radius:999px;
-    font-family:inherit;font-size:13px;font-weight:600;
+    font-family:inherit;font-size:15px;font-weight:600;
     cursor:pointer;transition:.15s;user-select:none;
   }
   .chip:hover{background:var(--secondary-hover);color:var(--text)}
@@ -151,6 +209,8 @@
   .btn.success:hover{background:#3dc16e}
   .btn.warn{background:var(--warning);color:#422006;box-shadow:0 4px 14px rgba(251,191,36,.25)}
   .btn.warn:hover{background:#f59e0b}
+  .btn.pick{background:#2563eb;color:#fff;box-shadow:0 4px 14px rgba(37,99,235,.25)}
+  .btn.pick:hover{background:#1d4ed8}
   .btn.warn:disabled{box-shadow:none}
   .btn.ghost{background:transparent;color:var(--text-dim);border:1px solid var(--border)}
   .btn.ghost:hover{color:var(--text);border-color:var(--text-dim)}
@@ -188,7 +248,7 @@
 
   /* 中文版改用系統字型，英文版維持等寬 */
   .prompt-output[data-lang="zh"]{
-    font-family:"M PLUS Rounded 1c","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+    font-family:"PingFang TC","Microsoft JhengHei","Noto Sans TC",system-ui,sans-serif;
     font-size:13.5px;line-height:1.85;
   }
 
@@ -410,6 +470,9 @@
   .upload-zone .upload-icon{font-size:42px;margin-bottom:10px;opacity:.7}
   .upload-zone h3{font-size:16px;font-weight:700;margin-bottom:6px}
   .upload-zone p{font-size:13px;color:var(--text-dim)}
+  .upload-zone{border-color:var(--primary)}
+  .upload-zone h3{font-size:18px;margin-bottom:14px}
+  .upload-zone .upload-pick{font-size:17px;padding:14px 28px;margin-bottom:14px}
 
   .view-toggle{display:flex;gap:6px;background:var(--bg);padding:4px;border-radius:999px;width:fit-content;margin-bottom:10px}
   .view-toggle button{
@@ -439,6 +502,9 @@
     display:flex;justify-content:center;align-items:flex-start;
   }
   .split-canvas-wrap canvas{display:block;max-width:100%;max-height:500px;width:auto;height:auto;object-fit:contain}
+  /* 放大檢視：圖片放大後在框內捲動，手機上較容易對準分割線 */
+  .split-canvas-wrap.zoomed{display:block;overflow:auto;max-height:75vh;-webkit-overflow-scrolling:touch}
+  .split-canvas-wrap.zoomed canvas{max-width:none;max-height:none;width:calc(var(--view-zoom,1) * 100%)}
   /* 分割線刪除按鈕 overlay */
   .split-overlay{position:absolute;inset:0;pointer-events:none;z-index:3}
   .split-overlay .line-del{
@@ -530,6 +596,40 @@
   .toast.success{border-color:var(--success);color:var(--success)}
   .toast.error{border-color:var(--danger);color:#fca5a5}
 
+  /* App 內建瀏覽器（LINE 等）提示與儲存視窗 */
+  .inapp-banner{margin-bottom:14px;align-items:center;flex-wrap:wrap}
+  .inapp-banner .btn{margin-left:auto}
+  .save-modal{
+    position:fixed;inset:0;z-index:900;
+    background:rgba(0,0,0,.72);
+    display:flex;align-items:center;justify-content:center;
+    padding:16px;
+  }
+  .save-modal.hidden{display:none}
+  .save-modal-box{
+    background:var(--panel);border:1px solid var(--border);
+    border-radius:var(--radius-sm);box-shadow:var(--shadow);
+    width:100%;max-width:560px;max-height:100%;
+    display:flex;flex-direction:column;padding:16px;
+  }
+  .save-modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+  .save-modal-head h3{margin:0;font-size:16px}
+  .save-modal-close{
+    width:32px;height:32px;border-radius:50%;flex:none;
+    background:transparent;border:1px solid var(--border);
+    color:var(--text);font-size:18px;line-height:1;cursor:pointer;padding:0;
+  }
+  .save-modal-desc{margin:0 0 12px;font-size:13px;line-height:1.6;color:var(--text-dim)}
+  .save-modal-grid{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;
+    overflow:auto;-webkit-overflow-scrolling:touch;min-height:0;margin-bottom:4px;
+  }
+  .save-modal-grid.single{grid-template-columns:1fr}
+  .save-modal-grid.single .frame-cell{aspect-ratio:auto}
+  .save-modal-grid.single .frame-cell img{height:auto;max-height:50vh}
+  /* 讓圖片可以長按叫出「儲存影像」選單 */
+  .save-modal-grid img{-webkit-touch-callout:default;-webkit-user-select:auto;user-select:auto;pointer-events:auto}
+
   .stats-bar{
     display:flex;gap:14px;flex-wrap:wrap;
     background:var(--bg);padding:10px 14px;border-radius:var(--radius-sm);
@@ -582,6 +682,14 @@
   .mt-3{margin-top:20px}
   .hidden{display:none !important}
 </style>
+<script>
+// 主題要在畫面繪製前套用，避免先閃一下另一種底色
+(function () {
+  var t = "light";
+  try { t = localStorage.getItem("lineStickerTheme") || t; } catch (e) {}
+  document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+})();
+</script>
 </head>
 <body>
 
@@ -591,6 +699,7 @@
     <div class="app-title">LINE 貼圖自動化助手</div>
     <div class="app-subtitle">Prompt 大師 ・ 浮水印移除 ・ 智慧分割去背</div>
   </div>
+  <button type="button" class="theme-toggle" id="theme-toggle" aria-label="切換網站底色"></button>
 </header>
 
 <nav class="nav-tabs" id="nav-tabs"></nav>
@@ -605,9 +714,10 @@
       <div class="form-group">
         <label class="form-label">① 設定角色來源</label>
         <div class="toggle-group" id="char-source">
-          <button class="pill active" data-val="reference">參考上傳圖</button>
-          <button class="pill" data-val="custom">自訂角色</button>
+          <button class="pill active" data-val="reference">用我的照片當角色</button>
+          <button class="pill" data-val="custom">用文字描述角色</button>
         </div>
+        <div class="hint" id="char-source-hint"></div>
         <div id="custom-char-wrap" class="mt-2 hidden">
           <textarea id="custom-char" placeholder="例：一隻穿著太空衣正在喝珍奶的機器人，圓潤可愛，大眼睛"></textarea>
         </div>
@@ -676,8 +786,9 @@
       <div id="wm-upload-wrap">
         <div class="upload-zone" id="wm-upload">
           <div class="upload-icon">⬆️</div>
-          <h3>拖曳圖片到此 或 點擊上傳</h3>
-          <p>支援 PNG / JPG，建議使用 Gemini 生成的原始大圖</p>
+          <h3>請選擇要去除浮水印的圖片</h3>
+          <button type="button" class="btn upload-pick">📂 選擇圖片檔案</button>
+          <p>也可以把圖片拖曳到這個框內。支援 PNG / JPG，建議使用 Gemini 生成的原始大圖</p>
           <input type="file" id="wm-file-input" accept="image/*" hidden />
         </div>
       </div>
@@ -777,17 +888,24 @@
         </div>
         <div class="row" style="margin-bottom:14px">
           <button class="btn warn" id="split-from-step2" disabled>📋 從步驟 2 複製圖片</button>
-          <button class="btn ghost" id="split-pick-file">📂 選擇檔案</button>
+          <button class="btn pick" id="split-pick-file">📂 選擇檔案</button>
           <input type="file" id="split-file-input" accept="image/*" hidden />
         </div>
 
         <div id="split-upload-zone" class="upload-zone">
           <div class="upload-icon">🖼️</div>
-          <h3>拖曳大圖到此</h3>
-          <p>支援 PNG / JPG，5×4 = 20 張貼圖網格</p>
+          <h3>請選擇要切割的貼圖大圖</h3>
+          <button type="button" class="btn upload-pick">📂 選擇圖片檔案</button>
+          <p>也可以把圖片拖曳到這個框內。支援 PNG / JPG，5×4 = 20 張貼圖網格</p>
         </div>
 
         <div id="split-editor" class="hidden">
+          <div class="row" style="margin-bottom:10px">
+            <button class="btn" id="split-auto-lines">🔍 自動偵測分割線</button>
+            <button class="btn secondary" id="split-reset-lines">📐 還原分割線等分</button>
+            <button class="btn secondary" id="split-magnify">🔎 放大檢視</button>
+          </div>
+          <div class="hint hidden" id="split-magnify-hint" style="margin:0 0 10px">已放大：用手指在圖片空白處滑動可移動畫面，按住粉色分割線或圓點可拖曳。</div>
           <div class="split-canvas-wrap">
             <canvas id="split-canvas"></canvas>
             <div class="split-overlay" id="split-overlay"></div>
@@ -848,7 +966,6 @@
           </div>
           <div class="button-row">
             <button class="btn" id="split-confirm">✂️ 確認切割</button>
-            <button class="btn secondary" id="split-reset-lines">📐 還原分割線等分</button>
             <button class="btn ghost" id="split-reset">重新選擇</button>
           </div>
         </div>
@@ -863,7 +980,7 @@
         <div class="switch-row" style="margin-bottom:14px">
           <div>
             <div class="label">啟用智能去背</div>
-            <div class="label-desc">遍歷 20 張影格將純綠幕背景轉換為透明</div>
+            <div class="label-desc">將每張影格的背景色轉換為透明</div>
           </div>
           <label class="switch">
             <input type="checkbox" id="bg-toggle" checked />
@@ -873,11 +990,23 @@
         <div class="form-group">
           <label class="form-label">處理模式</label>
           <div class="toggle-group" id="bg-mode">
-            <button class="pill active" data-val="standard">標準模式（一般綠幕去背）</button>
+            <button type="button" class="pill active" data-val="green">綠幕（預設）</button>
+            <button type="button" class="pill" data-val="border">自動偵測背景色</button>
+            <button type="button" class="pill" data-val="custom">自選背景色</button>
           </div>
+          <div class="hint" id="bg-mode-hint"></div>
         </div>
+        <div class="bg-color-row hidden" id="bg-color-row">
+          <input type="color" id="bg-color" value="#ffffff" aria-label="要去除的背景色" />
+          <span class="hex" id="bg-color-hex">#FFFFFF</span>
+          <span class="hint" style="margin-top:0">用色盤選色，或在切割後直接點下方任一張貼圖的背景來吸取顏色</span>
+        </div>
+        <label class="bg-check hidden" id="bg-contig-wrap">
+          <input type="checkbox" id="bg-contig" checked />
+          <span>只去除與外框相連的背景（保留主體內相同的顏色，例如白色描邊、眼白）</span>
+        </label>
         <div class="slider-row">
-          <label>容差值 tolerance <span class="val" id="bg-tol-val">80</span></label>
+          <label>容差值 tolerance（越大去除越多）<span class="val" id="bg-tol-val">80</span></label>
           <input type="range" id="bg-tol" min="20" max="150" step="1" value="80" />
         </div>
         <div class="button-row">
@@ -886,6 +1015,16 @@
         <div class="frame-hint" id="frame-hint" style="display:none">
           <span>💡</span>
           <span>點擊每張右上角的 <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> 圖示可下載單張（手機亦支援）。檔名會跟隨「起始編號」設定。</span>
+        </div>
+        <div class="preview-bg-row">
+          <span class="form-label" style="margin-bottom:0">預覽底色（檢查去背用）</span>
+          <div class="toggle-group" id="preview-bg">
+            <button type="button" class="pill active" data-val="checker">棋盤格</button>
+            <button type="button" class="pill" data-val="line">LINE 聊天室</button>
+            <button type="button" class="pill" data-val="white">白色</button>
+            <button type="button" class="pill" data-val="black">黑色</button>
+          </div>
+          <div class="hint" style="margin-top:0;flex-basis:100%">只影響這裡的預覽，不會改變下載的圖片。去背成功的地方會透出所選的底色。</div>
         </div>
         <div class="frame-grid" id="frame-preview"></div>
       </div>
@@ -914,6 +1053,22 @@
 </main>
 
 <div class="toast" id="toast"></div>
+
+<!-- App 內建瀏覽器無法下載時的替代儲存視窗 -->
+<div class="save-modal hidden" id="save-modal" role="dialog" aria-modal="true" aria-labelledby="save-modal-title">
+  <div class="save-modal-box">
+    <div class="save-modal-head">
+      <h3 id="save-modal-title">儲存圖片</h3>
+      <button type="button" class="save-modal-close" id="save-modal-close" aria-label="關閉">×</button>
+    </div>
+    <p class="save-modal-desc" id="save-modal-desc"></p>
+    <div class="save-modal-grid" id="save-modal-grid"></div>
+    <div class="button-row">
+      <button type="button" class="btn" id="save-modal-share">📤 分享／儲存到相簿</button>
+      <button type="button" class="btn secondary" id="save-modal-external">🌐 改用外部瀏覽器開啟</button>
+    </div>
+  </div>
+</div>
 
 <script>
 /* =========================================================================
@@ -975,6 +1130,202 @@ function toast(msg, type="info") {
   toast._t = setTimeout(() => t.classList.remove("show"), 2200);
 }
 
+/* =========================================================================
+ * 下載 / 儲存（含 LINE 等 App 內建瀏覽器的相容處理）
+ *   App 內建瀏覽器不支援 blob 下載，<a download> 會出現「不支援下載」，
+ *   因此改為：自動轉外部瀏覽器 → 失敗時以「長按圖片 / 分享」視窗儲存
+ * ======================================================================= */
+const Env = (() => {
+  const ua = navigator.userAgent || "";
+  const isLine = /\bLine\//i.test(ua);
+  return {
+    isLine,
+    isInApp: isLine || /FBAN|FBAV|FB_IAB|Instagram|MicroMessenger|; wv\)/i.test(ua),
+    isAndroid: /Android/i.test(ua),
+    isHttp: /^https?:$/.test(location.protocol),
+    triedExternal: /[?&]openExternalBrowser=1/.test(location.search)
+  };
+})();
+
+// LINE 支援在網址加上 openExternalBrowser=1 來改用手機預設瀏覽器開啟
+function openInExternalBrowser() {
+  if (!Env.isHttp) { toast("請改用 Safari / Chrome 開啟此頁面", "info"); return; }
+  const u = new URL(location.href);
+  if (Env.isLine && !Env.triedExternal) {
+    u.searchParams.set("openExternalBrowser", "1");
+    location.href = u.toString();
+  } else if (Env.isAndroid) {
+    location.href = `intent://${u.host}${u.pathname}${u.search}#Intent;scheme=${u.protocol.replace(":", "")};end`;
+  } else {
+    copyPageUrl();
+  }
+}
+
+function copyPageUrl() {
+  const done = () => toast("已複製網址，請貼到 Safari / Chrome 開啟", "success");
+  const fail = () => toast("請點右上角選單 →「以預設瀏覽器開啟」", "info");
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(location.href).then(done, fail);
+  } else {
+    fail();
+  }
+}
+
+function initInAppSupport() {
+  // 尚未有任何操作進度時就先轉出去，避免做到一半才發現不能下載
+  if (Env.isLine && Env.isHttp && !Env.triedExternal) {
+    const u = new URL(location.href);
+    u.searchParams.set("openExternalBrowser", "1");
+    location.replace(u.toString());
+    return;
+  }
+  $("save-modal-close").addEventListener("click", closeSaveModal);
+  $("save-modal").addEventListener("click", e => { if (e.target === $("save-modal")) closeSaveModal(); });
+  $("save-modal-external").addEventListener("click", openInExternalBrowser);
+  if (!Env.isInApp) return;
+
+  const banner = document.createElement("div");
+  banner.className = "alert warning inapp-banner";
+  const msg = document.createElement("span");
+  msg.textContent = "⚠️ 目前是在 App 內建瀏覽器中開啟，無法直接下載檔案。建議改用 Safari / Chrome 開啟。";
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "btn secondary";
+  btn.textContent = "🌐 改用外部瀏覽器開啟";
+  btn.addEventListener("click", openInExternalBrowser);
+  banner.append(msg, btn);
+  const main = document.querySelector("main");
+  if (main) main.prepend(banner);
+}
+
+// 網站底色切換（淺色 / 深色），選擇會記在這台裝置上
+function initThemeToggle() {
+  const btn = $("theme-toggle");
+  const root = document.documentElement;
+  const render = () => {
+    btn.textContent = root.getAttribute("data-theme") === "dark" ? "☀️ 淺色" : "🌙 深色";
+  };
+  btn.addEventListener("click", () => {
+    const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    try { localStorage.setItem("lineStickerTheme", next); } catch (e) {}
+    render();
+  });
+  render();
+}
+
+function canvasToPngBlob(canvas) {
+  return new Promise((res, rej) => {
+    canvas.toBlob(b => b ? res(b) : rej(new Error("toBlob 失敗")), "image/png");
+  });
+}
+
+function blobToDataUrl(blob) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result);
+    r.onerror = () => rej(r.error);
+    r.readAsDataURL(blob);
+  });
+}
+
+function itemsToFiles(items) {
+  if (typeof File === "undefined") return [];
+  return items.map(it => new File([it.blob], it.filename, { type: it.blob.type || "image/png" }));
+}
+
+function canShareFiles(files) {
+  try {
+    return !!(files.length && navigator.canShare && navigator.canShare({ files }));
+  } catch (e) {
+    return false;
+  }
+}
+
+function triggerDownload(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.rel = "noopener";
+  a.style.display = "none";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+// 統一的儲存入口。items: [{ blob, filename }]
+//   preferShare：手機/平板優先用 Web Share API（可直接存進相簿）
+async function saveFiles(items, okMsg, preferShare) {
+  if (Env.isInApp) { await openSaveModal(items); return; }
+
+  // 桌機一律跳過 share，因為桌機分享面板無法直接「下載到電腦」
+  if (preferShare && isTouchPrimaryDevice()) {
+    const files = itemsToFiles(items);
+    if (canShareFiles(files)) {
+      try {
+        await navigator.share({ files });
+        toast("已分享／儲存", "success");
+        return;
+      } catch (e) {
+        if (e && e.name === "AbortError") return; // 使用者取消
+        // 其他錯誤 → 退回標準下載
+      }
+    }
+  }
+  items.forEach(it => triggerDownload(it.blob, it.filename));
+  toast(okMsg, "success");
+}
+
+// 以 <img> 顯示成品，讓使用者長按儲存；支援分享時另外提供分享按鈕
+async function openSaveModal(items) {
+  const grid = $("save-modal-grid");
+  grid.innerHTML = "";
+  grid.classList.toggle("single", items.length === 1);
+  for (const it of items) {
+    const cell = document.createElement("div");
+    cell.className = "frame-cell";
+    const img = document.createElement("img");
+    img.alt = it.filename;
+    img.src = await blobToDataUrl(it.blob);
+    cell.appendChild(img);
+    if (items.length > 1) {
+      const lab = document.createElement("div");
+      lab.className = "frame-label";
+      lab.textContent = it.filename.replace(/\.png$/i, "");
+      cell.appendChild(lab);
+    }
+    grid.appendChild(cell);
+  }
+
+  // 檔案先備好，分享按鈕按下時才能在同一個使用者手勢內呼叫 share
+  const files = itemsToFiles(items);
+  const shareBtn = $("save-modal-share");
+  const shareable = canShareFiles(files);
+  shareBtn.classList.toggle("hidden", !shareable);
+  shareBtn.onclick = async () => {
+    try {
+      await navigator.share({ files });
+      toast("已分享／儲存", "success");
+    } catch (e) {
+      if (e && e.name !== "AbortError") toast("分享失敗，請改用長按圖片儲存", "error");
+    }
+  };
+
+  $("save-modal-title").textContent = items.length > 1 ? `儲存圖片（共 ${items.length} 張）` : "儲存圖片";
+  $("save-modal-desc").textContent =
+    "App 內建瀏覽器無法直接下載檔案。請「長按圖片」選擇儲存" +
+    (shareable ? "，或按下方「分享／儲存到相簿」" : "") +
+    "。若都無法儲存，請改用外部瀏覽器開啟後重新操作（目前的進度不會保留）。";
+  $("save-modal").classList.remove("hidden");
+}
+
+function closeSaveModal() {
+  $("save-modal").classList.add("hidden");
+  $("save-modal-grid").innerHTML = "";
+}
+
 // 用 textarea + execCommand 實作複製（避開 iframe 中 navigator.clipboard 權限問題）
 function copyText(text) {
   const ta = document.createElement("textarea");
@@ -1030,12 +1381,20 @@ const PromptState = {
 
 function initPromptTab() {
   // 角色來源切換
+  // 「用我的照片」不需在本頁上傳，照片是之後連同提示詞一起交給 AI 工具
+  const renderCharHint = () => {
+    $("char-source-hint").textContent = PromptState.charSource === "reference"
+      ? "📌 這裡不需要上傳照片。等一下把提示詞貼到 Gemini 等 AI 工具時，請一併附上您的照片。"
+      : "請在下方用文字描述角色的外觀。";
+  };
+  renderCharHint();
   $$("#char-source .pill").forEach(btn => {
     btn.addEventListener("click", () => {
       $$("#char-source .pill").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       PromptState.charSource = btn.dataset.val;
       $("custom-char-wrap").classList.toggle("hidden", PromptState.charSource !== "custom");
+      renderCharHint();
       updatePrompt();
     });
   });
@@ -1215,7 +1574,7 @@ function buildPromptZh() {
   const style = PromptState.style;
 
   const charLine = PromptState.charSource === "reference"
-    ? "請以上方上傳的參考圖作為基準角色。保留照片人物或動物或植物的主要特徵，包括髮型、臉型、眼鏡及服裝特色，並確保每張貼圖的人物造型一致。"
+    ? "請以我附上的參考圖作為基準角色。保留照片人物或動物或植物的主要特徵，包括髮型、臉型、眼鏡及服裝特色，並確保每張貼圖的人物造型一致。"
     : (PromptState.customChar.trim() || "[請於上方輸入角色描述]");
 
   // 情境清單：1【xxx】、2【yyy】... 使用中文全形頓號
@@ -1556,17 +1915,10 @@ function downloadWm() {
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
   ctx.putImageData(processWatermark(), 0, 0);
   canvas.toBlob(blob => {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "cleaned_" + Date.now() + ".png";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-    toast("已下載乾淨版本", "success");
+    if (!blob) { toast("匯出失敗", "error"); return; }
     // 將處理後圖片暫存供 Tab3 使用
     WM.cleanedBlob = blob;
+    saveFiles([{ blob, filename: "cleaned_" + Date.now() + ".png" }], "已下載乾淨版本", false);
   }, "image/png");
 }
 
@@ -1610,7 +1962,11 @@ const Split = {
   frames: [],                // 切割後的 ImageData 陣列 (20 張) - 帶綠幕
   framesNoBg: [],            // 去背後的 ImageData 陣列
   bgEnabled: true,
-  bgTolerance: 80
+  bgTolerance: 80,
+  viewZoom: 1,               // 分割預覽的顯示倍率 (1~3)
+  bgMode: "green",           // green | border | custom
+  bgColor: [255, 255, 255],  // 自選背景色 (RGB)
+  bgContig: true             // 只去除與外框相連的背景
 };
 
 // 重置為均分分割線
@@ -1620,6 +1976,80 @@ function resetSplitLines() {
   for (let i = 1; i < cols; i++) Split.colLines.push(i / cols);
   Split.rowLines = [];
   for (let j = 1; j < rows; j++) Split.rowLines.push(j / rows);
+}
+
+// 自動偵測分割線：找出貼圖之間的空白帶，把每條線移到空白帶中央
+//   線的數量維持目前設定；找不到明顯空白的線保持等分位置。回傳有調整的線數
+function autoDetectSplitLines() {
+  if (!Split.sourceCanvas) return 0;
+  // 縮小後分析即可（分割線以 0~1 比例儲存，與解析度無關）
+  const scale = Math.min(1, 800 / Math.max(Split.fullW, Split.fullH));
+  const w = Math.max(1, Math.round(Split.fullW * scale));
+  const h = Math.max(1, Math.round(Split.fullH * scale));
+  const c = document.createElement("canvas");
+  c.width = w; c.height = h;
+  const ctx = c.getContext("2d", { willReadFrequently: true });
+  // 與預覽相同的 offset / zoom
+  const dw = w * Split.zoom, dh = h * Split.zoom;
+  ctx.drawImage(Split.sourceCanvas, (w - dw) / 2 + Split.offsetX * scale, (h - dh) / 2 + Split.offsetY * scale, dw, dh);
+  const d = ctx.getImageData(0, 0, w, h).data;
+
+  // 與背景色差異夠大的像素視為貼圖內容，分別統計每一欄 / 每一列的內容量
+  const key = sampleBorderColor(d, w, h);
+  const colSum = new Float32Array(w), rowSum = new Float32Array(h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4;
+      const dr = d[i] - key[0], dg = d[i+1] - key[1], db = d[i+2] - key[2];
+      if (d[i+3] > 20 && dr*dr + dg*dg + db*db > 3600) { colSum[x]++; rowSum[y]++; }
+    }
+  }
+
+  let moved = 0;
+  // profile：每一欄(列)的內容量；len：另一方向的長度；count：格數
+  const detect = (profile, len, count) => {
+    const size = profile.length, lines = [];
+    for (let k = 1; k < count; k++) {
+      const expect = k / count * size;
+      const win = size / count * 0.4;
+      const a = Math.max(1, Math.round(expect - win)), b = Math.min(size - 2, Math.round(expect + win));
+      let min = Infinity;
+      for (let p = a; p <= b; p++) min = Math.min(min, profile[p]);
+      // 空白不夠明顯（最空的地方仍有 15% 以上是內容）就不動
+      if (!(min <= len * 0.15)) { lines.push(k / count); continue; }
+      // 取最長的空白帶；一樣長時取離等分位置最近的
+      const thr = min + len * 0.01;
+      let best = null;
+      for (let p = a; p <= b; p++) {
+        if (profile[p] > thr) continue;
+        let q = p;
+        while (q + 1 <= b && profile[q + 1] <= thr) q++;
+        const run = { len: q - p + 1, mid: (p + q + 1) / 2 };
+        if (!best || run.len > best.len ||
+            (run.len === best.len && Math.abs(run.mid - expect) < Math.abs(best.mid - expect))) best = run;
+        p = q;
+      }
+      const pos = best.mid / size;
+      if (Math.abs(pos - k / count) * size >= 1) moved++;
+      lines.push(pos);
+    }
+    return lines;
+  };
+  Split.colLines = detect(colSum, h, Split.colLines.length + 1);
+  Split.rowLines = detect(rowSum, w, Split.rowLines.length + 1);
+  return moved;
+}
+
+// 設定分割預覽的顯示倍率（只影響畫面大小，不影響切割結果）
+function setSplitViewZoom(z) {
+  Split.viewZoom = z;
+  const wrap = $("split-canvas").parentElement;
+  wrap.classList.toggle("zoomed", z > 1);
+  wrap.style.setProperty("--view-zoom", z);
+  if (z === 1) { wrap.scrollLeft = 0; wrap.scrollTop = 0; }
+  $("split-magnify").textContent = z > 1 ? `🔎 放大檢視（${z}×）` : "🔎 放大檢視";
+  $("split-magnify-hint").classList.toggle("hidden", z === 1);
+  if (Split.sourceCanvas) renderSplitOverlay();
 }
 
 function initSplitTab() {
@@ -1633,10 +2063,14 @@ function initSplitTab() {
   // 上傳區
   const zone = $("split-upload-zone");
   const input = $("split-file-input");
-  $("split-pick-file").addEventListener("click", () => input.click());
+  // 整個框（含框內的「選擇圖片檔案」按鈕）點擊都會開啟檔案選擇
   zone.addEventListener("click", () => input.click());
+  // 上方按鈕在載入圖片後仍可使用，方便直接換另一張圖
+  $("split-pick-file").addEventListener("click", () => input.click());
   input.addEventListener("change", e => {
     if (e.target.files[0]) loadSplitFile(e.target.files[0]);
+    // 清空後才能再次選到同一個檔案
+    e.target.value = "";
   });
   zone.addEventListener("dragover", e => { e.preventDefault(); zone.classList.add("drag-over"); });
   zone.addEventListener("dragleave", () => zone.classList.remove("drag-over"));
@@ -1686,6 +2120,16 @@ function initSplitTab() {
 
   $("split-confirm").addEventListener("click", confirmSplit);
   $("split-reset").addEventListener("click", resetSplit);
+  $("split-auto-lines").addEventListener("click", () => {
+    if (!Split.sourceCanvas) return;
+    const moved = autoDetectSplitLines();
+    renderSplitPreview();
+    toast(moved ? `已自動調整 ${moved} 條分割線，請確認後再切割` : "分割線已在貼圖間的空白處，無需調整", moved ? "success" : "info");
+  });
+  // 放大檢視：1× → 2× → 3× 循環
+  $("split-magnify").addEventListener("click", () => {
+    setSplitViewZoom(Split.viewZoom >= 3 ? 1 : Split.viewZoom + 1);
+  });
   $("split-reset-lines").addEventListener("click", () => {
     if (!Split.sourceCanvas) return;
     resetSplitLines();
@@ -1704,6 +2148,22 @@ function initSplitTab() {
   $("bg-toggle").addEventListener("change", e => { Split.bgEnabled = e.target.checked; });
   $("bg-tol").addEventListener("input", e => { Split.bgTolerance = +e.target.value; $("bg-tol-val").textContent = e.target.value; });
   $("bg-execute").addEventListener("click", executeBgRemoval);
+  $$("#bg-mode .pill").forEach(btn => {
+    btn.addEventListener("click", () => setBgMode(btn.dataset.val));
+  });
+  $("bg-color").addEventListener("input", e => {
+    const v = e.target.value;
+    setBgColor([1, 3, 5].map(i => parseInt(v.slice(i, i + 2), 16)));
+  });
+  $("bg-contig").addEventListener("change", e => { Split.bgContig = e.target.checked; });
+  // 預覽底色（只影響畫面，不影響輸出）
+  $$("#preview-bg .pill").forEach(btn => {
+    btn.addEventListener("click", () => {
+      $$("#preview-bg .pill").forEach(b => b.classList.toggle("active", b === btn));
+      $("frame-preview").dataset.bg = btn.dataset.val;
+    });
+  });
+  setBgMode(Split.bgMode);
 
   // 步驟 3
   $("zip-start").addEventListener("input", () => {
@@ -1734,6 +2194,15 @@ function loadSplitFromCanvas(canvas) {
   Split.fullW = canvas.width;
   Split.fullH = canvas.height;
   Split.offsetX = 0; Split.offsetY = 0; Split.zoom = 1;
+  // 換圖時清掉上一張圖的切割 / 去背結果，避免下載到舊圖
+  Split.frames = [];
+  Split.framesNoBg = [];
+  $("split-step1").classList.remove("done");
+  $("split-step2").classList.remove("done");
+  $("split-step2").classList.add("disabled");
+  $("split-step3").classList.add("disabled");
+  $("frame-preview").innerHTML = "";
+  $("split-overlay").innerHTML = "";
   resetSplitLines();
   Split.dragLine = null; Split.hoverLine = null;
   $("split-x").value = 0; $("split-y").value = 0; $("split-zoom").value = 100;
@@ -1754,8 +2223,11 @@ function loadSplitFromCanvas(canvas) {
       toast(`已載入 ${canvas.width}×${canvas.height}（建議 ${expectedW}×${expectedH}）`, "info");
     }
   }
+  // 載入後先自動對齊一次，使用者仍可拖曳微調或還原等分
+  const moved = autoDetectSplitLines();
   renderSplitPreview();
   updateZipPreviewName();
+  if (moved) toast(`已自動偵測分割線（調整 ${moved} 條），請確認後再切割`, "success");
 }
 
 // 綁定 canvas 上的分割線拖曳與 hover 行為（鼠標 + 觸控）
@@ -1775,7 +2247,8 @@ function bindSplitCanvasInteraction() {
       x: (cx - rect.left) * canvas.width / rect.width,
       y: (cy - rect.top)  * canvas.height / rect.height,
       scaleX: canvas.width  / rect.width,
-      scaleY: canvas.height / rect.height
+      scaleY: canvas.height / rect.height,
+      touch: !!(e.touches || e.changedTouches)
     };
   }
 
@@ -1783,8 +2256,9 @@ function bindSplitCanvasInteraction() {
   function hitTest(c) {
     if (!Split.colLines.length) return null;
     const W = Split.fullW, H = Split.fullH;
-    // 顯示上 ~16px 的命中半徑
-    const tx = 16 * c.scaleX, ty = 16 * c.scaleY;
+    // 顯示上 ~16px 的命中半徑（手指較粗，觸控時放寬）
+    const rad = c.touch ? 24 : 16;
+    const tx = rad * c.scaleX, ty = rad * c.scaleY;
     let best = null, bestD = Infinity;
     Split.colLines.forEach((n, i) => {
       const d = Math.abs(c.x - n*W);
@@ -1937,8 +2411,9 @@ function renderSplitOverlay() {
   const cr = canvas.getBoundingClientRect();
   const wr = wrap.getBoundingClientRect();
   // canvas 在 wrap 中的相對偏移與顯示尺寸
-  const offX = cr.left - wr.left;
-  const offY = cr.top - wr.top;
+  // 放大檢視時外框可捲動，需加回捲動量
+  const offX = cr.left - wr.left + wrap.scrollLeft;
+  const offY = cr.top - wr.top + wrap.scrollTop;
   const dispW = cr.width;
   const dispH = cr.height;
   // 邊距：× 按鈕從畫面邊緣縮進 14px 以方便點擊
@@ -2077,6 +2552,7 @@ function renderFramePreview(useNoBg) {
     cnv.width = f.canvas.width;
     cnv.height = f.canvas.height;
     cnv.getContext("2d").drawImage(f.canvas, 0, 0);
+    cnv.addEventListener("click", ev => pickBgColorFromFrame(ev, cnv, idx));
     cell.appendChild(cnv);
     const displayLabel = getDisplayLabel(f.col, f.row);
     const lab = document.createElement("div");
@@ -2145,43 +2621,51 @@ async function downloadSingleFrame(f, useNoBg) {
   const filename = getFrameFilename(f);
   let blob;
   try {
-    blob = await new Promise((res, rej) => {
-      f.canvas.toBlob(b => b ? res(b) : rej(new Error("toBlob 失敗")), "image/png");
-    });
+    blob = await canvasToPngBlob(f.canvas);
   } catch (e) {
     toast("匯出失敗：" + e.message, "error");
     return;
   }
-  if (!blob) { toast("匯出失敗", "error"); return; }
+  await saveFiles([{ blob, filename }], `已下載 ${filename}`, true);
+}
 
-  // 1. 手機/平板優先嘗試 Web Share API（可儲存至相簿）
-  //    桌機一律跳過，因為桌機分享面板無法直接「下載到電腦」
-  if (isTouchPrimaryDevice() && typeof File !== "undefined" && navigator.canShare) {
-    try {
-      const file = new File([blob], filename, { type: "image/png" });
-      if (navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: filename });
-        toast(`已分享 ${filename}`, "success");
-        return;
-      }
-    } catch (e) {
-      if (e && e.name === "AbortError") return; // 使用者取消
-      // 其他錯誤 → 退回標準下載
+// 由影格外框取樣，估計背景的「綠度」(g - max(r,b)) 中位數
+function sampleBorderGreenness(d, w, h) {
+  const vals = [];
+  const inset = Math.min(2, (Math.min(w, h) - 1) >> 1);
+  const step = Math.max(1, Math.floor((w + h) / 200));
+  const push = (x, y) => {
+    const i = (y * w + x) * 4;
+    vals.push(d[i+1] - Math.max(d[i], d[i+2]));
+  };
+  for (let x = inset; x < w - inset; x += step) { push(x, inset); push(x, h - 1 - inset); }
+  for (let y = inset; y < h - inset; y += step) { push(inset, y); push(w - 1 - inset, y); }
+  vals.sort((a, b) => a - b);
+  return vals.length ? vals[vals.length >> 1] : 0;
+}
+
+// 綠幕去背（就地修改 ImageData.data）。回傳是否偵測到綠幕背景
+//   門檻依實際背景綠度自動換算，偏暗或不純的綠幕也能去乾淨；容差越大去除越多
+function keyOutGreen(d, w, h, tol) {
+  const keyG = sampleBorderGreenness(d, w, h);
+  const hasGreen = keyG >= 25;
+  // 偵測不到綠幕時以 160 為基準，容差 80 時等同原本的固定門檻
+  const ref = hasGreen ? keyG : 160;
+  const hi = Math.max(12, ref * (1 - tol / 160));
+  const lo = hi * 0.4;
+  for (let i = 0; i < d.length; i += 4) {
+    const r = d[i], g = d[i+1], b = d[i+2];
+    const greenness = g - Math.max(r, b);
+    if (greenness >= hi) {
+      d[i+3] = 0;
+    } else if (greenness > lo) {
+      // 邊緣半透明（連續遞減到 0，避免殘留一層淡綠）+ 去除溢色
+      const t = (greenness - lo) / (hi - lo);
+      d[i+3] = Math.round(d[i+3] * (1 - t));
+      d[i+1] = Math.min(g, Math.round((r + b) / 2) + 5);
     }
   }
-
-  // 2. 標準下載（桌機與不支援 share 的行動瀏覽器）
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.rel = "noopener";
-  a.style.display = "none";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
-  toast(`已下載 ${filename}`, "success");
+  return hasGreen;
 }
 
 function executeBgRemoval() {
@@ -2197,6 +2681,7 @@ function executeBgRemoval() {
   }
 
   const tol = Split.bgTolerance;
+  let noGreen = 0;
   Split.framesNoBg = Split.frames.map(f => {
     const w = f.canvas.width, h = f.canvas.height;
     const out = document.createElement("canvas");
@@ -2205,20 +2690,11 @@ function executeBgRemoval() {
     octx.drawImage(f.canvas, 0, 0);
     const imgData = octx.getImageData(0, 0, w, h);
     const d = imgData.data;
-    for (let i = 0; i < d.length; i += 4) {
-      const r = d[i], g = d[i+1], b = d[i+2];
-      // 綠幕判定：g 顯著高於 r, b
-      const greenness = g - Math.max(r, b);
-      if (greenness > tol) {
-        d[i+3] = 0;
-      } else if (greenness > tol * 0.4) {
-        // 邊緣半透明 + 去除溢色
-        const t = (greenness - tol * 0.4) / (tol * 0.6);
-        d[i+3] = Math.round(d[i+3] * (1 - t * 0.85));
-        // 抑制溢色
-        const target = (r + b) / 2;
-        d[i+1] = Math.min(g, target + 5);
-      }
+    if (Split.bgMode === "green") {
+      if (!keyOutGreen(d, w, h, tol)) noGreen++;
+    } else {
+      const key = Split.bgMode === "border" ? sampleBorderColor(d, w, h) : Split.bgColor;
+      keyOutColor(d, w, h, key, tol, Split.bgContig);
     }
     octx.putImageData(imgData, 0, 0);
     return { ...f, canvas: out };
@@ -2226,8 +2702,108 @@ function executeBgRemoval() {
   renderFramePreview(true);
   $("split-step2").classList.add("done");
   $("split-step3").classList.remove("disabled");
-  toast("綠幕背景已去除", "success");
+  if (noGreen) toast(`有 ${noGreen} 張偵測不到綠幕，可改用「自動偵測背景色」`, "error");
+  else toast("背景已去除", "success");
   setTimeout(() => $("split-step3").scrollIntoView({behavior:"smooth", block:"start"}), 250);
+}
+
+// 由影格外框取樣，估計背景色（各色版取中位數）
+function sampleBorderColor(d, w, h) {
+  const ch = [[], [], []];
+  const inset = Math.min(2, (Math.min(w, h) - 1) >> 1);
+  const step = Math.max(1, Math.floor((w + h) / 200));
+  const push = (x, y) => {
+    const i = (y * w + x) * 4;
+    ch[0].push(d[i]); ch[1].push(d[i+1]); ch[2].push(d[i+2]);
+  };
+  for (let x = inset; x < w - inset; x += step) { push(x, inset); push(x, h - 1 - inset); }
+  for (let y = inset; y < h - inset; y += step) { push(inset, y); push(w - 1 - inset, y); }
+  return ch.map(v => { v.sort((a, b) => a - b); return v.length ? v[v.length >> 1] : 0; });
+}
+
+// 指定顏色去背（就地修改 ImageData.data）；容差越大去除越多
+//   contiguous：只從外框往內去除相連的背景，主體內部相同的顏色會保留
+function keyOutColor(d, w, h, key, tol, contiguous) {
+  const thr = tol * 0.75, soft = thr * 1.5, thr2 = thr * thr;
+  const dist2 = i => {
+    const dr = d[i] - key[0], dg = d[i+1] - key[1], db = d[i+2] - key[2];
+    return dr*dr + dg*dg + db*db;
+  };
+  // 邊緣半透明：色差介於 thr ~ soft 之間依比例保留
+  const feather = i => {
+    const ds = Math.sqrt(dist2(i));
+    if (ds < soft) d[i+3] = Math.round(d[i+3] * (ds - thr) / (soft - thr));
+  };
+  const n = w * h;
+
+  if (!contiguous) {
+    for (let p = 0; p < n; p++) {
+      const i = p * 4;
+      if (dist2(i) <= thr2) d[i+3] = 0; else feather(i);
+    }
+    return;
+  }
+
+  // 從四邊往內填充
+  const removed = new Uint8Array(n);
+  const stack = new Int32Array(n);
+  let sp = 0;
+  const tryPush = p => {
+    if (!removed[p] && dist2(p * 4) <= thr2) { removed[p] = 1; stack[sp++] = p; }
+  };
+  for (let x = 0; x < w; x++) { tryPush(x); tryPush((h - 1) * w + x); }
+  for (let y = 0; y < h; y++) { tryPush(y * w); tryPush(y * w + w - 1); }
+  while (sp) {
+    const p = stack[--sp], x = p % w;
+    if (x > 0) tryPush(p - 1);
+    if (x < w - 1) tryPush(p + 1);
+    if (p >= w) tryPush(p - w);
+    if (p < n - w) tryPush(p + w);
+  }
+  for (let p = 0; p < n; p++) {
+    const i = p * 4;
+    if (removed[p]) { d[i+3] = 0; continue; }
+    const x = p % w;
+    const edge = (x > 0 && removed[p-1]) || (x < w - 1 && removed[p+1]) ||
+                 (p >= w && removed[p-w]) || (p < n - w && removed[p+w]);
+    if (edge) feather(i);
+  }
+}
+
+function setBgMode(mode) {
+  Split.bgMode = mode;
+  $$("#bg-mode .pill").forEach(b => b.classList.toggle("active", b.dataset.val === mode));
+  $("bg-color-row").classList.toggle("hidden", mode !== "custom");
+  $("bg-contig-wrap").classList.toggle("hidden", mode === "green");
+  $("frame-preview").classList.toggle("picking", mode === "custom");
+  $("bg-mode-hint").textContent = {
+    green: "適用純綠幕背景，會一併消除邊緣的綠色溢色。",
+    border: "以每張貼圖最外圈的顏色當作背景色，適合白底或其他單色背景。",
+    custom: "自行指定要去除的顏色。"
+  }[mode];
+}
+
+function setBgColor(rgb) {
+  Split.bgColor = rgb;
+  const hex = "#" + rgb.map(v => v.toString(16).padStart(2, "0")).join("");
+  $("bg-color").value = hex;
+  $("bg-color-hex").textContent = hex.toUpperCase();
+}
+
+// 「自選背景色」模式下，點貼圖預覽即可吸取該點顏色（一律取去背前的原圖）
+function pickBgColorFromFrame(ev, cnv, idx) {
+  if (Split.bgMode !== "custom") return;
+  const src = Split.frames[idx] && Split.frames[idx].canvas;
+  if (!src) return;
+  // 預覽以 object-fit:contain 顯示，需換算回圖片座標
+  const rect = cnv.getBoundingClientRect();
+  const scale = Math.min(rect.width / src.width, rect.height / src.height);
+  const x = Math.floor((ev.clientX - rect.left - (rect.width - src.width * scale) / 2) / scale);
+  const y = Math.floor((ev.clientY - rect.top - (rect.height - src.height * scale) / 2) / scale);
+  if (x < 0 || y < 0 || x >= src.width || y >= src.height) return;
+  const px = src.getContext("2d", { willReadFrequently: true }).getImageData(x, y, 1, 1).data;
+  setBgColor([px[0], px[1], px[2]]);
+  toast(`已選取背景色 ${$("bg-color-hex").textContent}，請按「執行去背處理」`, "success");
 }
 
 function cloneCanvas(c) {
@@ -2256,33 +2832,42 @@ async function downloadZip() {
   progress.classList.remove("hidden");
   fill.style.width = "0%";
 
-  // 將 20 張 canvas 轉 Uint8Array PNG
-  const files = [];
-  for (let i = 0; i < Split.framesNoBg.length; i++) {
-    const f = Split.framesNoBg[i];
-    const newCol = start + (f.col - 1);
-    const filename = `${newCol}-${f.row}.png`;
-    const blob = await new Promise(res => f.canvas.toBlob(res, "image/png"));
-    const buf = new Uint8Array(await blob.arrayBuffer());
-    files.push({ name: filename, data: buf });
-    fill.style.width = ((i + 1) / 20 * 80) + "%";
-    await new Promise(r => setTimeout(r, 0));
+  // 將每張 canvas 轉成 PNG
+  const total = Split.framesNoBg.length;
+  const items = [];
+  let maxCol = 1;
+  try {
+    for (let i = 0; i < total; i++) {
+      const f = Split.framesNoBg[i];
+      maxCol = Math.max(maxCol, f.col);
+      items.push({ blob: await canvasToPngBlob(f.canvas), filename: getFrameFilename(f) });
+      fill.style.width = ((i + 1) / total * 80) + "%";
+      await new Promise(r => setTimeout(r, 0));
+    }
+  } catch (e) {
+    progress.classList.add("hidden");
+    toast("匯出失敗：" + e.message, "error");
+    return;
+  }
+
+  // App 內建瀏覽器無法下載 ZIP，改為逐張顯示讓使用者長按 / 分享儲存
+  if (Env.isInApp) {
+    fill.style.width = "100%";
+    setTimeout(() => progress.classList.add("hidden"), 600);
+    await openSaveModal(items);
+    return;
   }
 
   // 打包成 ZIP（stored 模式）
+  const files = [];
+  for (const it of items) {
+    files.push({ name: it.filename, data: new Uint8Array(await it.blob.arrayBuffer()) });
+  }
   const zipBytes = createZip(files);
   fill.style.width = "100%";
   const blob = new Blob([zipBytes], { type: "application/zip" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `line_stickers_${start}-${start+4}.zip`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 1500);
   setTimeout(() => progress.classList.add("hidden"), 600);
-  toast("ZIP 已下載！", "success");
+  await saveFiles([{ blob, filename: `line_stickers_${start}-${start + maxCol - 1}.zip` }], "ZIP 已下載！", false);
 }
 
 /* =========================================================================
@@ -2397,6 +2982,8 @@ function bootstrap() {
   if (window.__lineStickerInited) return;
   window.__lineStickerInited = true;
 
+  initThemeToggle();
+  initInAppSupport();
   initTabs();
   initPromptTab();
   initWatermarkTab();
