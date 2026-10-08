@@ -1,3 +1,8 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>動態貼圖工坊</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -223,8 +228,68 @@ a.btn{text-decoration:none;color:var(--ink)}
 .tips{display:flex;flex-wrap:wrap;gap:6px}
 .tips span{font-size:11.5px;border:1px solid var(--line-strong);border-radius:999px;padding:1px 8px;color:var(--muted)}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;z-index:10;box-shadow:var(--shadow)}
+.toast{width:max-content;max-width:calc(100vw - 32px);text-align:center}
+
+/* mobile / in-app browser */
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+.wrap>*,.top-in>*{min-width:0}
+.vsrc{position:fixed;left:0;top:0;width:2px;height:2px;opacity:.01;pointer-events:none}
+.inapp{display:flex;gap:10px;align-items:center;padding:10px 14px;background:var(--warn-soft);color:var(--warn);font-size:13px;border-bottom:1px solid var(--line)}
+.inapp span{flex:1;min-width:0}
+.inapp button{flex:none;border:0;background:none;color:inherit;font-size:20px;line-height:1;padding:6px 8px;cursor:pointer}
+.savebar{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:11;display:flex;gap:8px;align-items:center;padding:10px 12px;border-radius:var(--r);background:var(--panel);border:1px solid var(--accent-line);box-shadow:var(--shadow)}
+.savebar span{flex:1;min-width:0;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (pointer:coarse){
+  .btn{min-height:40px;padding:8px 14px}
+  .btn.sm{min-height:36px;padding:6px 12px;font-size:13px}
+  .chip{padding:6px 12px}
+  .seg button{padding:8px 12px;font-size:13px}
+  .player button{width:36px;height:36px}
+  .player button.pp{width:40px}
+  input[type=range]{height:32px}
+  input[type=checkbox]{width:20px;height:20px;flex:none}
+  input[type=number],select,.cact select{font-size:16px;padding:8px 10px}
+  .timeline{height:44px}
+  .timeline .lbl{top:13px}
+  .src .x{font-size:22px;padding:6px 8px}
+  .sw{padding:4px 8px 4px 4px}
+  .sw button{font-size:18px;padding:2px 2px 2px 6px}
+  details.grp>summary{padding:14px}
+  .tabs button{padding:11px 18px}
+}
+@media (max-width:640px){
+  .top{padding-inline:12px;padding-block:12px 10px}
+  .top-in{gap:10px}
+  .brand h1{font-size:18px}
+  .brand p{font-size:12px}
+  .specs{flex-wrap:nowrap;overflow-x:auto;width:100%;scrollbar-width:none}
+  .specs::-webkit-scrollbar{display:none}
+  .tabs{padding:8px 12px 0}
+  .tabs button{flex:1}
+  .wrap{padding-inline:12px;padding-block:14px 48px;gap:18px}
+  .src{width:min(250px,78vw)}
+  .stage-card{padding:8px}
+  .progress{flex-basis:100%;min-width:0}
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .player{grid-template-columns:auto minmax(0,1fr) auto;padding:6px 8px}
+  .player [data-p=prev],.player [data-p=next]{display:none}
+  .player .fc{min-width:0}
+  .cbody{padding:8px}
+  .cact .btn{flex:1;justify-content:center;margin-left:0!important}
+  .exp{padding:12px}
+  .mt{grid-template-columns:1fr}
+  .prompts>summary{flex-wrap:wrap;padding:12px}
+  .pgrid{padding:0 12px 12px}
+  .empty{padding:20px 12px}
+}
+@media (max-width:340px){.grid{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
+</head>
+<body>
+
+<div class="inapp" id="inapp" hidden><span id="inappTxt"></span><button type="button" id="inappX" aria-label="關閉">×</button></div>
 
 <header class="top">
   <div class="top-in">
@@ -463,6 +528,8 @@ const mk = (w, h) => { const c = document.createElement('canvas'); c.width = w; 
 const ctx2d = c => c.getContext('2d', { willReadFrequently: true });
 const pad2 = n => String(n).padStart(2, '0');
 const kb = b => (b / 1024).toFixed(b < 10240 ? 1 : 0);
+const UA = navigator.userAgent || '';
+const IN_LINE = /\bLine\//i.test(UA), IN_APP = IN_LINE || /FBAN|FBAV|FB_IAB|Instagram|MicroMessenger/i.test(UA);
 let toastT;
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2600); }
 
@@ -698,9 +765,28 @@ async function saveFile(name, blob) {
     catch (e) { if (e && e.code === 'declined') toast('已取消下載'); else toast('無法下載：' + (e && e.message || e)); }
     return;
   }
+  // in-app browsers (LINE, FB…) ignore blob downloads: hand the file to the system share sheet instead
+  if (IN_APP && typeof File === 'function' && navigator.canShare) {
+    let file = null;
+    try { file = new File([blob], name, { type: blob.type || 'application/octet-stream' }); if (!navigator.canShare({ files: [file] })) file = null; } catch (e) { file = null; }
+    if (file) { offerShare(file); return; }
+  }
   const url = URL.createObjectURL(blob), a = document.createElement('a');
   a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 4000);
+  if (IN_APP) toast('若沒有開始下載，請改用 Chrome／Safari 開啟本頁');
+}
+/* share needs a fresh tap, so show a bar with the button instead of calling it after async work */
+function offerShare(file) {
+  let bar = $('#savebar');
+  if (!bar) { bar = document.createElement('div'); bar.id = 'savebar'; bar.className = 'savebar'; document.body.appendChild(bar); }
+  bar.innerHTML = `<span>${esc(file.name)} 已備妥</span><button class="btn primary" type="button">儲存／分享</button><button class="btn" type="button" aria-label="關閉">×</button>`;
+  const [go, x] = bar.querySelectorAll('button');
+  go.onclick = async () => {
+    try { await navigator.share({ files: [file] }); bar.remove(); }
+    catch (e) { if (!e || e.name !== 'AbortError') toast('無法分享，請改用 Chrome／Safari 開啟本頁'); }
+  };
+  x.onclick = () => bar.remove();
 }
 
 /* ---------- k-means / background palette ---------- */
@@ -1098,17 +1184,26 @@ async function drawSource(v, t, c, W, H) {
 function addFile(file) {
   return new Promise((res, rej) => {
     const el = document.createElement('video');
-    el.muted = true; el.playsInline = true; el.preload = 'auto'; el.crossOrigin = 'anonymous';
+    el.muted = true; el.defaultMuted = true; el.playsInline = true; el.preload = 'auto'; el.crossOrigin = 'anonymous';
+    el.setAttribute('playsinline', ''); el.setAttribute('webkit-playsinline', '');
+    // iOS only decodes frames for a video that is in the document
+    el.className = 'vsrc'; document.body.appendChild(el);
     const url = URL.createObjectURL(file);
+    let loaded = false;
+    const fail = m => { if (loaded) return; loaded = true; el.remove(); URL.revokeObjectURL(url); rej(new Error(m + '：' + file.name)); };
+    // iOS / in-app browsers ignore preload: a muted inline play() makes them fetch the first frame
+    setTimeout(() => { if (loaded) return; const p = el.play(); if (p) p.then(() => el.pause()).catch(() => { }); }, 1200);
+    setTimeout(() => fail('影片讀取逾時，此瀏覽器可能不支援這個格式'), 20000);
     el.onloadeddata = () => {
+      if (loaded) return; loaded = true; el.pause();
       const v = newVideo({ kind: 'video', name: file.name, el, url, w: el.videoWidth, h: el.videoHeight, duration: el.duration, sizeMB: file.size / 1048576 });
       const ar = v.w / v.h;
       if (ar < 1.2) v.grid = { rows: 3, cols: 4, xs: [0, .25, .5, .75, 1], ys: [0, 1 / 3, 2 / 3, 1] };
       v.seg.dur = Math.min(2, v.duration);
       state.videos.push(v); res(v);
     };
-    el.onerror = () => rej(new Error('無法讀取影片：' + file.name));
-    el.src = url;
+    el.onerror = () => fail('無法讀取影片');
+    el.src = url; el.load();
   });
 }
 async function makeThumb(v) {
@@ -1588,18 +1683,19 @@ function drawStage() {
   sctx.fillStyle = 'rgba(0,0,0,.55)';
   sctx.fillRect(0, 0, W, Y[0]); sctx.fillRect(0, Y[Y.length - 1], W, H - Y[Y.length - 1]);
   sctx.fillRect(0, Y[0], X[0], Y[Y.length - 1] - Y[0]); sctx.fillRect(X[X.length - 1], Y[0], W - X[X.length - 1], Y[Y.length - 1] - Y[0]);
-  const lw = Math.max(1.5, W / 640);
+  const k = W / (stage.clientWidth || W); // canvas px per CSS px, so lines stay visible on a phone
+  const lw = Math.max(1.5 * k, W / 640);
   sctx.lineWidth = lw; sctx.strokeStyle = '#3DF08A'; sctx.setLineDash([]);
   X.forEach((x, i) => { sctx.globalAlpha = (drag && drag.t === 'x' && drag.i === i) ? 1 : .9; sctx.beginPath(); sctx.moveTo(x, Y[0]); sctx.lineTo(x, Y[Y.length - 1]); sctx.stroke(); });
   Y.forEach((y, i) => { sctx.globalAlpha = (drag && drag.t === 'y' && drag.i === i) ? 1 : .9; sctx.beginPath(); sctx.moveTo(X[0], y); sctx.lineTo(X[X.length - 1], y); sctx.stroke(); });
   sctx.globalAlpha = 1;
   // handles
   sctx.fillStyle = '#3DF08A';
-  const hs = Math.max(5, W / 160);
+  const hs = Math.max(5, W / 160, 7 * k);
   X.forEach(x => { const y = (Y[0] + Y[Y.length - 1]) / 2; sctx.fillRect(x - hs / 2, y - hs * 1.5, hs, hs * 3); });
   Y.forEach(y => { const x = (X[0] + X[X.length - 1]) / 2; sctx.fillRect(x - hs * 1.5, y - hs / 2, hs * 3, hs); });
   if ($('#showNums').checked) {
-    const nums = globalNumbers(); const fs = Math.max(12, Math.round(W / 60));
+    const nums = globalNumbers(); const fs = Math.max(12, Math.round(W / 60), Math.round(11 * k));
     sctx.font = '600 ' + fs + 'px "IBM Plex Mono", monospace'; sctx.textBaseline = 'top';
     for (let r = 0; r < g.rows; r++) for (let c = 0; c < g.cols; c++) {
       const k = r * g.cols + c, n = nums.get(v.id + ':' + k); const st = v.stickers[k];
@@ -1623,7 +1719,7 @@ stage.addEventListener('pointerdown', e => {
     pickMode = false; $('#pickBtn').classList.remove('on'); $('#stageWrap').classList.remove('pick');
     renderSwatches(); toast('已加入背景色 ' + hex([d[0], d[1], d[2]])); return;
   }
-  const g = v.grid, r = stage.getBoundingClientRect(), tolPx = 10 / r.width;
+  const g = v.grid, r = stage.getBoundingClientRect(), tolPx = (e.pointerType === 'touch' ? 24 : 10) / r.width;
   let best = null;
   const inY = p.y >= g.ys[0] - .02 && p.y <= g.ys[g.ys.length - 1] + .02, inX = p.x >= g.xs[0] - .02 && p.x <= g.xs[g.xs.length - 1] + .02;
   if (inY) g.xs.forEach((x, i) => { const d = Math.abs(p.x - x); if (d < tolPx && (!best || d < best.d)) best = { t: 'x', i, d }; });
@@ -1635,7 +1731,7 @@ stage.addEventListener('pointermove', e => {
   const p = canvasPt(e);
   if (!drag) {
     if (pickMode) return;
-    const g = v.grid, r = stage.getBoundingClientRect(), tolPx = 10 / r.width;
+    const g = v.grid, r = stage.getBoundingClientRect(), tolPx = (e.pointerType === 'touch' ? 24 : 10) / r.width;
     const nx = g.xs.some(x => Math.abs(p.x - x) < tolPx), ny = g.ys.some(y => Math.abs(p.y - y) * (r.height / r.width) < tolPx);
     stage.style.cursor = nx ? 'ew-resize' : ny ? 'ns-resize' : 'default'; return;
   }
@@ -1811,6 +1907,7 @@ function removeVideo(v) {
   state.videos.splice(i, 1);
   v.stickers.forEach(s => s.res && URL.revokeObjectURL(s.res.url));
   if (v.url) URL.revokeObjectURL(v.url);
+  if (v.el && v.el.remove) v.el.remove();
   if (state.main && state.main.v === v) state.main = null;
   if (state.tab && state.tab.v === v) state.tab = null;
   if (V() === v) { state.active = null; if (state.videos.length) setActive(state.videos[0]); else { sctx.clearRect(0, 0, stage.width, stage.height); $('#timeline').innerHTML = ''; $('#sceneChips').innerHTML = ''; msg('上傳圖板影片後，這裡會顯示格線校正與片段選擇'); setBusy(true); } }
@@ -1823,7 +1920,8 @@ async function setActive(v) {
   if (!v.analyzed) { await analyzeScenes(v); if (V() === v) { renderTimeline(); syncPanel(); } }
 }
 async function handleFiles(files) {
-  const list = [...files].filter(f => f.type.startsWith('video/') || /\.(mp4|mov|webm|m4v)$/i.test(f.name));
+  // some mobile pickers hand over files with no MIME type and no extension
+  const list = [...files].filter(f => !f.type || f.type.startsWith('video/') || /\.(mp4|mov|webm|m4v)$/i.test(f.name));
   if (!list.length) { toast('請選擇影片檔（MP4 / MOV / WebM）'); return; }
   let last = null;
   for (const f of list) {
@@ -2257,5 +2355,18 @@ mRender();
   msg('上傳圖板影片後，這裡會顯示格線校正與片段選擇');
   setBusy(true);
 })();
+/* LINE's in-app browser can't save files: reopen in the default browser, or explain how */
+(function inApp() {
+  if (!IN_APP || window.claude || !/^https?:$/.test(location.protocol)) return;
+  if (IN_LINE) {
+    const u = new URL(location.href);
+    if (!u.searchParams.has('openExternalBrowser')) { u.searchParams.set('openExternalBrowser', '1'); location.replace(u.href); return; }
+  }
+  $('#inappTxt').textContent = '目前在 ' + (IN_LINE ? 'LINE' : 'App') + ' 內建瀏覽器，下載可能失敗。請點選單「⋮」或分享鈕，選擇「以預設瀏覽器開啟」（Chrome／Safari）。';
+  $('#inapp').hidden = false;
+  $('#inappX').onclick = () => $('#inapp').hidden = true;
+})();
 window.__enc = encodeAPNG; window.__app = { state, generate, autoAll, addFile, setActive, exportZip, compose, fitEncode, encodePNG, makeZip };
 </script>
+</body>
+</html>
