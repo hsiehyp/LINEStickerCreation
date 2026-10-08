@@ -1076,6 +1076,9 @@ textarea.input{resize:vertical;min-height:80px;line-height:1.5}
 .frame-group-head label{display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-weight:500}
 .frame-group-head input{width:18px;height:18px;accent-color:var(--c-primary);cursor:pointer}
 .frame-group-head .btn{padding:5px 10px;font-size:12px}
+.kw-clear{padding:5px 11px;border-radius:999px;border:1px solid var(--c-danger);color:var(--c-danger);font-size:12.5px;font-weight:600;background:transparent}
+.kw-clear:hover{background:var(--c-danger);color:#fff}
+@media(pointer:coarse){.kw-clear{padding:8px 13px}}
 /* under the frames of a row: the「預覽動畫」tick box on the left, the animation to its right,
    so the frames keep the full width (they were tiny on phones with the preview beside them) */
 .frame-group-foot{display:flex;align-items:center;gap:14px;margin-top:10px}
@@ -1083,7 +1086,11 @@ textarea.input{resize:vertical;min-height:80px;line-height:1.5}
 .frame-group-ctl .btn{padding:7px 12px;font-size:13px;margin-top:4px}
 .frame-group-ctl label{display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-weight:600;white-space:nowrap}
 .frame-group-ctl input{width:18px;height:18px;accent-color:var(--c-primary);cursor:pointer;flex:none}
-.frame-group .frame-group-preview{width:min(55%,220px);flex:none}
+.frame-group .frame-group-preview{width:min(55%,220px);flex:none;background:#8cabd8}   /* LINE chat-room background */
+/* the cut frames of each row are shown on the chat-room background too, instead of the checkerboard */
+:root .frame-group .frame-cell .img-area{background:#8cabd8;background-image:none}
+/* the animation preview of the「動態貼圖製作」tab uses the same chat-room background, in both themes */
+:root .compose-side .preview-canvas-wrap,:root[data-theme="light"] .compose-side .preview-canvas-wrap{background:#8cabd8;background-image:none}
 @media(pointer:coarse){.frame-group-ctl input{width:22px;height:22px}}
 /* optional tool tab: sits after the numbered steps and looks lighter than them */
 .tab-btn.optional{background:transparent;border:1.5px dashed var(--c-border);margin-left:10px}
@@ -2455,9 +2462,18 @@ function renderSelectedKeywordsBar() {
         <button type="button" data-kw="${kw}" aria-label="移除">×</button>
       </span>`).join("");
   }
+  if (items.length) html += `<button type="button" class="kw-clear">✕ 全部取消選取</button>`;
   const counterClass = items.length === MAX_ACTIONS ? "kw-counter full" : "kw-counter";
   html += `<span class="${counterClass}">已選 <b>${items.length}</b>/${MAX_ACTIONS}</span>`;
   bar.innerHTML = html;
+  const clearBtn = bar.querySelector(".kw-clear");
+  if (clearBtn) clearBtn.addEventListener("click", () => {
+    PromptState.selectedActions = [];
+    renderSelectedKeywordsBar();
+    refreshChipStates();
+    renderPrompt();
+    toast("已取消全部選取的動作", "");
+  });
   bar.querySelectorAll(".kw-selected-chip button").forEach(btn => {
     btn.addEventListener("click", e => {
       e.stopPropagation();
@@ -3810,7 +3826,7 @@ function renderSplitFramesGrid() {
             <span class="muted grp-info"></span>
             <button type="button" class="btn line grp-dl">⬇ 下載這組</button>
           </div>
-          <div class="frame-group-preview checker-bg" ${on ? "" : "hidden"}><canvas></canvas></div>
+          <div class="frame-group-preview" ${on ? "" : "hidden"}><canvas></canvas></div>
         </div>`;
       grid = group.querySelector(".frames-grid");
       if (on) {
