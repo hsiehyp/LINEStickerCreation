@@ -1079,7 +1079,8 @@ textarea.input{resize:vertical;min-height:80px;line-height:1.5}
 /* under the frames of a row: the「預覽動畫」tick box on the left, the animation to its right,
    so the frames keep the full width (they were tiny on phones with the preview beside them) */
 .frame-group-foot{display:flex;align-items:center;gap:14px;margin-top:10px}
-.frame-group-ctl{display:flex;flex-direction:column;gap:4px;font-size:13px;min-width:0}
+.frame-group-ctl{display:flex;flex-direction:column;align-items:flex-start;gap:6px;font-size:13px;min-width:0}
+.frame-group-ctl .btn{padding:7px 12px;font-size:13px;margin-top:4px}
 .frame-group-ctl label{display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-weight:600;white-space:nowrap}
 .frame-group-ctl input{width:18px;height:18px;accent-color:var(--c-primary);cursor:pointer;flex:none}
 .frame-group .frame-group-preview{width:min(55%,220px);flex:none}
@@ -1640,7 +1641,7 @@ A continuous green background fills the entire 2560×1664 canvas with NO interru
           </div>
 
           <div class="row" style="gap:8px;margin-bottom:8px">
-            <span class="muted" style="font-size:12px;flex:1;min-width:180px">每一列是一組連續動作：勾選該組的「▶ 預覽動畫」，就會把那一列的影格循環播放。若只勾選其中幾格，預覽只播放勾選的影格。按「⬇ 下載這組」可一次下載該組的圖片（有勾選時只下載勾選的那幾張），每張各存成一個 PNG。</span>
+            <span class="muted" style="font-size:12px;flex:1;min-width:180px">每一列是一組連續動作：勾選該組的「▶ 預覽動畫」，就會把那一列的影格循環播放。若只勾選其中幾格，預覽只播放勾選的影格。預覽滿意後，按旁邊的下載按鈕可一次下載該組的圖片（有勾選時只下載勾選的那幾張），每張各存成一個 PNG。</span>
             <span class="label" style="margin-bottom:0">預覽速度</span>
             <select class="select" id="splitPrevSpeed" style="width:auto">
               <option value="320">慢</option>
@@ -3673,7 +3674,14 @@ function confirmSplit() {
 }
 
 /* ----- Per-row animation preview: tick a row's「預覽動畫」to play its frames in a loop ----- */
-const SplitPreview = { rows: new Set(), players: [], timer: null };
+const SplitPreview = { rows: new Set(), players: [], timer: null, dlBtns: [] };
+// the download button says what it will save: the ticked frames of its row, or the whole row
+function updateGroupDownloadLabels() {
+  SplitPreview.dlBtns.forEach(({ btn, rowIdx }) => {
+    const n = rowIdx.filter(i => AppState.split.selected.has(i)).length;
+    btn.textContent = n ? `⬇ 下載勾選的 ${n} 張` : `⬇ 下載這組（${rowIdx.length} 張）`;
+  });
+}
 function splitPreviewTick() {
   const all = AppState.split.frames, picked = AppState.split.selected;
   SplitPreview.players.forEach(p => {
@@ -3774,6 +3782,7 @@ function renderSplitFramesGrid() {
   const root = $("#splitFramesGrid");
   root.innerHTML = "";
   SplitPreview.players = [];
+  SplitPreview.dlBtns = [];
   const frames = AppState.split.frames;
   const ncol = AppState.split.ncol || 4;
   const start = AppState.split.startNum;
@@ -3799,6 +3808,7 @@ function renderSplitFramesGrid() {
           <div class="frame-group-ctl">
             <label><input type="checkbox" class="grp-prev" ${on ? "checked" : ""} />▶ 預覽動畫</label>
             <span class="muted grp-info"></span>
+            <button type="button" class="btn line grp-dl">⬇ 下載這組</button>
           </div>
           <div class="frame-group-preview checker-bg" ${on ? "" : "hidden"}><canvas></canvas></div>
         </div>`;
@@ -3813,7 +3823,11 @@ function renderSplitFramesGrid() {
         if (e.target.checked) SplitPreview.rows.add(row); else SplitPreview.rows.delete(row);
         renderSplitFramesGrid();
       });
-      group.querySelector(".grp-dl").addEventListener("click", () => downloadSplitGroup(rowIdx, row + start));
+      // the same download is offered in the row header and beside the preview
+      group.querySelectorAll(".grp-dl").forEach(btn => {
+        btn.addEventListener("click", () => downloadSplitGroup(rowIdx, row + start));
+        SplitPreview.dlBtns.push({ btn, rowIdx });
+      });
       group.querySelector(".grp-sel").addEventListener("click", () => {
         // select the whole row, or clear it when it is already fully selected
         const all = rowIdx.every(i => AppState.split.selected.has(i));
@@ -3837,6 +3851,7 @@ function renderSplitFramesGrid() {
       else AppState.split.selected.delete(idx);
       cell.classList.toggle("selected", cb.checked);
       $("#selectedCountInfo").textContent = "已選 " + AppState.split.selected.size + " 張";
+      updateGroupDownloadLabels();
     });
     // Click anywhere on the cell (except checkbox) toggles selection too;
     // while the eyedropper is armed, the click picks the background colour instead
@@ -3849,6 +3864,7 @@ function renderSplitFramesGrid() {
     grid.appendChild(cell);
   });
   $("#selectedCountInfo").textContent = "已選 " + AppState.split.selected.size + " 張";
+  updateGroupDownloadLabels();
   splitPreviewRestart();
 }
 
