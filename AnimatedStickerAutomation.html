@@ -1098,9 +1098,6 @@ textarea.input{resize:vertical;min-height:80px;line-height:1.5}
 .note-box.line{background:#048c3c}
 .note-box.web{background:#1d4ed8}
 @media(max-width:560px){.note-box{font-size:13.5px;padding:12px 14px}.note-box b:first-child{font-size:16px}}
-.frame-cell .dl-btn{position:absolute;top:3px;left:3px;z-index:3;width:24px;height:24px;border-radius:6px;background:rgba(0,0,0,.55);color:#fff;display:flex;align-items:center;justify-content:center}
-.frame-cell .dl-btn:hover{background:var(--c-primary)}
-@media(pointer:coarse){.frame-cell .dl-btn{width:30px;height:30px}}
 .frame-group-body{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;align-items:center}
 .frame-group-body.with-preview{grid-template-columns:minmax(0,1fr) minmax(96px,22%)}
 .frame-group .frames-grid{margin-top:0}
@@ -1606,7 +1603,7 @@ A continuous green background fills the entire 2560×1664 canvas with NO interru
           <div class="card-title"><span class="num">2</span>智慧去背 / 預覽動畫</div>
           <div class="note-box line">
             <b>📱 想用手機「LINE 拍貼」App 製作貼圖？做到這一步就可以了。</b><br>
-            點每張圖左上角的下載圖示，把需要的圖片一張一張存到手機相簿，再到「LINE 拍貼」App 選取這些圖片製作。<b>不需要</b>再做下面的「3 打包與下載」和分頁「3. 動態貼圖製作」。
+            按每一組的「⬇ 下載這組」，把圖片存到手機相簿，再到「LINE 拍貼」App 選取這些圖片製作。<b>不需要</b>再做下面的「3 打包與下載」和分頁「3. 動態貼圖製作」。
           </div>
 
           <div class="row" style="margin-bottom:14px;gap:14px;flex-wrap:wrap;padding:12px;background:var(--c-well);border-radius:8px">
@@ -1643,7 +1640,7 @@ A continuous green background fills the entire 2560×1664 canvas with NO interru
           </div>
 
           <div class="row" style="gap:8px;margin-bottom:8px">
-            <span class="muted" style="font-size:12px;flex:1;min-width:180px">每一列是一組連續動作：勾選該組的「▶ 預覽動畫」，就會把那一列的影格循環播放。若只勾選其中幾格，預覽只播放勾選的影格。點每張左上角的下載圖示可單獨下載那一張。</span>
+            <span class="muted" style="font-size:12px;flex:1;min-width:180px">每一列是一組連續動作：勾選該組的「▶ 預覽動畫」，就會把那一列的影格循環播放。若只勾選其中幾格，預覽只播放勾選的影格。按「⬇ 下載這組」可一次下載該組的圖片（有勾選時只下載勾選的那幾張），每張各存成一個 PNG。</span>
             <span class="label" style="margin-bottom:0">預覽速度</span>
             <select class="select" id="splitPrevSpeed" style="width:auto">
               <option value="320">慢</option>
@@ -1682,7 +1679,7 @@ A continuous green background fills the entire 2560×1664 canvas with NO interru
     <section class="panel" id="panel-tab-compose">
       <div class="note-box web" style="margin-bottom:16px">
         <b>💻 這個分頁是給「LINE Creators Market 網站」上架用的。</b><br>
-        這裡會把影格合成符合 LINE 規範的動態貼圖檔（APNG），再到 LINE Creators Market 網站上傳。如果您是用手機「LINE 拍貼」App 製作，只要在分頁「2. 圖片分割 / 智慧去背」把圖片單張下載到相簿即可，不需要使用這個分頁。
+        這裡會把影格合成符合 LINE 規範的動態貼圖檔（APNG），再到 LINE Creators Market 網站上傳。如果您是用手機「LINE 拍貼」App 製作，只要在分頁「2. 圖片分割 / 智慧去背」按「⬇ 下載這組」把圖片存到相簿即可，不需要使用這個分頁。
       </div>
       <div class="compose-grid" bis_skin_checked="1">
         <div bis_skin_checked="1">
@@ -3701,6 +3698,78 @@ function splitPreviewRestart() {
   SplitPreview.timer = setInterval(splitPreviewTick, sel ? parseInt(sel.value) : 200);
 }
 
+/* ----- Download one row in one tap -----
+ * The ticked frames of the row, or the whole row when none is ticked, in their current state
+ * (after background removal if it has been run). Each frame is saved as its own PNG. */
+function anchorDownload(blob, filename) {
+  const a = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+  a.href = url; a.download = filename; a.style.display = "none";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+async function downloadSplitGroup(rowIdx, groupNo) {
+  const picked = rowIdx.filter(i => AppState.split.selected.has(i));
+  const items = [];
+  for (const i of (picked.length ? picked : rowIdx)) {
+    const f = AppState.split.frames[i];
+    const blob = f && await canvasToBlob(f.canvas, "image/png");
+    if (blob) items.push({ blob, filename: `${f.label}.png` });
+  }
+  if (!items.length) { toast("下載失敗", "error"); return; }
+  const what = picked.length ? `勾選的 ${items.length} 張` : `整組 ${items.length} 張`;
+
+  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  if (isIOS || Env.isInApp) {
+    // iOS only reaches the photo library through the share sheet; in-app browsers cannot download at all
+    let files = null;
+    try {
+      files = items.map(it => new File([it.blob], it.filename, { type: "image/png" }));
+      if (!(navigator.canShare && navigator.canShare({ files }))) files = null;
+    } catch (e) { files = null; }
+    if (files) {
+      toast(`請在選單中點「儲存 ${items.length} 張影像」`, "");
+      try { await navigator.share({ files }); return; }
+      catch (e) { if (e && e.name === "AbortError") return; }
+    }
+    showImagesSaveModal(items, files);
+    return;
+  }
+  // desktop / Android: one file after another (the browser may ask once to allow multiple downloads)
+  for (const it of items) { anchorDownload(it.blob, it.filename); await new Promise(r => setTimeout(r, 350)); }
+  toast(`✅ 已下載第 ${groupNo} 組${what}`, "success");
+}
+// Fallback when the share sheet is not available: show the images so each can be long-pressed and saved
+function showImagesSaveModal(items, files) {
+  const urls = items.map(it => URL.createObjectURL(it.blob));
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.innerHTML = `
+    <div class="modal-dialog" style="max-width:420px">
+      <div class="modal-title">📥 儲存圖片（共 ${items.length} 張）</div>
+      <div class="modal-message" style="margin-bottom:12px">請逐一「長按圖片」選擇儲存${files ? "，或按下方「分享／儲存到相簿」一次處理" : ""}。</div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;max-height:50vh;overflow:auto;margin-bottom:14px">
+        ${items.map((it, i) => `<div><img src="${urls[i]}" alt="${it.filename}" style="width:100%;border-radius:8px;border:1px solid var(--c-border);background:repeating-conic-gradient(var(--c-checker) 0% 25%,transparent 0% 50%) 50% / 16px 16px"><div class="mono muted" style="font-size:11px">${it.filename}</div></div>`).join("")}
+      </div>
+      <div class="modal-actions" style="flex-wrap:wrap">
+        ${files ? `<button class="btn primary" data-act="share">📤 分享／儲存到相簿</button>` : ""}
+        ${Env.isInApp ? `<button class="btn outline" data-act="external">🌐 改用外部瀏覽器開啟</button>` : ""}
+        <button class="btn outline" data-act="close">完成</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  const cleanup = () => { overlay.remove(); urls.forEach(u => URL.revokeObjectURL(u)); };
+  overlay.addEventListener("click", e => { if (e.target === overlay) cleanup(); });
+  overlay.querySelector('[data-act="close"]').addEventListener("click", cleanup);
+  const ext = overlay.querySelector('[data-act="external"]');
+  if (ext) ext.addEventListener("click", openInExternalBrowser);
+  const sh = overlay.querySelector('[data-act="share"]');
+  if (sh) sh.addEventListener("click", async () => {
+    try { await navigator.share({ files }); cleanup(); }
+    catch (e) { if (!e || e.name !== "AbortError") toast("分享失敗，請改用長按圖片儲存", "error"); }
+  });
+}
+
 function renderSplitFramesGrid() {
   const root = $("#splitFramesGrid");
   root.innerHTML = "";
@@ -3721,6 +3790,7 @@ function renderSplitFramesGrid() {
         <div class="frame-group-head">
           <b>第 ${row + start} 組</b>
           <button type="button" class="btn outline grp-sel">☑ 選取整組</button>
+          <button type="button" class="btn line grp-dl">⬇ 下載這組</button>
         </div>
         <div class="frame-group-body">
           <div class="frames-grid" style="grid-template-columns:repeat(${ncol},minmax(0,1fr))"></div>
@@ -3743,6 +3813,7 @@ function renderSplitFramesGrid() {
         if (e.target.checked) SplitPreview.rows.add(row); else SplitPreview.rows.delete(row);
         renderSplitFramesGrid();
       });
+      group.querySelector(".grp-dl").addEventListener("click", () => downloadSplitGroup(rowIdx, row + start));
       group.querySelector(".grp-sel").addEventListener("click", () => {
         // select the whole row, or clear it when it is already fully selected
         const all = rowIdx.every(i => AppState.split.selected.has(i));
@@ -3757,16 +3828,8 @@ function renderSplitFramesGrid() {
     const url = f.canvas.toDataURL("image/png");
     cell.innerHTML = `
       <input type="checkbox" data-idx="${idx}" ${AppState.split.selected.has(idx) ? "checked" : ""} />
-      <button type="button" class="dl-btn" title="下載這一張" aria-label="下載 ${f.label}.png"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></button>
       <div class="img-area"><img src="${url}" alt="${f.label}" /></div>
       <div class="label">${f.label}</div>`;
-    // download this single frame (current state: after background removal if it has been run)
-    cell.querySelector(".dl-btn").addEventListener("click", async e => {
-      e.stopPropagation();
-      const blob = await canvasToBlob(f.canvas, "image/png");
-      if (!blob) { toast("下載失敗", "error"); return; }
-      await downloadBlob(blob, `${f.label}.png`);
-    });
     const cb = cell.querySelector("input");
     cb.addEventListener("change", e => {
       e.stopPropagation();
