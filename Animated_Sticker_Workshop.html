@@ -35,6 +35,9 @@
   --warn:#F0AE45; --warn-soft:#33260F; --bad:#F27B72; --bad-soft:#3A1917; --good:#35C774;
   --stage:#0B0E0C; --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
 }
+:root{color-scheme:light dark}
+:root[data-theme="light"]{color-scheme:light}
+:root[data-theme="dark"]{color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.55;margin:0}
 button,input,select{font:inherit;color:inherit}
@@ -290,6 +293,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 @media (max-width:340px){.grid{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
+<script>try { var th0 = localStorage.getItem('asw-theme'); if (th0 === 'light' || th0 === 'dark') document.documentElement.setAttribute('data-theme', th0); } catch (e) { }</script>
 </head>
 <body>
 
@@ -300,6 +304,9 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
     <div class="brand">
       <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true"><rect x="2" y="2" width="36" height="36" rx="10" fill="var(--accent)"/><rect x="8" y="8" width="11" height="11" rx="3" fill="var(--accent-ink)" opacity=".95"/><rect x="21" y="8" width="11" height="11" rx="3" fill="var(--accent-ink)" opacity=".55"/><rect x="8" y="21" width="11" height="11" rx="3" fill="var(--accent-ink)" opacity=".55"/><path d="M23 22.5 31 27 23 31.5Z" fill="var(--accent-ink)"/></svg>
       <div><h1>動態貼圖工坊</h1><p>AI 圖板影片 → 切割・去背・穩定 → LINE 動態貼圖 APNG</p></div>
+    </div>
+    <div class="seg" id="themeSeg" role="group" aria-label="畫面主題">
+      <button type="button" data-th="auto" class="on">自動</button><button type="button" data-th="light">淺色</button><button type="button" data-th="dark">深色</button>
     </div>
     <div class="specs" aria-label="LINE 動態貼圖規格">
       <span class="spec">貼圖 <b>≤320×270</b></span>
@@ -2414,6 +2421,20 @@ mRender();
   renderSources(); renderResults(); renderExport();
   msg('上傳圖板影片後，這裡會顯示格線校正與片段選擇');
   setBusy(true);
+})();
+/* theme: follow the system, or force light / dark and remember it */
+(function theme() {
+  const root = document.documentElement, seg = $('#themeSeg');
+  const apply = t => {
+    if (t === 'light' || t === 'dark') root.setAttribute('data-theme', t); else { t = 'auto'; root.removeAttribute('data-theme'); }
+    [...seg.children].forEach(b => { b.classList.toggle('on', b.dataset.th === t); b.setAttribute('aria-pressed', b.dataset.th === t); });
+  };
+  apply(root.getAttribute('data-theme'));
+  seg.addEventListener('click', e => {
+    const b = e.target.closest('[data-th]'); if (!b) return;
+    apply(b.dataset.th);
+    try { if (b.dataset.th === 'auto') localStorage.removeItem('asw-theme'); else localStorage.setItem('asw-theme', b.dataset.th); } catch (err) { }
+  });
 })();
 /* LINE's in-app browser can't save files: reopen in the default browser, or explain how */
 (function inApp() {
