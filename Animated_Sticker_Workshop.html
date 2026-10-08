@@ -93,6 +93,10 @@ a{color:var(--accent)}
 .stage{position:relative;background:var(--stage);border-radius:8px;overflow:hidden;line-height:0}
 .stage canvas{width:100%;height:auto;display:block;touch-action:none}
 .stage.pick canvas{cursor:crosshair}
+.stage{aspect-ratio:16/9}
+.stage canvas{max-width:none}
+.zoom{display:inline-flex;gap:4px;align-items:center}
+.zoom #zoomLbl{font-family:var(--mono);min-width:58px;justify-content:center}
 .stage-msg{position:absolute;left:10px;bottom:10px;line-height:1.4;font-size:12px;color:#fff;background:rgba(0,0,0,.6);padding:4px 8px;border-radius:6px;pointer-events:none}
 .transport{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .transport .time{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-left:auto}
@@ -328,7 +332,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
   </section>
 
   <section>
-    <div class="sec-head"><h2><span class="step">2</span>校正與設定</h2><p>拖曳綠色格線對準每格貼圖；時間軸上的橘線是偵測到的場景切換，綠框是要擷取的片段。</p></div>
+    <div class="sec-head"><h2><span class="step">2</span>校正與設定</h2><p>拖曳綠色格線對準每格貼圖；時間軸上的橘線是偵測到的場景切換，綠框是要擷取的片段。畫面可用雙指或 ＋／－ 放大檢視格線，放大後單指拖曳空白處可移動畫面。</p></div>
     <div class="work">
       <div class="stage-card">
         <div class="stage" id="stageWrap"><canvas id="stage" width="1280" height="720"></canvas><div class="stage-msg" id="stageMsg" hidden></div></div>
@@ -336,6 +340,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
           <button class="btn sm" id="playBtn" type="button">▶ 播放片段</button>
           <button class="btn sm" id="pickBtn" type="button" title="在畫面上點一下，把該顏色加入背景色">吸管取背景色</button>
           <label class="check" style="font-size:12px;align-items:center"><input type="checkbox" id="showNums" checked>顯示編號</label>
+          <span class="zoom" role="group" aria-label="畫面縮放"><button class="btn sm" id="zoomOut" type="button" aria-label="縮小">－</button><button class="btn sm" id="zoomLbl" type="button" title="還原為 100%">100%</button><button class="btn sm" id="zoomIn" type="button" aria-label="放大">＋</button></span>
           <span class="time" id="timeLbl">0.00 / 0.00 s</span>
         </div>
         <div class="timeline" id="timeline" title="點擊設定片段起點"></div>
@@ -530,6 +535,7 @@ const pad2 = n => String(n).padStart(2, '0');
 const kb = b => (b / 1024).toFixed(b < 10240 ? 1 : 0);
 const UA = navigator.userAgent || '';
 const IN_LINE = /\bLine\//i.test(UA), IN_APP = IN_LINE || /FBAN|FBAV|FB_IAB|Instagram|MicroMessenger/i.test(UA);
+const IS_IOS = /iPad|iPhone|iPod/.test(UA) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1), IS_ANDROID = /Android/i.test(UA);
 let toastT;
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2600); }
 
@@ -765,28 +771,50 @@ async function saveFile(name, blob) {
     catch (e) { if (e && e.code === 'declined') toast('已取消下載'); else toast('無法下載：' + (e && e.message || e)); }
     return;
   }
-  // in-app browsers (LINE, FB…) ignore blob downloads: hand the file to the system share sheet instead
-  if (IN_APP && typeof File === 'function' && navigator.canShare) {
+  // iOS: a download lands in the Files app; only the share sheet's「儲存影像」reaches the photo library.
+  // in-app browsers (LINE, FB…) ignore blob downloads altogether, so they take the share sheet too.
+  const isPng = /\.png$/i.test(name);
+  if (((IS_IOS && isPng) || IN_APP) && typeof File === 'function' && navigator.canShare) {
     let file = null;
     try { file = new File([blob], name, { type: blob.type || 'application/octet-stream' }); if (!navigator.canShare({ files: [file] })) file = null; } catch (e) { file = null; }
-    if (file) { offerShare(file); return; }
+    if (file) { await shareFiles([file]); return; }
   }
+  if (IS_ANDROID && isPng && !IN_APP) toast('已下載 ' + name + '，可在圖庫的「下載」相簿找到');
   const url = URL.createObjectURL(blob), a = document.createElement('a');
   a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 4000);
   if (IN_APP) toast('若沒有開始下載，請改用 Chrome／Safari 開啟本頁');
 }
-/* share needs a fresh tap, so show a bar with the button instead of calling it after async work */
-function offerShare(file) {
+const SAVE_HINT = IS_IOS ? '請在選單中點「儲存影像」，就會存到照片圖庫' : '請在選單中選擇儲存位置';
+/* open the share sheet; if the tap has expired (async encoding in between), ask for a fresh one */
+async function shareFiles(files) {
+  toast(SAVE_HINT);
+  try { await navigator.share({ files }); }
+  catch (e) { if (e && e.name === 'AbortError') return; offerShare(files); }
+}
+function offerShare(files) {
   let bar = $('#savebar');
   if (!bar) { bar = document.createElement('div'); bar.id = 'savebar'; bar.className = 'savebar'; document.body.appendChild(bar); }
-  bar.innerHTML = `<span>${esc(file.name)} 已備妥</span><button class="btn primary" type="button">儲存／分享</button><button class="btn" type="button" aria-label="關閉">×</button>`;
+  bar.innerHTML = `<span>${files.length > 1 ? files.length + ' 張貼圖' : esc(files[0].name)} 已備妥</span><button class="btn primary" type="button">${IS_IOS ? '存到圖庫' : '儲存／分享'}</button><button class="btn" type="button" aria-label="關閉">×</button>`;
   const [go, x] = bar.querySelectorAll('button');
   go.onclick = async () => {
-    try { await navigator.share({ files: [file] }); bar.remove(); }
+    toast(SAVE_HINT);
+    try { await navigator.share({ files }); bar.remove(); }
     catch (e) { if (!e || e.name !== 'AbortError') toast('無法分享，請改用 Chrome／Safari 開啟本頁'); }
   };
   x.onclick = () => bar.remove();
+}
+/* every selected sticker straight to the phone's gallery */
+async function saveAllToGallery() {
+  const on = allStickers().filter(s => s.enabled && s.res); if (!on.length) return;
+  const S = state.out.startNo, names = on.map((s, i) => pad2(S + i) + '.png');
+  if (typeof File === 'function' && navigator.canShare) {
+    let files = null;
+    try { files = on.map((s, i) => new File([s.res.blob], names[i], { type: 'image/png' })); if (!navigator.canShare({ files })) files = null; } catch (e) { files = null; }
+    if (files && (IS_IOS || IN_APP)) { await shareFiles(files); return; }
+  }
+  for (let i = 0; i < on.length; i++) { await saveFile(names[i], on[i].res.blob); await new Promise(r => setTimeout(r, 350)); }
+  if (IS_ANDROID) toast('已下載 ' + on.length + ' 張，可在圖庫的「下載」相簿找到');
 }
 
 /* ---------- k-means / background palette ---------- */
@@ -1659,7 +1687,25 @@ let curT = 0, playing = false, rafId = 0, pickMode = false, drag = null;
 function sizeStage(v) {
   const W = Math.min(1280, v.w), H = Math.round(W * v.h / v.w);
   if (stage.width !== W || stage.height !== H) { stage.width = W; stage.height = H; frameC.width = W; frameC.height = H; }
+  stageWrap.style.aspectRatio = W + ' / ' + H;
 }
+/* ---------- zoom / pan: the wrapper keeps its size, the canvas grows inside it ---------- */
+const stageWrap = $('#stageWrap');
+let zoom = 1, pinch = null, pan = null; const pts = new Map();
+function setZoom(z, cx, cy) { // cx, cy: client point that should stay under the finger
+  const r = stageWrap.getBoundingClientRect();
+  z = clamp(z, 1, 6);
+  const ax = cx == null ? r.width / 2 : cx - r.left, ay = cy == null ? r.height / 2 : cy - r.top;
+  const fx = (stageWrap.scrollLeft + ax) / (r.width * zoom), fy = (stageWrap.scrollTop + ay) / (r.height * zoom);
+  zoom = z; stage.style.width = (z * 100) + '%';
+  stageWrap.scrollLeft = fx * r.width * z - ax; stageWrap.scrollTop = fy * r.height * z - ay;
+  $('#zoomLbl').textContent = Math.round(z * 100) + '%';
+  drawStage();
+}
+$('#zoomIn').onclick = () => setZoom(zoom * 1.5);
+$('#zoomOut').onclick = () => setZoom(zoom / 1.5);
+$('#zoomLbl').onclick = () => setZoom(1);
+stage.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); setZoom(zoom * (e.deltaY < 0 ? 1.15 : 1 / 1.15), e.clientX, e.clientY); }, { passive: false });
 async function showFrame(t) {
   const v = V(); if (!v) return;
   curT = clamp(t, 0, v.duration);
@@ -1711,6 +1757,11 @@ function drawStage() {
 function canvasPt(e) { const r = stage.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height, sx: stage.width / r.width }; }
 stage.addEventListener('pointerdown', e => {
   const v = V(); if (!v) return;
+  pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pts.size === 2) { // second finger: pinch to zoom
+    const [a, b] = [...pts.values()];
+    drag = null; pan = null; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, z: zoom }; return;
+  }
   const p = canvasPt(e);
   if (pickMode) {
     const d = fctx.getImageData(clamp(Math.floor(p.x * stage.width), 0, stage.width - 1), clamp(Math.floor(p.y * stage.height), 0, stage.height - 1), 1, 1).data;
@@ -1725,9 +1776,16 @@ stage.addEventListener('pointerdown', e => {
   if (inY) g.xs.forEach((x, i) => { const d = Math.abs(p.x - x); if (d < tolPx && (!best || d < best.d)) best = { t: 'x', i, d }; });
   if (inX) g.ys.forEach((y, i) => { const d = Math.abs(p.y - y) * (r.height / r.width); if (d < tolPx && (!best || d < best.d)) best = { t: 'y', i, d }; });
   if (best) { drag = best; stage.setPointerCapture(e.pointerId); drawStage(); }
+  else if (zoom > 1) { pan = { x: e.clientX, y: e.clientY, l: stageWrap.scrollLeft, t: stageWrap.scrollTop }; stage.setPointerCapture(e.pointerId); }
 });
 stage.addEventListener('pointermove', e => {
   const v = V(); if (!v) return;
+  if (pts.has(e.pointerId)) pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pinch && pts.size >= 2) {
+    const [a, b] = [...pts.values()];
+    setZoom(pinch.z * Math.hypot(a.x - b.x, a.y - b.y) / pinch.d, (a.x + b.x) / 2, (a.y + b.y) / 2); return;
+  }
+  if (pan) { stageWrap.scrollLeft = pan.l - (e.clientX - pan.x); stageWrap.scrollTop = pan.t - (e.clientY - pan.y); return; }
   const p = canvasPt(e);
   if (!drag) {
     if (pickMode) return;
@@ -1740,8 +1798,8 @@ stage.addEventListener('pointermove', e => {
   arr[drag.i] = clamp(val, lo, hi);
   markDirty(v, 3, true); drawStage();
 });
-const endDrag = () => { if (drag) { drag = null; drawStage(); syncPanel(); } };
-stage.addEventListener('pointerup', endDrag); stage.addEventListener('pointercancel', endDrag);
+const endDrag = e => { pts.delete(e.pointerId); if (pts.size < 2) pinch = null; pan = null; if (drag) { drag = null; drawStage(); syncPanel(); } };
+stage.addEventListener('pointerup', endDrag); stage.addEventListener('pointercancel', endDrag); stage.addEventListener('pointerleave', endDrag);
 
 function playLoop() {
   const v = V(); if (!v || !playing) return;
@@ -1910,12 +1968,12 @@ function removeVideo(v) {
   if (v.el && v.el.remove) v.el.remove();
   if (state.main && state.main.v === v) state.main = null;
   if (state.tab && state.tab.v === v) state.tab = null;
-  if (V() === v) { state.active = null; if (state.videos.length) setActive(state.videos[0]); else { sctx.clearRect(0, 0, stage.width, stage.height); $('#timeline').innerHTML = ''; $('#sceneChips').innerHTML = ''; msg('上傳圖板影片後，這裡會顯示格線校正與片段選擇'); setBusy(true); } }
+  if (V() === v) { state.active = null; if (state.videos.length) setActive(state.videos[0]); else { setZoom(1); sctx.clearRect(0, 0, stage.width, stage.height); $('#timeline').innerHTML = ''; $('#sceneChips').innerHTML = ''; msg('上傳圖板影片後，這裡會顯示格線校正與片段選擇'); setBusy(true); } }
   renderSources(); renderResults(); renderExport();
 }
 function msg(t) { const m = $('#stageMsg'); m.hidden = !t; m.textContent = t || ''; }
 async function setActive(v) {
-  stopPlay(); setBusy(false); state.active = v; sizeStage(v); msg('');
+  stopPlay(); setBusy(false); state.active = v; sizeStage(v); setZoom(1); msg('');
   renderSources(); syncPanel(); await showFrame(v.seg.start);
   if (!v.analyzed) { await analyzeScenes(v); if (V() === v) { renderTimeline(); syncPanel(); } }
 }
@@ -2117,6 +2175,7 @@ function renderExport() {
       <pre class="files">${files}</pre>
       <p class="note warn">main 與 tab 欄位不能放貼圖檔：貼圖是 320×270，main 必須剛好 240×240、tab 必須剛好 96×74，尺寸不符 LINE 會顯示「錯誤」。請上傳整包 ZIP，或用下面的按鈕單獨下載這兩個檔。</p>
       <button class="btn primary block" id="zipBtn" type="button" ${n ? '' : 'disabled'}>下載 LINE 上架 ZIP</button>
+      ${IS_IOS || IS_ANDROID ? `<button class="btn block" id="galBtn" type="button" ${n ? '' : 'disabled'}>全部貼圖存到手機圖庫</button>` : ''}
       <div class="btns"><button class="btn sm" id="mainBtn" type="button" ${n ? '' : 'disabled'}>下載 main.png（240×240）</button><button class="btn sm" id="tabBtn" type="button" ${n ? '' : 'disabled'}>下載 tab.png（96×74）</button></div>
       <div class="btns" style="margin-top:2px">
         <a class="btn" href="https://creator.line.me/zh-hant/" target="_blank" rel="noopener">前往 LINE Creators Market 上架 ↗</a>
@@ -2127,6 +2186,7 @@ function renderExport() {
   $('#startNo').oninput = e => { state.out.startNo = clamp(Math.round(+e.target.value || 1), 1, 24); renderResults(); renderSources(); drawStage(); renderExport(); $('#startNo').focus(); };
   $('#withMT').onchange = e => { state.out.withMainTab = e.target.checked; renderExport(); };
   $('#zipBtn').onclick = exportZip;
+  if ($('#galBtn')) $('#galBtn').onclick = saveAllToGallery;
   $('#mainBtn').onclick = async () => { const s = state.main; if (!s) return; const c = compose(s, [240, 240], true), plan = s.v.plan; const e = await fitEncode(plan.seq.map(i => c.frames[i]), 240, 240, plan.delay, state.out.loops); saveFile('main.png', e.blob); };
   $('#tabBtn').onclick = async () => { const s = state.tab || state.main; if (!s) return; const c = compose(s, [96, 74], true); saveFile('tab.png', await encodePNG(c.frames[0], 96, 74)); };
 }
