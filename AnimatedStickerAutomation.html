@@ -1076,6 +1076,19 @@ textarea.input{resize:vertical;min-height:80px;line-height:1.5}
 .frame-group-head label{display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-weight:500}
 .frame-group-head input{width:18px;height:18px;accent-color:var(--c-primary);cursor:pointer}
 .frame-group-head .btn{padding:5px 10px;font-size:12px}
+/* under the frames of a row: the「預覽動畫」tick box on the left, the animation to its right,
+   so the frames keep the full width (they were tiny on phones with the preview beside them) */
+.frame-group-foot{display:flex;align-items:center;gap:14px;margin-top:10px}
+.frame-group-ctl{display:flex;flex-direction:column;gap:4px;font-size:13px;min-width:0}
+.frame-group-ctl label{display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-weight:600;white-space:nowrap}
+.frame-group-ctl input{width:18px;height:18px;accent-color:var(--c-primary);cursor:pointer;flex:none}
+.frame-group .frame-group-preview{width:min(55%,220px);flex:none}
+@media(pointer:coarse){.frame-group-ctl input{width:22px;height:22px}}
+/* optional tool tab: sits after the numbered steps and looks lighter than them */
+.tab-btn.optional{background:transparent;border:1.5px dashed var(--c-border);margin-left:10px}
+.tab-btn.optional.active{background:var(--c-primary);border-style:solid;border-color:var(--c-primary)}
+#splitFramesGrid.picking .frame-cell,#splitFramesGrid.picking .frame-cell img{cursor:crosshair}
+#splitFramesGrid.picking .frame-cell{outline:2px dashed var(--c-accent2);outline-offset:-2px}
 /* which tool a step is for: LINE 拍貼 app (green) or the LINE Creators Market website (blue) */
 /* solid colour blocks with white text, the same in light and dark theme, so they cannot be missed */
 .note-box{font-size:14px;line-height:1.7;color:#fff;border-radius:12px;padding:14px 16px;margin-bottom:16px;box-shadow:0 4px 14px rgba(0,0,0,.18)}
@@ -1274,7 +1287,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
     <div class="brand-logo">🎨</div>
     <div class="brand-text">
       <div class="brand">LINE 動態貼圖自動化助手 <span class="line-badge">LINE Ready</span> <span class="version-badge" title="若版本號不是最新請強制重新整理 (Ctrl+Shift+R)">v2026.05.16b</span></div>
-      <div class="brand-sub">Prompt 大師 ・ 浮水印移除 ・ 智慧分割去背 ・ 動態貼圖製作</div>
+      <div class="brand-sub">Prompt 大師 ・ 智慧分割去背 ・ 動態貼圖製作 ・ 浮水印移除</div>
     </div>
     <button type="button" class="theme-toggle" id="themeToggle" aria-label="切換網站底色"></button>
   </header>
@@ -1437,7 +1450,8 @@ A continuous green background fills the entire 2560×1664 canvas with NO interru
     <!-- ===== TAB 2: WATERMARK ===== -->
     <section class="panel wm-bg" id="panel-tab-watermark">
       <h2 style="margin-bottom:6px;font-size:20px">🌟 去除星星浮水印</h2>
-      <p class="muted" style="margin-bottom:16px">基於 Alpha Unmix + 雙線性插值演算法，精準還原 Gemini AI 生成圖底色</p>
+      <p class="muted" style="margin-bottom:10px">基於 Alpha Unmix + 雙線性插值演算法，精準還原 Gemini AI 生成圖底色</p>
+      <div class="hint-box" style="margin-bottom:16px;position:relative;z-index:1">🧰 <b>這是有需要再用的工具，不是必要步驟。</b>只有當 AI 產生的圖片右下角帶有 Gemini 星星浮水印時才需要使用；處理完後到「2. 圖片分割 / 智慧去背」分頁按「載入處理過的圖片」即可接續。</div>
       <div class="wm-grid" bis_skin_checked="1">
         <div class="glass wm-canvas-area" bis_skin_checked="1">
           <div class="wm-toolbar" bis_skin_checked="1">
@@ -1477,7 +1491,7 @@ A continuous green background fills the entire 2560×1664 canvas with NO interru
               <span style="font-size:13px;font-weight:600">✨ 啟用浮水印去除</span>
               <label class="switch"><input type="checkbox" id="wmEnable" checked=""><span class="slot"></span></label>
             </div>
-            <p class="muted" style="margin-top:6px;font-size:11px">關閉後將直接使用「原始圖片」作為下載/複製到分頁 3 的結果，不執行 Alpha Unmix 演算法。</p>
+            <p class="muted" style="margin-top:6px;font-size:11px">關閉後將直接使用「原始圖片」作為下載/載入到「圖片分割」分頁的結果，不執行 Alpha Unmix 演算法。</p>
           </div>
           <div bis_skin_checked="1">
             <h4>影像資訊</h4>
@@ -1530,9 +1544,9 @@ A continuous green background fills the entire 2560×1664 canvas with NO interru
           ⚠ 圖檔規格：<b>4 欄 × 5 列，共 20 張（每一列是一組連續動作），總尺寸 2200 × 2560 px</b>（其他尺寸亦可使用，但建議遵循以保證最佳效果）。
         </div>
         <div class="row" style="margin-bottom:12px;gap:8px;flex-wrap:wrap" bis_skin_checked="1">
-          <button class="btn line" id="copyFromStep2Btn" disabled="">📋 從「去除浮水印」分頁載入處理過的圖片</button>
           <button class="btn primary" id="splitChangeBtn">📁 選擇圖片</button>
-          <span class="muted" style="font-size:11px;flex-basis:100%">「載入處理過的圖片」需先在分頁 2 完成處理；「選擇圖片」則從電腦選擇本地檔案。</span>
+          <button class="btn outline" id="copyFromStep2Btn" disabled="">📋 載入去除浮水印後的圖片（選用）</button>
+          <span class="muted" style="font-size:11px;flex-basis:100%">一般直接按「選擇圖片」即可。圖片上有 Gemini 星星浮水印時，才需要先到「🧰 去除星星浮水印」分頁處理，再按「載入處理過的圖片」。</span>
         </div>
         <input type="file" id="splitFile" accept="image/*" class="file-hidden">
         <div class="split-uploader" id="splitUploader" bis_skin_checked="1">
@@ -1592,7 +1606,7 @@ A continuous green background fills the entire 2560×1664 canvas with NO interru
           <div class="card-title"><span class="num">2</span>智慧去背 / 預覽動畫</div>
           <div class="note-box line">
             <b>📱 想用手機「LINE 拍貼」App 製作貼圖？做到這一步就可以了。</b><br>
-            點每張圖左上角的下載圖示，把需要的圖片一張一張存到手機相簿，再到「LINE 拍貼」App 選取這些圖片製作。<b>不需要</b>再做下面的「3 打包與下載」和分頁「4. 動態貼圖製作」。
+            點每張圖左上角的下載圖示，把需要的圖片一張一張存到手機相簿，再到「LINE 拍貼」App 選取這些圖片製作。<b>不需要</b>再做下面的「3 打包與下載」和分頁「3. 動態貼圖製作」。
           </div>
 
           <div class="row" style="margin-bottom:14px;gap:14px;flex-wrap:wrap;padding:12px;background:var(--c-well);border-radius:8px">
@@ -1600,11 +1614,32 @@ A continuous green background fills the entire 2560×1664 canvas with NO interru
               <label class="switch"><input type="checkbox" id="bgRmEnable" checked=""><span class="slot"></span></label>
               <span>啟用智能去背</span>
             </div>
-            <select class="select" id="bgRmMode" style="width:auto">
-              <option value="standard">標準模式（綠幕去背）</option>
-            </select>
-            <button class="btn primary" id="runBgRmBtn" type="button">⚡ 執行去背處理</button>
             <span class="tag" id="bgRmStatusTag">尚未去背</span>
+            <div style="flex-basis:100%">
+              <span class="label">處理模式</span>
+              <div class="btn-group" id="bgRmMode">
+                <button type="button" class="btn sel" data-val="green">綠幕（預設）</button>
+                <button type="button" class="btn" data-val="border">自動偵測背景色</button>
+                <button type="button" class="btn" data-val="custom">吸取顏色（自選背景色）</button>
+              </div>
+              <p class="muted" id="bgRmModeHint" style="margin-top:6px"></p>
+            </div>
+            <div class="row" id="bgRmColorRow" style="flex-basis:100%;gap:10px;display:none">
+              <input type="color" id="bgRmColor" value="#ffffff" aria-label="要去除的背景色" style="width:52px;height:40px;padding:2px;border:1px solid var(--c-border);border-radius:6px;background:var(--c-input);cursor:pointer">
+              <span class="mono" id="bgRmColorHex" style="font-weight:700">#FFFFFF</span>
+              <button type="button" class="btn" id="bgRmPickBtn">🔍 吸取顏色</button>
+              <span class="muted" style="flex:1;min-width:180px">按「吸取顏色」後，點下方任一張圖的背景；也可以用左邊的色盤自己選。</span>
+            </div>
+            <label class="row" id="bgRmContigWrap" style="flex-basis:100%;gap:8px;display:none;cursor:pointer;font-size:13px;align-items:flex-start">
+              <input type="checkbox" id="bgRmContig" checked style="width:18px;height:18px;margin-top:2px;flex:none;accent-color:var(--c-primary)">
+              <span style="flex:1">只去除與外框相連的背景（保留角色身上相同的顏色，例如白色描邊、眼白）</span>
+            </label>
+            <div style="flex-basis:100%">
+              <div class="row" style="justify-content:space-between"><span class="label">容差值（越大去除越多）</span><span class="mono" id="bgRmTolVal">80</span></div>
+              <input type="range" class="slider" id="bgRmTol" min="20" max="150" step="1" value="80">
+            </div>
+            <button class="btn primary" id="runBgRmBtn" type="button">⚡ 執行去背處理</button>
+            <span class="muted" style="flex:1;min-width:160px">可以換模式或調整容差後重複執行，每次都從切割後的原圖重新處理。</span>
           </div>
 
           <div class="row" style="gap:8px;margin-bottom:8px">
@@ -1628,7 +1663,7 @@ A continuous green background fills the entire 2560×1664 canvas with NO interru
           <div class="card-title"><span class="num">3</span>打包與下載</div>
           <div class="note-box web">
             <b>💻 這一步是給「LINE Creators Market 網站」上架用的。</b><br>
-            要在電腦上到 LINE Creators Market 網站上傳貼圖時，才需要下載 ZIP，或把影格複製到分頁「4. 動態貼圖製作」。只用「LINE 拍貼」App 的人可以略過。
+            要在電腦上到 LINE Creators Market 網站上傳貼圖時，才需要下載 ZIP，或把影格複製到分頁「3. 動態貼圖製作」。只用「LINE 拍貼」App 的人可以略過。
           </div>
           <div class="row" style="margin-bottom:12px;gap:8px">
             <span class="label" style="margin-bottom:0">起始編號（組）</span>
@@ -1638,7 +1673,7 @@ A continuous green background fills the entire 2560×1664 canvas with NO interru
             <button class="btn line" id="downloadZipBtn" type="button">📦 下載完整 ZIP</button>
             <button class="btn primary" id="copyToTab4Btn" type="button">📌 複製選取至「動態貼圖製作」</button>
           </div>
-          <p class="muted" style="margin-top:10px;font-size:12px">提示：勾選需要的影格（或按「選取整組」）後，可複製到分頁 4 製作動態貼圖；或直接「下載完整 ZIP」取得所有影格。</p>
+          <p class="muted" style="margin-top:10px;font-size:12px">提示：勾選需要的影格（或按「選取整組」）後，可複製到分頁「3. 動態貼圖製作」；或直接「下載完整 ZIP」取得所有影格。</p>
         </div>
       </div>
     </section>
@@ -1647,7 +1682,7 @@ A continuous green background fills the entire 2560×1664 canvas with NO interru
     <section class="panel" id="panel-tab-compose">
       <div class="note-box web" style="margin-bottom:16px">
         <b>💻 這個分頁是給「LINE Creators Market 網站」上架用的。</b><br>
-        這裡會把影格合成符合 LINE 規範的動態貼圖檔（APNG），再到 LINE Creators Market 網站上傳。如果您是用手機「LINE 拍貼」App 製作，只要在分頁「3. 圖片分割 / 智慧去背」把圖片單張下載到相簿即可，不需要使用這個分頁。
+        這裡會把影格合成符合 LINE 規範的動態貼圖檔（APNG），再到 LINE Creators Market 網站上傳。如果您是用手機「LINE 拍貼」App 製作，只要在分頁「2. 圖片分割 / 智慧去背」把圖片單張下載到相簿即可，不需要使用這個分頁。
       </div>
       <div class="compose-grid" bis_skin_checked="1">
         <div bis_skin_checked="1">
@@ -1957,9 +1992,10 @@ const AppConfig = {
   },
   tabs: [
     { id: "tab-prompt", name: "1. 動態貼圖 Prompt 大師" },
-    { id: "tab-watermark", name: "2. 去除星星浮水印" },
-    { id: "tab-split", name: "3. 圖片分割 / 智慧去背" },
-    { id: "tab-compose", name: "4. 動態貼圖製作" }
+    { id: "tab-split", name: "2. 圖片分割 / 智慧去背" },
+    { id: "tab-compose", name: "3. 動態貼圖製作" },
+    // not a numbered step: only needed when the generated image carries the Gemini sparkle watermark
+    { id: "tab-watermark", name: "🧰 去除星星浮水印（有需要再用）", optional: true }
   ],
   promptThemes: [
     { id: "daily",  label: "日常動作", keywords: ["打哈欠","打瞌睡","睡覺","Say HI","捧碗","打招呼","揮手","鞠躬","拜託","握手","打呼","吹泡泡","起床","躲進被窩","點頭","比OK","搖頭","手比X","嘟嘴","眨眼","驚訝","疑惑","驚嚇","石化","僵硬","不解","抓頭","思考","尷尬","探頭","眼冒金星","疲倦"] },
@@ -2954,14 +2990,14 @@ function setupSplitTab() {
 
   $("#copyFromStep2Btn").addEventListener("click", () => {
     const c = AppState.watermark.processedImage;
-    if (!c) { toast("分頁 2 尚未有處理過的圖片", "error"); return; }
+    if (!c) { toast("「去除星星浮水印」分頁尚未有處理過的圖片", "error"); return; }
     AppState.split.sourceCanvas = c;
     $("#splitResultsCard").style.display = "none";
     AppState.split.frames = [];
     AppState.split.selected.clear();
     AppState.split.bgRemoved = false;
     showSplitEditor();
-    toast("✅ 已從分頁 2 載入處理過的圖片", "success");
+    toast("✅ 已載入去除浮水印後的圖片", "success");
   });
 
   ["splitX","splitY","splitScale"].forEach(id => {
@@ -3018,6 +3054,20 @@ function setupSplitTab() {
   });
 
   $("#runBgRmBtn").addEventListener("click", runBackgroundRemoval);
+  $$("#bgRmMode .btn").forEach(b => b.addEventListener("click", () => setBgRmMode(b.dataset.val)));
+  $("#bgRmColor").addEventListener("input", e => {
+    const v = e.target.value;
+    setBgRmColor([1, 3, 5].map(i => parseInt(v.slice(i, i + 2), 16)));
+    setBgRmPicking(false);
+  });
+  $("#bgRmPickBtn").addEventListener("click", () => {
+    if (!AppState.split.frames.length) { toast("請先切割影格", "error"); return; }
+    setBgRmPicking(!BgRm.picking);
+    if (BgRm.picking) toast("🎯 請點下方任一張圖的背景", "");
+  });
+  $("#bgRmContig").addEventListener("change", e => { BgRm.contig = e.target.checked; });
+  $("#bgRmTol").addEventListener("input", e => { BgRm.tol = parseInt(e.target.value); $("#bgRmTolVal").textContent = e.target.value; });
+  setBgRmMode("green");
   $("#downloadZipBtn").addEventListener("click", downloadSplitZip);
 
   $("#selectAllFramesBtn").addEventListener("click", () => {
@@ -3604,7 +3654,11 @@ function confirmSplit() {
       const fctx = fc.getContext("2d", { willReadFrequently: true });
       fctx.drawImage(adjusted, sx, sy, sw, sh, 0, 0, sw, sh);
       // label uses live startNum (row+startNum)-(col+1)
-      frames.push({ canvas: fc, label: `${row + AppState.split.startNum}-${col + 1}` });
+      // orig: untouched copy, so background removal can be re-run with other settings
+      const oc = document.createElement("canvas");
+      oc.width = sw; oc.height = sh;
+      oc.getContext("2d", { willReadFrequently: true }).drawImage(fc, 0, 0);
+      frames.push({ canvas: fc, orig: oc, label: `${row + AppState.split.startNum}-${col + 1}` });
     }
   }
   AppState.split.frames = frames;
@@ -3667,11 +3721,15 @@ function renderSplitFramesGrid() {
         <div class="frame-group-head">
           <b>第 ${row + start} 組</b>
           <button type="button" class="btn outline grp-sel">☑ 選取整組</button>
-          <label><input type="checkbox" class="grp-prev" ${on ? "checked" : ""} />▶ 預覽動畫</label>
-          <span class="muted grp-info"></span>
         </div>
-        <div class="frame-group-body${on ? " with-preview" : ""}">
+        <div class="frame-group-body">
           <div class="frames-grid" style="grid-template-columns:repeat(${ncol},minmax(0,1fr))"></div>
+        </div>
+        <div class="frame-group-foot">
+          <div class="frame-group-ctl">
+            <label><input type="checkbox" class="grp-prev" ${on ? "checked" : ""} />▶ 預覽動畫</label>
+            <span class="muted grp-info"></span>
+          </div>
           <div class="frame-group-preview checker-bg" ${on ? "" : "hidden"}><canvas></canvas></div>
         </div>`;
       grid = group.querySelector(".frames-grid");
@@ -3717,9 +3775,11 @@ function renderSplitFramesGrid() {
       cell.classList.toggle("selected", cb.checked);
       $("#selectedCountInfo").textContent = "已選 " + AppState.split.selected.size + " 張";
     });
-    // Click anywhere on the cell (except checkbox) toggles selection too
+    // Click anywhere on the cell (except checkbox) toggles selection too;
+    // while the eyedropper is armed, the click picks the background colour instead
     cell.addEventListener("click", e => {
       if (e.target === cb) return;
+      if (BgRm.picking) { pickBgColorFromFrame(e, cell.querySelector(".img-area img"), idx); return; }
       cb.checked = !cb.checked;
       cb.dispatchEvent(new Event("change"));
     });
@@ -3729,27 +3789,154 @@ function renderSplitFramesGrid() {
   splitPreviewRestart();
 }
 
+/* ----- Background removal: green screen / colour detected from each frame's border / picked colour ----- */
+const BgRm = { mode: "green", color: [255, 255, 255], contig: true, tol: 80, picking: false };
+
+function setBgRmMode(mode) {
+  BgRm.mode = mode;
+  $$("#bgRmMode .btn").forEach(b => b.classList.toggle("sel", b.dataset.val === mode));
+  $("#bgRmColorRow").style.display = mode === "custom" ? "" : "none";
+  $("#bgRmContigWrap").style.display = mode === "green" ? "none" : "";
+  $("#bgRmModeHint").textContent = {
+    green: "適用純綠幕背景，會一併消除邊緣的綠色溢色。",
+    border: "以每張圖最外圈的顏色當作背景色，適合白底或其他單色背景。",
+    custom: "自行指定要去除的顏色：按「吸取顏色」後點圖片背景，或用色盤選色。"
+  }[mode];
+  setBgRmPicking(mode === "custom");   // ready to pick straight away
+}
+function setBgRmColor(rgb) {
+  BgRm.color = rgb;
+  const hex = "#" + rgb.map(v => v.toString(16).padStart(2, "0")).join("");
+  $("#bgRmColor").value = hex;
+  $("#bgRmColorHex").textContent = hex.toUpperCase();
+}
+function setBgRmPicking(on) {
+  BgRm.picking = on;
+  $("#bgRmPickBtn").classList.toggle("sel", on);
+  $("#bgRmPickBtn").textContent = on ? "🎯 請點圖片背景…" : "🔍 吸取顏色";
+  $("#splitFramesGrid").classList.toggle("picking", on);
+}
+// One click on a frame picks the colour under the finger, always from the frame as it was cut
+function pickBgColorFromFrame(ev, imgEl, idx) {
+  const f = AppState.split.frames[idx];
+  const src = f && (f.orig || f.canvas);
+  if (!src || !imgEl) return;
+  // the thumbnail is shown with object-fit:contain: convert back to image coordinates
+  const rect = imgEl.getBoundingClientRect();
+  const scale = Math.min(rect.width / src.width, rect.height / src.height);
+  const x = Math.floor((ev.clientX - rect.left - (rect.width - src.width * scale) / 2) / scale);
+  const y = Math.floor((ev.clientY - rect.top - (rect.height - src.height * scale) / 2) / scale);
+  if (x < 0 || y < 0 || x >= src.width || y >= src.height) return;
+  const px = src.getContext("2d", { willReadFrequently: true }).getImageData(x, y, 1, 1).data;
+  if (px[3] < 16) { toast("這一點已經是透明的，請點有顏色的背景", "error"); return; }
+  setBgRmColor([px[0], px[1], px[2]]);
+  setBgRmPicking(false);
+  toast(`已選取背景色 ${$("#bgRmColorHex").textContent}，請按「執行去背處理」`, "success");
+}
+
+// median "greenness" of the frame border: how green the background really is
+function sampleBorderGreenness(d, w, h) {
+  const vals = [];
+  const inset = Math.min(2, (Math.min(w, h) - 1) >> 1);
+  const step = Math.max(1, Math.floor((w + h) / 200));
+  const push = (x, y) => { const i = (y * w + x) * 4; vals.push(d[i+1] - Math.max(d[i], d[i+2])); };
+  for (let x = inset; x < w - inset; x += step) { push(x, inset); push(x, h - 1 - inset); }
+  for (let y = inset; y < h - inset; y += step) { push(inset, y); push(w - 1 - inset, y); }
+  vals.sort((a, b) => a - b);
+  return vals.length ? vals[vals.length >> 1] : 0;
+}
+// Green-screen key (edits ImageData.data in place). Returns whether a green background was found.
+// The threshold follows the real background, so dark or impure greens are removed too.
+function keyOutGreen(d, w, h, tol) {
+  const keyG = sampleBorderGreenness(d, w, h);
+  const hasGreen = keyG >= 25;
+  const ref = hasGreen ? keyG : 160;
+  const hi = Math.max(12, ref * (1 - tol / 160));
+  const lo = hi * 0.4;
+  for (let i = 0; i < d.length; i += 4) {
+    const r = d[i], g = d[i+1], b = d[i+2];
+    const greenness = g - Math.max(r, b);
+    if (greenness >= hi) {
+      d[i+3] = 0;
+    } else if (greenness > lo) {
+      // soft edge that fades to 0, plus spill removal
+      const t = (greenness - lo) / (hi - lo);
+      d[i+3] = Math.round(d[i+3] * (1 - t));
+      d[i+1] = Math.min(g, Math.round((r + b) / 2) + 5);
+    }
+  }
+  return hasGreen;
+}
+// Background colour estimated from the frame border (median per channel, opaque pixels only)
+function sampleBorderColor(d, w, h) {
+  const ch = [[], [], []];
+  const inset = Math.min(2, (Math.min(w, h) - 1) >> 1);
+  const step = Math.max(1, Math.floor((w + h) / 200));
+  const push = (x, y) => {
+    const i = (y * w + x) * 4; if (d[i+3] < 16) return;
+    ch[0].push(d[i]); ch[1].push(d[i+1]); ch[2].push(d[i+2]);
+  };
+  for (let x = inset; x < w - inset; x += step) { push(x, inset); push(x, h - 1 - inset); }
+  for (let y = inset; y < h - inset; y += step) { push(inset, y); push(w - 1 - inset, y); }
+  if (!ch[0].length) return null;   // border already transparent: nothing to remove
+  return ch.map(v => { v.sort((a, b) => a - b); return v[v.length >> 1]; });
+}
+// Remove one colour (edits ImageData.data in place); a larger tolerance removes more.
+// contiguous: only the background connected to the frame edge, so the same colour inside the character stays.
+function keyOutColor(d, w, h, key, tol, contiguous) {
+  const thr = tol * 0.75, soft = thr * 1.5, thr2 = thr * thr;
+  const dist2 = i => {
+    const dr = d[i] - key[0], dg = d[i+1] - key[1], db = d[i+2] - key[2];
+    return dr*dr + dg*dg + db*db;
+  };
+  const feather = i => {   // colour distance between thr and soft keeps a proportional alpha
+    const ds = Math.sqrt(dist2(i));
+    if (ds < soft) d[i+3] = Math.round(d[i+3] * (ds - thr) / (soft - thr));
+  };
+  const n = w * h;
+  if (!contiguous) {
+    for (let p = 0; p < n; p++) { const i = p * 4; if (dist2(i) <= thr2) d[i+3] = 0; else feather(i); }
+    return;
+  }
+  // flood fill inwards from the four edges; already-transparent pixels count as background
+  const removed = new Uint8Array(n), stack = new Int32Array(n);
+  let sp = 0;
+  const tryPush = p => { if (!removed[p] && (d[p*4+3] < 16 || dist2(p * 4) <= thr2)) { removed[p] = 1; stack[sp++] = p; } };
+  for (let x = 0; x < w; x++) { tryPush(x); tryPush((h - 1) * w + x); }
+  for (let y = 0; y < h; y++) { tryPush(y * w); tryPush(y * w + w - 1); }
+  while (sp) {
+    const p = stack[--sp], x = p % w;
+    if (x > 0) tryPush(p - 1);
+    if (x < w - 1) tryPush(p + 1);
+    if (p >= w) tryPush(p - w);
+    if (p < n - w) tryPush(p + w);
+  }
+  for (let p = 0; p < n; p++) {
+    const i = p * 4;
+    if (removed[p]) { d[i+3] = 0; continue; }
+    const x = p % w;
+    const edge = (x > 0 && removed[p-1]) || (x < w - 1 && removed[p+1]) || (p >= w && removed[p-w]) || (p < n - w && removed[p+w]);
+    if (edge) feather(i);
+  }
+}
+
 function runBackgroundRemoval() {
   if (!AppState.split.frames.length) { toast("請先切割影格", "error"); return; }
   if (!$("#bgRmEnable").checked) { toast("已停用智能去背，跳過", ""); return; }
+  const tol = BgRm.tol;
+  let noGreen = 0, noBg = 0;
   AppState.split.frames.forEach(f => {
+    const w = f.canvas.width, h = f.canvas.height;
     const ctx = f.canvas.getContext("2d", { willReadFrequently: true });
-    const id = ctx.getImageData(0, 0, f.canvas.width, f.canvas.height);
+    // always start again from the frame as it was cut, so settings can be changed and re-run
+    if (f.orig) { ctx.clearRect(0, 0, w, h); ctx.drawImage(f.orig, 0, 0); }
+    const id = ctx.getImageData(0, 0, w, h);
     const d = id.data;
-    for (let i = 0; i < d.length; i += 4) {
-      const r = d[i], g = d[i+1], b = d[i+2];
-      // Green dominance check
-      const gDom = g - Math.max(r, b);
-      if (g > 100 && gDom > 30 && b < 200) {
-        // Soft mask: stronger gDom -> more transparent
-        let alpha = 1 - clamp((gDom - 20) / 80, 0, 1);
-        d[i+3] = Math.round(d[i+3] * alpha);
-        // De-spill: shift green channel toward avg of r,b
-        if (alpha < 0.95) {
-          const target = (r + b) / 2;
-          d[i+1] = Math.round(g * 0.4 + target * 0.6);
-        }
-      }
+    if (BgRm.mode === "green") {
+      if (!keyOutGreen(d, w, h, tol)) noGreen++;
+    } else {
+      const key = BgRm.mode === "border" ? sampleBorderColor(d, w, h) : BgRm.color;
+      if (key) keyOutColor(d, w, h, key, tol, BgRm.contig); else noBg++;
     }
     ctx.putImageData(id, 0, 0);
   });
@@ -3757,7 +3944,10 @@ function runBackgroundRemoval() {
   $("#bgRmStatusTag").textContent = "✅ 已完成去背";
   $("#bgRmStatusTag").className = "tag success";
   renderSplitFramesGrid();
-  toast(`✅ 已完成 ${AppState.split.frames.length} 張影格的綠幕去背`, "success");
+  const n = AppState.split.frames.length;
+  if (noGreen) toast(`有 ${noGreen} 張偵測不到綠幕，可改用「自動偵測背景色」`, "error");
+  else if (noBg === n) toast("這些圖的外圈已經是透明的，不需要去背", "");
+  else toast(`✅ 已完成 ${n} 張影格的去背`, "success");
 }
 
 async function downloadSplitZip() {
@@ -4059,7 +4249,7 @@ async function composeClearAllFrames() {
     ? `<b style="color:var(--c-danger)">${filledCount}</b> 張影格圖片`
     : `所有編輯狀態`;
   const ok = await customConfirm(
-    `確定要恢復步驟 4 為原始狀態？此動作將清除：<br><br>
+    `確定要把「動態貼圖製作」恢復為原始狀態？此動作將清除：<br><br>
      • ${itemNote}<br>
      • 所有文字與裝飾物件編輯<br>
      • 動畫格式、秒數、循環次數設定<br><br>
@@ -4091,7 +4281,7 @@ async function composeClearAllFrames() {
   if (typeof enforceLoopLockBySec === "function") enforceLoopLockBySec();
 
   composeRefreshAll();
-  toast(`✅ 步驟 4 已恢復為原始狀態`, "success");
+  toast(`✅「動態貼圖製作」已恢復為原始狀態`, "success");
 }
 
 function composeMove(dir) {
@@ -5836,7 +6026,7 @@ function setupRouter() {
   console.log("[setupRouter] Building tabs:", AppConfig.tabs.map(t => t.id).join(", "));
   AppConfig.tabs.forEach((tab, i) => {
     const b = document.createElement("button");
-    b.className = "tab-btn"; b.textContent = tab.name; b.dataset.tab = tab.id;
+    b.className = "tab-btn" + (tab.optional ? " optional" : ""); b.textContent = tab.name; b.dataset.tab = tab.id;
     b.addEventListener("click", () => location.hash = tab.id);
     nav.appendChild(b);
   });
