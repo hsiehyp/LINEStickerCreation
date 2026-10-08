@@ -460,7 +460,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
     <div class="sec-head"><h2><span class="step">3</span>貼圖成果</h2><p>不合適的貼圖可以刪除，也能個別切換穩定方式；點「主圖」「標籤」指定上架用的代表圖。</p></div>
     <div class="res-bar">
       <div class="seg" id="bgSeg" role="group" aria-label="預覽背景">
-        <button type="button" data-bg="checker" class="on">透明格</button><button type="button" data-bg="white">白</button><button type="button" data-bg="line">聊天室</button><button type="button" data-bg="dark">深色</button>
+        <button type="button" data-bg="checker">透明格</button><button type="button" data-bg="white">白</button><button type="button" data-bg="line" class="on">聊天室</button><button type="button" data-bg="dark">深色</button>
       </div>
       <div class="seg" id="playSeg" role="group" aria-label="播放次數">
         <button type="button" data-pm="loop" class="on" title="不停重複播放，方便檢查動作">連續循環</button><button type="button" data-pm="line" title="依輸出設定的循環次數播放後停在最後一幀，和 LINE 聊天室裡一樣">依上架次數</button>
@@ -1190,7 +1190,7 @@ const state = {
   videos: [], active: null, seq: 0,
   stab: { mode: 'auto', strength: 1 },
   out: { size: 'fixed', margin: 10, colors: 256, indexed: true, denoise: true, loops: 'auto', maxKB: 300, startNo: 1, withMainTab: true },
-  previewBg: 'checker', main: null, tab: null, busy: false,
+  previewBg: 'line', main: null, tab: null, busy: false,
 };
 function newVideo(o) {
   return Object.assign({
