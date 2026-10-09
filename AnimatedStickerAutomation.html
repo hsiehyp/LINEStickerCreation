@@ -1306,8 +1306,8 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
           <div class="card" bis_skin_checked="1">
             <div class="card-title" bis_skin_checked="1"><span class="num">1</span>模式設定 (固定)</div>
             <div class="row" bis_skin_checked="1">
-              <button class="btn primary" disabled="">連續動作 (無文字)</button>
-              <span class="muted">已鎖定為連續動作模式以避免 AI 文字干擾</span>
+              <button class="btn primary" disabled="">連續動作</button>
+              <span class="muted">已鎖定為連續動作模式；每組會在最需要的那一格加入文字</span>
             </div>
           </div>
 
@@ -1400,47 +1400,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
                 <button data-lang="zh">🇹🇼 完全中文</button>
               </div>
             </div>
-            <div id="promptOutput" class="prompt-output" bis_skin_checked="1"># Animated Sticker Prompt (Continuous-Action Mode, NO TEXT)
-
-[!!! CRITICAL — NO VISIBLE GRID LINES !!!]
-The "5×4 grid" is a LOGICAL LAYOUT CONCEPT for the AI to organize the composition.
-The output image MUST NOT contain any visible:
-  ✗ grid lines (white, black, or any color)
-  ✗ borders, frames, or boxes around individual cells
-  ✗ gutters, gaps, or separator strips between cells
-  ✗ panel dividers (like in a comic book or photo collage)
-  ✗ corner marks, crop marks, or registration marks
-The 20 sub-images must touch each other directly with NO visual separation.
-The viewer should NOT be able to tell where one cell ends and the next begins, except by the change in pose/character.
-A continuous green background fills the entire 2560×1664 canvas with NO interruption.
-
-[Layout Specification]
-- Canvas size: 2560 x 1664 px (single uninterrupted image)
-- Logical arrangement: 5 columns × 4 rows = 20 sub-images (each conceptually ~512 × 416 px)
-- Each VERTICAL COLUMN represents ONE continuous animation sequence (4 frames per column, top → bottom).
-- 5 distinct continuous-action sequences in total.
-- IMPORTANT: This grid structure is INVISIBLE — only the AI uses it for composition; the rendered output shows only characters on a uniform green background.
-
-[Core Rules]
-- ABSOLUTELY NO TEXT, words, letters, numbers, captions, watermarks, or signatures anywhere.
-- ABSOLUTELY NO GRID LINES of any kind — no white lines, no black lines, no thin strokes, no faint guides. The 20 sub-images blend seamlessly into ONE flat green canvas.
-- Composition: half-body or full-body depending on the action; full character must remain inside its conceptual cell area.
-- Background: SOLID GREEN SCREEN (#00C800), perfectly flat and uniform across the ENTIRE 2560×1664 canvas, for easy chroma keying.
-- Subtle, expressive variation between frames within a column to create smooth animation.
-
-[Creative Settings]
-- Use the attached photo of me as the main character. (Please attach your photo in the AI platform's UI when sending this prompt.)
-- (⚠ NOT YET SET — please select 1-5 action keywords or fill the custom-actions field in the UI before sending to Gemini.)
-- Visual style: cute chibi Q-version style, big head, soft pastel colors.
-- Lighting: clean, even, no harsh shadows that would interfere with chroma key.
-- Each column tells one micro-story (4 frames of a single motion). Different columns show different actions.
-
-[Hard Constraints]
-- Output exactly 5×4 sub-images, no more, no less.
-- Do not draw anything outside the conceptual cell boundaries.
-- The green background MUST be visible around the character on every sub-image (no edge-to-edge fill).
-- ZERO visible grid lines, borders, frames, or panel dividers anywhere in the output. If you are tempted to draw a thin line to separate cells — DO NOT. The cells separate themselves naturally through the green negative space around each character.
-</div>
+            <div id="promptOutput" class="prompt-output" bis_skin_checked="1"></div>
             <div class="row" style="margin-top:12px;gap:8px" bis_skin_checked="1">
               <button class="btn primary flex-1" id="copyPromptBtn">📑 複製 Prompt</button>
               <button class="btn line flex-1" id="goGeminiBtn">✨ 前往 Gemini</button>
@@ -1546,7 +1506,7 @@ A continuous green background fills the entire 2560×1664 canvas with NO interru
       <div class="card" bis_skin_checked="1">
         <div class="card-title" bis_skin_checked="1"><span class="num">1</span>上傳網格圖</div>
         <div class="muted" style="margin-bottom:12px" bis_skin_checked="1">
-          ⚠ 圖檔規格：<b>4 欄 × 5 列，共 20 張（每一列是一組連續動作），總尺寸 2200 × 2560 px</b>（其他尺寸亦可使用，但建議遵循以保證最佳效果）。
+          ⚠ 圖檔規格：<b>4 欄 × 5 列，共 20 張（每一列是一組連續動作），總尺寸 2400 × 2600 px</b>（其他尺寸亦可使用，但建議遵循以保證最佳效果）。
         </div>
         <div class="row" style="margin-bottom:12px;gap:8px;flex-wrap:wrap" bis_skin_checked="1">
           <button class="btn primary" id="splitChangeBtn">📁 選擇圖片</button>
@@ -1557,7 +1517,7 @@ A continuous green background fills the entire 2560×1664 canvas with NO interru
         <div class="split-uploader" id="splitUploader" bis_skin_checked="1">
           <div style="font-size:38px" bis_skin_checked="1">📤</div>
           <h3 style="margin-top:6px">拖曳網格圖到此 / 點擊上傳</h3>
-          <p class="muted">支援 PNG / JPG，建議 2200 × 2560</p>
+          <p class="muted">支援 PNG / JPG，建議 2400 × 2600</p>
         </div>
         <div id="splitEditor" style="display:none">
           <div class="muted mono" id="splitImgInfo" style="margin:12px 0 10px">-</div>
@@ -2545,12 +2505,12 @@ function buildPromptEN() {
   return `# LINE Animated Sticker Prompt (Dynamic Selection · Continuous-Action Mode)
 
 ## 1. Canvas
-- Canvas: 2200 × 2560 px, transparent PNG (alpha).
+- Canvas: 2400 × 2600 px, transparent PNG (alpha).
 - Layout: 4 columns × 5 rows, 20 keyframes in total.
 - Each row has 4 cells, played left to right, forming one looping animation.
-- **Visible grid lines, rectangular frames, separator lines, text and watermarks are ABSOLUTELY FORBIDDEN.**
+- **Visible grid lines, rectangular frames, separator lines and watermarks are ABSOLUTELY FORBIDDEN. Text may appear only as allowed by "7. Text Rules"; no other text anywhere.**
 - The character in each cell stands alone with transparent empty space on all sides; it must not cross into or overlap another cell.
-- **Leave plenty of space between stickers so the image can be split afterwards:** each cell is about 550 × 512 px; the character (including hair, limbs, props and effects) is centred and fills at most 75% of the cell's width and height. Keep at least 60 px of transparent margin on every side of every cell, so two neighbouring characters are at least 120 px apart.
+- **Leave plenty of space between stickers so the image can be split afterwards:** each cell is about 600 × 520 px; the character (including hair, limbs, props and effects) is centred and fills at most 75% of the cell's width and height. Keep at least 60 px of transparent margin on every side of every cell, so two neighbouring characters are at least 120 px apart.
 - The frames with the largest motion (stretched arms, jumps, flying effects) must stay out of the margin too; if space is tight, make the character smaller instead of shrinking the margin.
 - Between every two columns and every two rows there must be a completely empty transparent band running across the whole canvas, touched by no character, effect or shadow.
 
@@ -2600,11 +2560,20 @@ ${p.style}
 
 **Same character, same size, same position, sensible direction of motion, natural loop from last frame to first.**
 
-**No text, no grid lines, no separator frames, transparent background.**
+**No grid lines, no separator frames, transparent background; no text other than what section 7 allows.**
 
 **Plenty of empty space between stickers: no character, prop or effect may touch or cross into a neighbouring cell.**
 
 **Every row must be a truly continuous animation storyboard, not 4 independent pose pictures.**
+
+## 7. Text Rules
+Every row must carry text in exactly one of its cells — the cell that needs text the most — written in Traditional Chinese (繁體中文).
+
+- **Presentation:** vertical or horizontal, short and easy to read, matching the action and situation.
+- **Amount:** exactly 1 of the 4 cells in a row carries text; the AI decides which cell most needs words to convey the meaning or emotion, and puts the text there.
+- **Position:** the text must not cover the character, cross into another cell, or enter the transparent margin.
+- **Animation continuity:** the other 3 cells carry no text, so the motion still loops naturally.
+- **Correctness:** no wrong characters, no garbled glyphs, no Simplified Chinese.
 `;
 }
 
@@ -2613,12 +2582,12 @@ function buildPromptZH() {
   return `# LINE 動態貼圖生成指令（動態選擇・連續動作模式）
 
 ## 一、畫布規格
-- 畫布：2200 × 2560 px，透明 PNG（Alpha）。
+- 畫布：2400 × 2600 px，透明 PNG（Alpha）。
 - 排版：4 欄 × 5 列，共 20 個關鍵影格。
 - 每列 4 格，由左至右播放，組成一組循環動畫。
-- **絕對禁止可見格線、矩形框、分隔線、文字及浮水印。**
+- **絕對禁止可見格線、矩形框、分隔線及浮水印；文字只能依「七、文字生成規則」出現，其餘一律不可有文字。**
 - 每格角色獨立，四周保留透明留白，不可跨格或互相重疊。
-- **貼圖之間一定要保留足夠的空間，以便後續分割圖片：** 每格約 550 × 512 px，角色（含頭髮、手腳、道具與特效）置中，最多只佔該格寬、高的 75%；每格上下左右各保留至少 60 px 的透明留白，因此相鄰兩個角色之間至少相隔 120 px 的空白。
+- **貼圖之間一定要保留足夠的空間，以便後續分割圖片：** 每格約 600 × 520 px，角色（含頭髮、手腳、道具與特效）置中，最多只佔該格寬、高的 75%；每格上下左右各保留至少 60 px 的透明留白，因此相鄰兩個角色之間至少相隔 120 px 的空白。
 - 動作幅度最大的影格（伸手、跳躍、特效飛出）同樣不可進入留白區；空間不夠時請縮小角色，而不是擠壓留白。
 - 欄與欄之間、列與列之間都必須有一條完全空白的透明帶，從畫布一端貫穿到另一端，沒有任何角色、特效或陰影碰到它。
 
@@ -2668,11 +2637,20 @@ ${p.style}
 
 **同角色、同尺寸、同位置、動作方向合理、首尾自然循環。**
 
-**無文字、無格線、無分隔框、透明背景。**
+**無格線、無分隔框、透明背景；除第七節允許的文字外，不出現任何文字。**
 
 **貼圖之間保留足夠的空白間距，任何角色、道具、特效都不可碰到或跨入相鄰的格子。**
 
 **每列必須呈現真正連續的動畫分鏡，而不是 4 張獨立姿勢圖。**
+
+## 七、文字生成規則
+每一組貼圖都要在其中一格加入文字，加在最需要文字的那一格。
+
+- **文字呈現：** 可直排或橫排，簡短易讀，與動作情境相符。
+- **文字數量：** 每組 4 格只有 1 格出現文字，由 AI 判斷哪一格最需要文字來表達語意或情緒，就加在那一格。
+- **文字位置：** 不得遮擋角色、跨格或侵入透明留白區。
+- **動畫連續性：** 其餘 3 格不出現文字，保持動作自然循環。
+- **文字正確性：** 不得出現錯字、亂碼或簡體字。
 `;
 }
 
@@ -3127,7 +3105,7 @@ function showSplitEditor() {
   const c = AppState.split.sourceCanvas;
   $("#splitUploader").style.display = "none";
   $("#splitEditor").style.display = "block";
-  $("#splitImgInfo").textContent = `來源尺寸：${c.width} × ${c.height} px ${(c.width === 2200 && c.height === 2560) ? "✅ 完全符合規格" : "⚠ 與建議 2200×2560 不同，仍可使用"}`;
+  $("#splitImgInfo").textContent = `來源尺寸：${c.width} × ${c.height} px ${(c.width === 2400 && c.height === 2600) ? "✅ 完全符合規格" : "⚠ 與建議 2400×2600 不同，仍可使用"}`;
   // reset adjustments
   $("#splitX").value = 0; $("#splitY").value = 0; $("#splitScale").value = 100;
   $("#splitXVal").textContent = "0 px"; $("#splitYVal").textContent = "0 px"; $("#splitScaleVal").textContent = "100%";
