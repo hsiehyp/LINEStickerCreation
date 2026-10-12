@@ -1076,6 +1076,15 @@ textarea.input{resize:vertical;min-height:80px;line-height:1.5}
 .frame-group-head label{display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-weight:500}
 .frame-group-head input{width:18px;height:18px;accent-color:var(--c-primary);cursor:pointer}
 .frame-group-head .btn{padding:5px 10px;font-size:12px}
+/* drag a frame onto another to swap them */
+.frame-group .frame-cell{-webkit-user-select:none;user-select:none}
+.frame-group .frame-cell img{-webkit-user-drag:none;pointer-events:none}
+.frame-cell .drag-handle{position:absolute;top:3px;left:3px;z-index:3;width:26px;height:26px;border-radius:6px;background:rgba(0,0,0,.55);color:#fff;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:grab;touch-action:none}
+.frame-cell .drag-handle:active{cursor:grabbing}
+.frame-cell.dragging{opacity:.35}
+.frame-cell.drop-target{border-color:var(--c-line);box-shadow:0 0 0 3px rgba(6,199,85,.45)}
+.frame-drag-ghost{position:fixed;z-index:9000;width:84px;height:84px;object-fit:contain;transform:translate(-50%,-50%);pointer-events:none;border-radius:10px;background:#8cabd8;border:2px solid var(--c-primary);box-shadow:0 8px 24px rgba(0,0,0,.35);opacity:.92}
+@media(pointer:coarse){.frame-cell .drag-handle{width:32px;height:32px;font-size:18px}}
 .kw-clear{padding:5px 11px;border-radius:999px;border:1px solid var(--c-danger);color:var(--c-danger);font-size:12.5px;font-weight:600;background:transparent}
 .kw-clear:hover{background:var(--c-danger);color:#fff}
 @media(pointer:coarse){.kw-clear{padding:8px 13px}}
@@ -1304,10 +1313,14 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
       <div class="prompt-grid" bis_skin_checked="1">
         <div bis_skin_checked="1">
           <div class="card" bis_skin_checked="1">
-            <div class="card-title" bis_skin_checked="1"><span class="num">1</span>模式設定 (固定)</div>
+            <div class="card-title" bis_skin_checked="1"><span class="num">1</span>模式設定</div>
             <div class="row" bis_skin_checked="1">
-              <button class="btn primary" disabled="">連續動作</button>
-              <span class="muted">已鎖定為連續動作模式；每組會在最需要的那一格加入文字</span>
+              <div class="btn-group">
+                <button type="button" class="btn" data-seq="4">4 個動作 × 每個 5 格</button>
+             <button type="button" class="btn sel" data-seq="2">2 個動作 × 每個 10 格</button>
+                <button type="button" class="btn" data-seq="1">1 個動作 × 20 格</button>
+              </div>
+              <span class="muted" style="flex-basis:100%">一張圖固定 20 格（5 欄 × 4 列）：可以做成 4 組各 5 格、2 組各 10 格，或 1 組 20 格的連續動畫，每一種都符合 LINE 動態貼圖 5～20 格的規定。格數越多動作越細緻；每組會在最需要的那一格加入文字。</span>
             </div>
           </div>
 
@@ -1327,7 +1340,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
           </div>
 
           <div class="card" bis_skin_checked="1">
-            <div class="card-title" bis_skin_checked="1"><span class="num">3</span>動作主題（最多選 5 個關鍵動作，每列 1 組連續動作）</div>
+            <div class="card-title" bis_skin_checked="1"><span class="num">3</span><span id="actHeading">動作主題（選 2 個動作，每個動作 10 格連續動畫）</span></div>
             <div class="kw-selected-bar" id="kwSelectedBar" bis_skin_checked="1"><span class="kw-selected-empty">尚未選取動作（請從下方分類點選 1–5 個）</span><span class="kw-counter">已選 <b>0</b>/5</span></div>
             <div id="kwCategories" bis_skin_checked="1"><div class="kw-cat" bis_skin_checked="1">
       <div class="kw-cat-head" bis_skin_checked="1">
@@ -1372,7 +1385,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
       <div class="kw-cat-body" bis_skin_checked="1"><button type="button" class="kw-chip" data-kw="大口咬下">大口咬下</button><button type="button" class="kw-chip" data-kw="流口水">流口水</button><button type="button" class="kw-chip" data-kw="舔嘴唇">舔嘴唇</button><button type="button" class="kw-chip" data-kw="乾杯">乾杯</button><button type="button" class="kw-chip" data-kw="捧肚子">捧肚子</button><button type="button" class="kw-chip" data-kw="幸福地嚼">幸福地嚼</button><button type="button" class="kw-chip" data-kw="大口吃">大口吃</button></div></div></div>
             <div style="margin-top:14px" bis_skin_checked="1">
               <label class="label">✏️ 自訂動作（選填，填寫後將覆蓋上方選取）</label>
-              <textarea class="input" id="customActions" rows="2" placeholder="例：抱貓咪、彈吉他、打電動、追公車、煮泡麵  ← 以「、」或「,」分隔，建議 5 個連續動作"></textarea>
+              <textarea class="input" id="customActions" rows="2" placeholder="例：抱貓咪、彈吉他、打電動、追公車、煮泡麵  ← 以「、」或「,」分隔，建議 4 個動作"></textarea>
               <p class="muted" style="margin-top:6px;font-size:11px">提示：動作主題分類僅是分類用，實際的 Prompt 會以你選的關鍵動作（或自訂內容）為主。</p>
             </div>
           </div>
@@ -1506,7 +1519,16 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
       <div class="card" bis_skin_checked="1">
         <div class="card-title" bis_skin_checked="1"><span class="num">1</span>上傳網格圖</div>
         <div class="muted" style="margin-bottom:12px" bis_skin_checked="1">
-          ⚠ 圖檔規格：<b>4 欄 × 5 列，共 20 張（每一列是一組連續動作），總尺寸 2400 × 2600 px</b>（其他尺寸亦可使用，但建議遵循以保證最佳效果）。
+          ⚠ 圖檔規格：<b id="splitSpecText">5 欄 × 4 列，共 20 張；第 1～2 列是第 1 組（10 格），第 3～4 列是第 2 組（10 格），比例 3:2 的橫式圖片</b>（提示詞指定 3600 × 2400；AI 實際輸出的像素通常較小，只要比例相近即可，其他比例也能使用）。
+        </div>
+        <div class="row" style="margin-bottom:12px;gap:8px">
+          <span class="label" style="margin-bottom:0">分組方式</span>
+          <div class="btn-group">
+            <button type="button" class="btn" data-seq="4">4 組 × 每組 5 格</button>
+         <button type="button" class="btn sel" data-seq="2">2 組 × 每組 10 格</button>
+            <button type="button" class="btn" data-seq="1">1 組 × 20 格</button>
+          </div>
+          <span class="muted" style="font-size:11px;flex-basis:100%">要和產生這張圖時在分頁 1 選的模式相同；切割後也可以隨時切換，影格會重新分組與編號。</span>
         </div>
         <div class="row" style="margin-bottom:12px;gap:8px;flex-wrap:wrap" bis_skin_checked="1">
           <button class="btn primary" id="splitChangeBtn">📁 選擇圖片</button>
@@ -1517,7 +1539,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
         <div class="split-uploader" id="splitUploader" bis_skin_checked="1">
           <div style="font-size:38px" bis_skin_checked="1">📤</div>
           <h3 style="margin-top:6px">拖曳網格圖到此 / 點擊上傳</h3>
-          <p class="muted">支援 PNG / JPG，建議 2400 × 2600</p>
+          <p class="muted">支援 PNG / JPG，建議 3600 × 2400</p>
         </div>
         <div id="splitEditor" style="display:none">
           <div class="muted mono" id="splitImgInfo" style="margin:12px 0 10px">-</div>
@@ -1526,7 +1548,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
             <button class="btn" id="splitResetLinesBtn" type="button">📐 還原分割線等分</button>
             <button class="btn outline" id="addVLineBtn" type="button">＋ 加垂直線</button>
             <button class="btn outline" id="addHLineBtn" type="button">＋ 加水平線</button>
-            <span class="muted mono" style="font-size:11px" id="splitGridInfo">目前：4 欄 × 5 列 = 20 格</span>
+            <span class="muted mono" style="font-size:11px" id="splitGridInfo">目前：5 欄 × 4 列 = 20 格</span>
           </div>
           <div class="row" style="margin-bottom:10px;gap:8px" role="group" aria-label="檢視大小">
             <span class="label" style="margin-bottom:0">檢視大小 <span id="splitZoomLbl">1×</span></span>
@@ -1559,6 +1581,16 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
             </div>
           </div>
           <div class="hint-box" style="margin-top:14px">✋ <b>拖曳</b>粉紅虛線可調整切割範圍；<b>雙擊線條</b>（手機請長按）可刪除，<b>雙擊格內空白處</b>（手機請長按）可新增分割線。先用滑桿粗調整體位置與縮放，再拖曳分割線精準對齊每張角色。</div>
+          <div class="row" style="margin-top:14px;gap:8px">
+            <span class="label" style="margin-bottom:0">切割方式</span>
+            <select class="select" id="splitAlignMode" style="width:auto;max-width:100%">
+              <option value="bottom" selected>智慧切割＋底部對齊（坐著、站著的動作，建議）</option>
+              <option value="center">智慧切割＋置中對齊（跳躍、飄浮的動作）</option>
+              <option value="grid">智慧切割，維持原圖位置</option>
+              <option value="off">只照格線切（不做智慧切割）</option>
+            </select>
+            <span class="muted" style="font-size:11px;flex-basis:100%">智慧切割會沿著每張貼圖自己的輪廓取圖：超出格線的部分不會被切掉，也不會帶進隔壁貼圖的碎片；同一組的影格再對齊到同一個基準點，播放時角色才不會跳動。分割線只要大致落在貼圖之間即可。</span>
+          </div>
           <div class="row button-row">
             <button class="btn primary" id="splitConfirmBtn" type="button">✂️ 確認切割（產生 20 張影格）</button>
             <button class="btn outline" id="splitReselectBtn" type="button">重新選擇</button>
@@ -1608,7 +1640,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
           </div>
 
           <div class="row" style="gap:8px;margin-bottom:8px">
-            <span class="muted" style="font-size:12px;flex:1;min-width:180px">每一列是一組連續動作：勾選該組的「▶ 預覽動畫」，就會把那一列的影格循環播放。若只勾選其中幾格，預覽只播放勾選的影格。預覽滿意後，按旁邊的下載按鈕可一次下載該組的圖片（有勾選時只下載勾選的那幾張），每張各存成一個 PNG。</span>
+            <span class="muted" style="font-size:12px;flex:1;min-width:180px">每一組是一段連續動作（5 格、10 格或 20 格，依上方的分組方式）：勾選該組的「▶ 預覽動畫」，就會把那一組的影格依序循環播放。若只勾選其中幾格，預覽只播放勾選的影格。預覽滿意後，按旁邊的下載按鈕可一次下載該組的圖片（有勾選時只下載勾選的那幾張），每張各存成一個 PNG。把一張圖拖曳到另一張上面可以交換兩張的位置（手機請按住左上角的 ⠿ 拖曳）。</span>
             <span class="label" style="margin-bottom:0">預覽速度</span>
             <select class="select" id="splitPrevSpeed" style="width:auto">
               <option value="320">慢</option>
@@ -1963,13 +1995,13 @@ const AppConfig = {
     { id: "tab-watermark", name: "🧰 去除星星浮水印（有需要再用）", optional: true }
   ],
   promptThemes: [
-    { id: "daily",  label: "日常動作", keywords: ["打哈欠","打瞌睡","睡覺","Say HI","捧碗","打招呼","揮手","鞠躬","拜託","握手","打呼","吹泡泡","起床","躲進被窩","點頭","比OK","搖頭","手比X","嘟嘴","眨眼","驚訝","疑惑","驚嚇","石化","僵硬","不解","抓頭","思考","尷尬","探頭","眼冒金星","疲倦"] },
-    { id: "happy",  label: "開心慶祝", keywords: ["歡呼","跳躍","鼓掌","撒花","比耶","握拳喝采","大笑","開心","狂笑","轉圈圈","加油","握拳","比大讚","唱歌"] },
-    { id: "love",   label: "戀愛撒嬌", keywords: ["送愛心","托腮臉紅","牽手","飛吻","依偎","眨眼電人","幸福","比心","眼冒愛心","抱抱","摸頭","撒嬌","害羞","臉紅"] },
-    { id: "work",   label: "工作情境", keywords: ["敲鍵盤","接電話","遞名片","開會討論","看手錶","伸懶腰","工作","學習","打字","寫字","打電腦","戰鬥"] },
+    { id: "daily",  label: "日常動作", keywords: ["打哈欠","打瞌睡","睡覺","Say HI","捧碗","打招呼","揮手","鞠躬","拜託","握手","打呼","吹泡泡","起床","躲進被窩","點頭","比OK","搖頭","手比X","嘟嘴","眨眼","驚訝","疑惑","驚嚇","石化","僵硬","不解","抓頭","思考","尷尬","探頭","眼冒金星","疲倦","哈囉","嗨呀","OK","謝謝","求求你","晚安","睏了","真的假的","嚇死寶寶"] },
+    { id: "happy",  label: "開心慶祝", keywords: ["歡呼","跳躍","鼓掌","撒花","比耶","握拳喝采","大笑","開心","狂笑","轉圈圈","加油","握拳","比大讚","唱歌","讚啦","推爆"] },
+    { id: "love",   label: "戀愛撒嬌", keywords: ["送愛心","托腮臉紅","牽手","飛吻","依偎","眨眼電人","幸福","比心","眼冒愛心","抱抱","摸頭","撒嬌","害羞","臉紅","超愛你"] },
+    { id: "work",   label: "工作情境", keywords: ["敲鍵盤","接電話","遞名片","開會討論","看手錶","伸懶腰","工作","學習","打字","寫字","打電腦","戰鬥","收到"] },
     { id: "foodie", label: "吃貨日常", keywords: ["大口咬下","流口水","舔嘴唇","乾杯","捧肚子","幸福地嚼","大口吃"] },
-    { id: "sad",    label: "難過失落", keywords: ["垂頭喪氣","擦眼淚","蹲牆角","畫圈圈","掩面","嘆氣","哭泣","噴淚","大哭","淚奔","瀑布淚","難過","啜泣","咬手帕","躲牆角"] },
-    { id: "angry",  label: "生氣激動", keywords: ["跺腳","拍桌","指責","翻白眼","噴火","雙手抱胸","發火","氣炸","冒煙","臉紅脖子粗","鄙視","三條線","冷淡","撇頭"] },
+    { id: "sad",    label: "難過失落", keywords: ["垂頭喪氣","擦眼淚","蹲牆角","畫圈圈","掩面","嘆氣","哭泣","噴淚","大哭","淚奔","瀑布淚","難過","啜泣","咬手帕","躲牆角","嗚嗚","人生好難"] },
+    { id: "angry",  label: "生氣激動", keywords: ["跺腳","拍桌","指責","翻白眼","噴火","雙手抱胸","發火","氣炸","冒煙","臉紅脖子粗","鄙視","三條線","冷淡","撇頭","氣死我","炸裂中"] },
     { id: "sport",  label: "運動健身", keywords: ["舉啞鈴","擦汗","跑步","伸展","喝水補給","秀肌肉"] },
   ],
   promptStyles: [
@@ -1980,6 +2012,7 @@ const AppConfig = {
     { id: "book",    label: "童書繪本",    en: "children's storybook illustration, warm watercolor textures, gentle outlines", zh: "童書繪本插畫風格，溫暖的水彩質感、柔和線條" },
     { id: "doodle",  label: "童趣手繪",    en: "childlike doodle style, hand-drawn marker lines, playful and rough", zh: "童趣手繪塗鴉風格，手繪麥克筆線條、俏皮粗獷" },
     { id: "chibi",   label: "日系 Chibi",  en: "Japanese chibi anime style, kawaii, glossy big eyes, bold outlines", zh: "日系 Chibi 動漫風格，kawaii 萌系、亮晶晶大眼睛、粗黑外框線" },
+    { id: "anime",   label: "日系動漫風",  en: "Japanese anime style, clean cel-shading with crisp line art, large expressive eyes with highlights, vivid colors, normal anime body proportions (not chibi), lively manga-style expressions and emotion symbols", zh: "日系動漫風格，乾淨的賽璐珞上色與俐落線稿、帶高光的大眼睛、鮮明色彩、一般動漫的頭身比例（非 Q 版），搭配生動的漫畫式表情與情緒符號" },
     { id: "water",   label: "清新水彩",    en: "fresh watercolor style, translucent washes, paper texture, soft edges", zh: "清新水彩風格，半透明渲染、紙張質感、柔邊處理" },
     { id: "ink",     label: "古風水墨",    en: "traditional Chinese ink painting style, sumi-e brush strokes, restrained palette", zh: "中式古風水墨畫風格、寫意毛筆筆觸、留白克制配色" },
     { id: "pixel",   label: "復古像素",    en: "retro pixel art style, 16-bit aesthetic, dithering, limited palette", zh: "復古像素藝術風格，16-bit 美學、抖動效果、有限色盤" },
@@ -2054,9 +2087,9 @@ const AppState = {
     bgRemoved: false,
     selected: new Set(),
     // Fractional positions (0..1) of split lines in source-canvas coordinates.
-    // Default = even 4×5 grid (4 columns × 5 rows; each ROW is one animation sequence)
-    vLines: [0.25, 0.5, 0.75],      // 3 vertical lines (separating 4 columns)
-    hLines: [0.2, 0.4, 0.6, 0.8],   // 4 horizontal lines (separating 5 rows)
+    // Default = even 5×4 grid (5 columns × 4 rows; each ROW is one animation sequence)
+    vLines: [0.2, 0.4, 0.6, 0.8],      // 4 vertical lines (separating 5 columns)
+    hLines: [0.25, 0.5, 0.75],   // 3 horizontal lines (separating 4 rows)
     startNum: 1                     // starting row (sequence) number for labels (live)
   },
   compose: {
@@ -2289,13 +2322,37 @@ function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 const PromptState = {
   source: "ref",           // ref | custom
   customText: "",
-  selectedActions: [],     // array of action keywords (max 5)
+  groups: 2,               // 2 = two actions × 10 frames each, 1 = one action × 20 frames
+  selectedActions: [],     // array of action keywords (as many as there are groups)
   customActions: "",       // optional override (free text)
   style: "qcute",
   border: false,
   lang: "en"               // "en" (English standard) | "zh" (full Chinese)
 };
-const MAX_ACTIONS = 5;
+// how many animation groups the 20 cells hold: 4 actions x 5 frames, 2 actions x 10 frames, or 1 action x 20 frames
+const seqGroups = () => ([1, 2, 4].includes(PromptState.groups) ? PromptState.groups : 2);
+const seqFrames = () => 20 / seqGroups();
+const maxActions = () => seqGroups();
+// Switch between the two layouts. Shared by tab 1 (the prompt) and tab 2 (how cut frames are grouped).
+function setSeqMode(groups) {
+  PromptState.groups = [1, 2, 4].includes(groups) ? groups : 2;
+  const G = seqGroups(), N = seqFrames();
+  if (PromptState.selectedActions.length > G) PromptState.selectedActions.length = G;
+  $$("[data-seq]").forEach(b => b.classList.toggle("sel", parseInt(b.dataset.seq) === G));
+  const h = $("#actHeading");
+  if (h) h.textContent = G === 1 ? "動作主題（選 1 個動作，20 格連續動畫）" : `動作主題（選 ${G} 個動作，每個動作 ${N} 格連續動畫）`;
+  const spec = $("#splitSpecText");
+  if (spec) spec.textContent = G === 2
+    ? "5 欄 × 4 列，共 20 張；第 1～2 列是第 1 組（10 格），第 3～4 列是第 2 組（10 格），比例 3:2 的橫式圖片" : G === 4 ? "5 欄 × 4 列，共 20 張；每一列是一組 5 格的連續動畫，共 4 組，比例 3:2 的橫式圖片"
+    : "5 欄 × 4 列，共 20 張；全部 20 格是同一組連續動畫，比例 3:2 的橫式圖片";
+  const ca = $("#customActions");
+  if (ca) ca.placeholder = G === 1 ? "例：抱貓咪  ← 請填 1 個動作" : G === 2 ? "例：抱貓咪、彈吉他  ← 以「、」或「,」分隔，請填 2 個動作" : "例：抱貓咪、彈吉他、打電動、追公車  ← 以「、」或「,」分隔，請填 4 個動作";
+  renderSelectedKeywordsBar();
+  refreshChipStates();
+  renderPrompt();
+  // frames that are already cut are regrouped and renumbered
+  if (AppState.split.frames.length) { SplitPreview.rows.clear(); relabelSplitFrames(); }
+}
 
 function setupPromptTab() {
   // keyword multi-select panel (categorized by theme)
@@ -2327,6 +2384,8 @@ function setupPromptTab() {
     });
   });
   // ref upload
+  // 2 actions × 10 frames / 1 action × 20 frames (the same buttons also sit in the split tab)
+  $$("[data-seq]").forEach(b => b.addEventListener("click", () => setSeqMode(parseInt(b.dataset.seq))));
   // custom text
   $("#charCustomText").addEventListener("input", e => {
     PromptState.customText = e.target.value; renderPrompt();
@@ -2396,9 +2455,9 @@ function toggleKeyword(kw) {
   if (i >= 0) {
     PromptState.selectedActions.splice(i, 1);
   } else {
-    if (PromptState.selectedActions.length >= MAX_ACTIONS) {
-      toast(`最多只能選 ${MAX_ACTIONS} 個動作`, "error");
-      return;
+    if (PromptState.selectedActions.length >= maxActions()) {
+      if (maxActions() > 1) { toast(`最多只能選 ${maxActions()} 個動作`, "error"); return; }
+      PromptState.selectedActions = [];   // single-action mode: picking another one replaces it
     }
     PromptState.selectedActions.push(kw);
   }
@@ -2413,7 +2472,7 @@ function renderSelectedKeywordsBar() {
   const items = PromptState.selectedActions;
   let html = "";
   if (items.length === 0) {
-    html = `<span class="kw-selected-empty">尚未選取動作（請從下方分類點選 1–${MAX_ACTIONS} 個）</span>`;
+    html = `<span class="kw-selected-empty">尚未選取動作（請從下方分類點選 1–${maxActions()} 個）</span>`;
   } else {
     html = items.map((kw, i) => `
       <span class="kw-selected-chip">
@@ -2423,8 +2482,8 @@ function renderSelectedKeywordsBar() {
       </span>`).join("");
   }
   if (items.length) html += `<button type="button" class="kw-clear">✕ 全部取消選取</button>`;
-  const counterClass = items.length === MAX_ACTIONS ? "kw-counter full" : "kw-counter";
-  html += `<span class="${counterClass}">已選 <b>${items.length}</b>/${MAX_ACTIONS}</span>`;
+  const counterClass = items.length === maxActions() ? "kw-counter full" : "kw-counter";
+  html += `<span class="${counterClass}">已選 <b>${items.length}</b>/${maxActions()}</span>`;
   bar.innerHTML = html;
   const clearBtn = bar.querySelector(".kw-clear");
   if (clearBtn) clearBtn.addEventListener("click", () => {
@@ -2448,7 +2507,7 @@ function renderSelectedKeywordsBar() {
 }
 
 function refreshChipStates() {
-  const atMax = PromptState.selectedActions.length >= MAX_ACTIONS;
+  const atMax = PromptState.selectedActions.length >= maxActions();
   $$(".kw-chip").forEach(chip => {
     const sel = PromptState.selectedActions.includes(chip.dataset.kw);
     chip.classList.toggle("selected", sel);
@@ -2467,16 +2526,18 @@ function promptParts(zh) {
   const style = AppConfig.promptStyles.find(s => s.id === PromptState.style);
   const customActs = PromptState.customActions.trim();
   const selectedActs = PromptState.selectedActions;
+  const G = seqGroups(), N = seqFrames(), rowsPer = N / 5;   // 4 groups × 5 frames, 2 × 10, or 1 × 20
+  const rowRange = g => { const a = g * rowsPer + 1, b = a + rowsPer - 1; return a === b ? (zh ? `第 ${a} 列` : `row ${a}`) : (zh ? `第 ${a}～${b} 列` : `rows ${a}-${b}`); };
 
   let actions;
   if (customActs) {
     actions = customActs;   // free text overrides the chips
   } else if (selectedActs.length > 0) {
-    actions = selectedActs.map((a, i) => zh ? `第 ${i + 1} 列：${a}` : `Row ${i + 1}: ${a}`).join("\n");
+    actions = selectedActs.slice(0, G).map((a, i) => zh ? `第 ${i + 1} 組（${rowRange(i)}，共 ${N} 格）：${a}` : `Group ${i + 1} (${rowRange(i)}, ${N} cells): ${a}`).join("\n");
   } else {
     actions = zh
-      ? "（⚠ 尚未設定 — 請先在介面上選取 1–5 個動作關鍵字，或填寫自訂動作欄位。）"
-      : "(⚠ NOT YET SET — please select 1-5 action keywords or fill the custom-actions field in the UI first.)";
+      ? `（⚠ 尚未設定 — 請先在介面上選取 ${G} 個動作關鍵字，或填寫自訂動作欄位。）`
+      : `(⚠ NOT YET SET — please select ${G} action keyword${G > 1 ? "s" : ""} or fill the custom-actions field in the UI first.)`;
   }
 
   let character;
@@ -2497,54 +2558,69 @@ function promptParts(zh) {
     : (zh ? "不加白色貼圖邊框；角色本身需有粗細一致、清楚的輪廓線。"
           : "No white sticker border; the character itself has a clear outline of consistent thickness.");
 
-  return { actions, character, border, style: zh ? (style.zh || style.en) : style.en };
+  // five phases spread evenly over the N frames of a group
+  const per = N / 5;
+  const span = k => { const a = k * per + 1, b = a + per - 1; return a === b ? (zh ? `第 ${a} 格` : `Cell ${a}`) : (zh ? `第 ${a}～${b} 格` : `Cells ${a}-${b}`); };
+
+  const layout4 = zh
+    ? "每一列（5 格）是一組動畫，共 4 組；每組 5 格由左至右播放，組成一組循環動畫。"
+    : "Each row (5 cells) is one animation group, 4 groups in total. The 5 cells of a row are played left to right and form one looping animation.";
+
+  return { actions, character, border, style: zh ? (style.zh || style.en) : style.en, G, N, rowsPer, span, layout4 };
 }
 
 function buildPromptEN() {
-  const p = promptParts(false);
+  const p = promptParts(false), G = p.G, N = p.N;
+  const layout = G === 4 ? p.layout4 : G === 2
+    ? "Rows 1-2 (10 cells) are animation group 1 and rows 3-4 (10 cells) are animation group 2. The 10 cells of a group are played in reading order and form one looping animation."
+    : "All 4 rows (20 cells) are ONE animation group. The 20 cells are played in reading order and form one looping animation.";
   return `# LINE Animated Sticker Prompt (Dynamic Selection · Continuous-Action Mode)
 
 ## 1. Canvas
-- Canvas: 2400 × 2600 px, transparent PNG (alpha).
-- Layout: 4 columns × 5 rows, 20 keyframes in total.
-- Each row has 4 cells, played left to right, forming one looping animation.
+- Canvas: 3600 × 2400 px (aspect ratio 3:2, landscape), transparent PNG (alpha). **Even if the actual output has fewer pixels, it must keep the 3:2 landscape shape — never a square or portrait image.**
+- Layout: 5 columns × 4 rows, 20 keyframes in total. Reading and playing order: left to right, then top to bottom (the last cell of a row continues in the first cell of the next row).
+- ${layout}
 - **Visible grid lines, rectangular frames, separator lines and watermarks are ABSOLUTELY FORBIDDEN. Text may appear only as allowed by "7. Text Rules"; no other text anywhere.**
 - The character in each cell stands alone with transparent empty space on all sides; it must not cross into or overlap another cell.
-- **Leave plenty of space between stickers so the image can be split afterwards:** each cell is about 600 × 520 px; the character (including hair, limbs, props and effects) is centred and fills at most 75% of the cell's width and height. Keep at least 60 px of transparent margin on every side of every cell, so two neighbouring characters are at least 120 px apart.
+- **Leave plenty of space between stickers so the image can be split afterwards:** each cell is about 720 × 600 px (wider than tall, the same shape as a 320 × 270 LINE sticker); the character (including hair, limbs, props, effects and text) is drawn in the very centre of its cell and fills at most 65% of the cell's width and height. Keep at least 15% of transparent margin on every side of every cell (about 105 px for a 720 px wide cell; scale it down in proportion if the output is smaller), so the empty space between two neighbouring characters is at least 30% of the cell width (about 210 px) — roughly half a character wide. **Draw the character smaller rather than give up any of this space.** White sticker borders, pillows, blankets and effect lines all count as part of the character and must not touch a neighbouring character either.
 - The frames with the largest motion (stretched arms, jumps, flying effects) must stay out of the margin too; if space is tight, make the character smaller instead of shrinking the margin.
-- Between every two columns and every two rows there must be a completely empty transparent band running across the whole canvas, touched by no character, effect or shadow.
+- Between every two columns and every two rows there must be a wide, completely empty transparent band (about 30% of the cell width) running straight across the whole canvas, touched by no character, prop, effect, text or shadow. The image must look like 20 separate little stickers set well apart, not one crowded picture.
 
 ## 2. Character Consistency
 - ${p.character}
 - Face shape, hairstyle, outfit, colors and body proportions are identical in all 20 cells.
-- Within a row, the character's size, camera angle, body centre and baseline position are fixed.
-- No sudden zooming, drifting, mirror-flipping or change of viewpoint.
+- Within a group, the character's size, camera angle, body centre and baseline position are fixed.
+- No sudden zooming, drifting, mirror-flipping or change of viewpoint; within a group the character faces the same side from start to finish.
 
 ## 3. Actions (inserted dynamically)
-**[Actions selected by the user]**
+**[Action${G > 1 ? "s" : ""} selected by the user]**
 ${p.actions}
 
-- Follow the user's order: one action per row. (Depict the actions as they are understood in a Chinese-speaking context.)
-- If fewer than 5 are given, add actions of a similar tone that animate well.
-- **For each action, the AI must design the 4 most natural consecutive keyframes based on the nature of that action.**
-- Different actions must not reuse exactly the same pose progression.
-
+- ${G > 1 ? "Follow the user's order: one action per group." : "The whole image shows this single action."} (Depict the action as it is understood in a Chinese-speaking context.)
+- ${G > 1 ? `If fewer than ${G} are given, add actions of a similar tone that animate well.` : "If none is given, choose an action that animates well."}
+- **For each action, the AI must design the ${N} most natural consecutive keyframes based on the nature of that action.**
+${G > 1 ? "- Different actions must not reuse exactly the same pose progression.\n" : ""}
 ## 4. Animation Continuity (most important)
-The 4 cells of a row are consecutive keyframes of one single motion:
+The ${N} cells of a group are consecutive keyframes of one single motion, spread evenly over five phases:
 
-1. **Start:** preparation or the natural starting point of the motion.
-2. **Transition:** changing gradually along a sensible direction of movement.
-3. **Peak:** the largest range of motion and the liveliest expression.
-4. **Link:** naturally recovering or following through, so that it flows smoothly into cell 1.
+1. **Start (${p.span(0)}):** preparation or the natural starting point of the motion.
+2. **Transition (${p.span(1)}):** changing gradually along a sensible direction of movement.
+3. **Peak (${p.span(2)}):** the largest range of motion and the liveliest expression.
+4. **Recovery (${p.span(3)}):** the motion eases back from the peak, getting smaller.
+5. **Link (${p.span(4)}):** close to the starting pose or naturally following through, so that it flows smoothly into cell 1.
 
-**It must form a natural loop: 1 → 2 → 3 → 4 → 1.**
+**It must form a natural loop: 1 → 2 → … → ${N} → 1.**
 
+- **Small steps:** each cell differs only slightly from the one before it, so the ${N} cells read as one smooth motion. No duplicated still cells and no sudden jumps.
+${p.rowsPer > 1 ? "- **Row changes do not interrupt the motion:** the cell at the start of a new row simply continues from the last cell of the row above (for example cell 5 → cell 6); the motion must not start over at a new row." : "- **One row, one animation:** each row is a complete loop of its own; the 5 cells of a row must connect to each other, not to the row above or below."}
+- **Same side, never switching sides (very important):** in every cell of a group the character faces the same direction; the action is done by the same hand and the same leg (if the right hand waves in cell 1, it is the right hand in every cell, never the left); a prop stays in the same hand; effects, symbols and text also stay on the same side of the character. Never swap left and right or mirror the character part-way through.
 - **Direction continuity:** hands, head and body move along sensible paths; no sudden reversal, teleporting or pose jumps.
 - **Amplitude continuity:** neighbouring frames change naturally; the motion must not swing between big and small.
-- **Loop continuity:** cell 4 must connect naturally back to cell 1 without a visible jump.
+- **Loop continuity:** cell ${N} must connect naturally back to cell 1 without a visible jump.
 - **Nature of the action:** the AI decides the fitting direction, rhythm, rotation, back-and-forth, stretch or expression change.
 - **Effect continuity:** hearts, tears, sweat drops, props etc. move, change or disappear frame by frame with the action.
-- **Registration:** the character's centre and baseline stay fixed; only the parts the action needs are moved.
+- **Registration (work like stop-motion — very important):** treat a group as a stop-motion animation shot with a LOCKED camera. Draw cell 1 first; every other cell starts from cell 1 and changes only the parts that must move. In every cell: the head is the same size and the body is the same size (no growing, shrinking, zooming in or out); the character sits at the same place in its cell (centred left-right, bottom on the same horizontal line); things that do not move — desk, laptop, chair, pillow — have exactly the same size and position in every cell. If the cells of a group were stacked on top of each other, the parts that do not move must overlap perfectly.
+- **Tidy layout:** the 20 cells form a neat 5 × 4 grid: the characters of a column line up vertically, the characters of a row line up horizontally, and the spacing between cells is equal. No cell may be shifted left or right or squeezed into another cell's place, and no character may be cut off by the canvas edge.
 - **Visual effect:** exaggerated, lively and fun, yet consistent with natural motion.
 
 ## 5. Visual Style (inserted dynamically)
@@ -2556,72 +2632,79 @@ ${p.style}
 - Fully transparent background: no scenery, no shadows, no checkerboard pattern.
 
 ## 6. Final Requirements
-**5 different actions × 4 consecutive frames each = 20 cells.**
+**${G > 1 ? `${G} different actions × ${N} consecutive frames each = 20 cells.` : "1 action × 20 consecutive frames = 20 cells."}**
 
-**Same character, same size, same position, sensible direction of motion, natural loop from last frame to first.**
+**Same character, same size, same position, same side with no switching, sensible direction of motion, natural loop from last frame to first.**
 
 **No grid lines, no separator frames, transparent background; no text other than what section 7 allows.**
 
-**Plenty of empty space between stickers: no character, prop or effect may touch or cross into a neighbouring cell.**
+**Leave real space in every cell: the character fills only 65% of its cell and the gap between neighbouring stickers is at least 30% of the cell width; no character, prop, effect or text may touch or cross into a neighbouring cell.**
 
-**Every row must be a truly continuous animation storyboard, not 4 independent pose pictures.**
+**Every group must be a truly continuous animation storyboard, not ${N} independent pose pictures.**
 
 ## 7. Text Rules
-Every row must carry text in exactly one of its cells — the cell that needs text the most — written in Traditional Chinese (繁體中文).
+Every group must carry text in exactly one of its cells — the cell that needs text the most — written in Traditional Chinese (繁體中文).
 
 - **Presentation:** vertical or horizontal, short and easy to read, matching the action and situation.
-- **Amount:** exactly 1 of the 4 cells in a row carries text; the AI decides which cell most needs words to convey the meaning or emotion, and puts the text there.
+- **Amount:** exactly 1 of the ${N} cells in a group carries text; the AI decides which cell most needs words to convey the meaning or emotion, and puts the text there.
 - **Position:** the text must not cover the character, cross into another cell, or enter the transparent margin.
-- **Animation continuity:** the other 3 cells carry no text, so the motion still loops naturally.
+- **Animation continuity:** the other ${N - 1} cells carry no text, so the motion still loops naturally.
 - **Correctness:** no wrong characters, no garbled glyphs, no Simplified Chinese.
 `;
 }
 
 function buildPromptZH() {
-  const p = promptParts(true);
+  const p = promptParts(true), G = p.G, N = p.N;
+  const layout = G === 4 ? p.layout4 : G === 2
+    ? "第 1～2 列（共 10 格）是第 1 組動畫，第 3～4 列（共 10 格）是第 2 組動畫；每組 10 格依閱讀順序播放，組成一組循環動畫。"
+    : "全部 4 列（共 20 格）是同一組動畫；20 格依閱讀順序播放，組成一組循環動畫。";
   return `# LINE 動態貼圖生成指令（動態選擇・連續動作模式）
 
 ## 一、畫布規格
-- 畫布：2400 × 2600 px，透明 PNG（Alpha）。
-- 排版：4 欄 × 5 列，共 20 個關鍵影格。
-- 每列 4 格，由左至右播放，組成一組循環動畫。
+- 畫布：3600 × 2400 px（比例 3:2，橫式），透明 PNG（Alpha）。**即使實際輸出的像素較小，也必須維持 3:2 的橫式比例，不可輸出成正方形或直式。**
+- 排版：5 欄 × 4 列，共 20 個關鍵影格。閱讀與播放順序：由左至右、由上而下（每一列的最後一格接下一列的第一格）。
+- ${layout}
 - **絕對禁止可見格線、矩形框、分隔線及浮水印；文字只能依「七、文字生成規則」出現，其餘一律不可有文字。**
 - 每格角色獨立，四周保留透明留白，不可跨格或互相重疊。
-- **貼圖之間一定要保留足夠的空間，以便後續分割圖片：** 每格約 600 × 520 px，角色（含頭髮、手腳、道具與特效）置中，最多只佔該格寬、高的 75%；每格上下左右各保留至少 60 px 的透明留白，因此相鄰兩個角色之間至少相隔 120 px 的空白。
+- **貼圖之間一定要保留足夠的空間，以便後續分割圖片：** 每格約 720 × 600 px（寬大於高，與 LINE 貼圖 320 × 270 的形狀相同），角色（含頭髮、手腳、道具、特效與文字）畫在格子的正中央，最多只佔該格寬、高的 65%；每格上下左右各保留至少 15% 的透明留白（以 720 px 寬的格子計算約 105 px，輸出尺寸縮小時依比例縮小），因此相鄰兩個角色之間的空白至少是格寬的 30%（約 210 px），大約等於半個角色的寬度。**寧可把角色畫小一點，也一定要留足這段空白。**白色貼圖外框、枕頭、棉被、特效線條等也都算在角色範圍內，同樣不可碰到相鄰的角色。
 - 動作幅度最大的影格（伸手、跳躍、特效飛出）同樣不可進入留白區；空間不夠時請縮小角色，而不是擠壓留白。
-- 欄與欄之間、列與列之間都必須有一條完全空白的透明帶，從畫布一端貫穿到另一端，沒有任何角色、特效或陰影碰到它。
+- 欄與欄之間、列與列之間都必須有一條寬闊、完全空白的透明帶（寬度約為格寬的 30%），從畫布一端筆直貫穿到另一端，沒有任何角色、道具、特效、文字或陰影碰到它。整張圖看起來要像 20 張各自獨立、彼此分得很開的小貼圖，而不是擠在一起的一大張圖。
 
 ## 二、角色一致性
 - ${p.character}
 - 20 格角色的臉型、髮型、服裝、配色、身體比例一致。
-- 同一列角色大小、鏡頭角度、身體中心及基準位置固定。
-- 不可突然縮放、漂移、鏡像翻轉或改變視角。
+- 同一組角色大小、鏡頭角度、身體中心及基準位置固定。
+- 不可突然縮放、漂移、鏡像翻轉或改變視角；同一組從頭到尾面向同一邊，不可換邊。
 
 ## 三、動作選擇（動態帶入）
 **【使用者選擇的動作】**
 ${p.actions}
 
-- 依使用者選擇順序，每列安排一個動作。
-- 若不足 5 組，自動補充風格相近且適合動畫的動作。
-- **AI 必須根據每個動作的特性，自行設計最自然的 4 個連續關鍵影格。**
-- 不可將不同動作套用完全相同的姿勢變化。
-
+- ${G > 1 ? "依使用者選擇順序，每組安排一個動作。" : "整張圖只呈現這一個動作。"}
+- ${G > 1 ? `若不足 ${G} 組，自動補充風格相近且適合動畫的動作。` : "若未指定，請自行選擇一個適合動畫的動作。"}
+- **AI 必須根據每個動作的特性，自行設計最自然的 ${N} 個連續關鍵影格。**
+${G > 1 ? "- 不可將不同動作套用完全相同的姿勢變化。\n" : ""}
 ## 四、動畫連續性（最重要）
-每列 4 格是同一段動作的連續關鍵影格：
+每組 ${N} 格是同一段動作的連續關鍵影格，平均分配在五個階段：
 
-1. **起始：** 動作準備或自然起點。
-2. **過渡：** 沿合理運動方向逐漸變化。
-3. **高峰：** 動作幅度最大、表情最生動。
-4. **銜接：** 自然回復或接續動作，能流暢銜接第 1 格。
+1. **起始（${p.span(0)}）：** 動作準備或自然起點。
+2. **過渡（${p.span(1)}）：** 沿合理運動方向逐漸變化。
+3. **高峰（${p.span(2)}）：** 動作幅度最大、表情最生動。
+4. **回復（${p.span(3)}）：** 動作由高峰逐漸收回，幅度變小。
+5. **銜接（${p.span(4)}）：** 接近起始姿勢或自然接續動作，能流暢銜接第 1 格。
 
-**必須形成自然循環：1 → 2 → 3 → 4 → 1。**
+**必須形成自然循環：1 → 2 → … → ${N} → 1。**
 
+- **小幅變化：** 相鄰兩格之間只做小幅度的變化，${N} 格連起來是一個流暢的動作；不可出現重複的靜止格，也不可突然跳動。
+${p.rowsPer > 1 ? "- **換列不中斷：** 新一列的第一格直接接續上一列的最後一格（例如第 5 格接第 6 格），動作不可因為換列而重新開始。" : "- **一列一組：** 每一列各自是一段完整的循環動畫；同一列的 5 格彼此連貫，不與上、下列相接。"}
+- **同一邊、不換邊（非常重要）：** 同一組的每一格，角色都面向同一個方向；做動作的是同一隻手、同一隻腳（例如第 1 格用右手揮手，之後每一格都是右手，不可變成左手）；道具拿在同一隻手上；特效、符號與文字也都出現在角色的同一側。絕對不可中途左右對調或鏡像翻轉。
 - **方向連續：** 手、頭、身體依合理軌跡移動，不可突然反向、瞬移或跳姿勢。
 - **幅度連續：** 相鄰影格變化自然，避免動作忽大忽小。
-- **循環連續：** 第 4 格必須能自然接回第 1 格，不產生明顯跳動。
+- **循環連續：** 第 ${N} 格必須能自然接回第 1 格，不產生明顯跳動。
 - **動作特性：** AI 自動判斷適合的方向、節奏、旋轉、往返、伸縮或表情變化。
 - **特效連續：** 愛心、眼淚、汗滴、道具等依動作逐格移動、變化或消失。
-- **角色對位：** 角色中心與基準位置固定，僅讓動作所需的部位移動。
+- **角色對位（定格動畫的做法，非常重要）：** 把同一組想成「固定鏡頭」拍攝的定格動畫。先畫好第 1 格，其餘每一格都以第 1 格為底，只修改需要動的部位。每一格中：角色的頭一樣大、身體一樣大（不可忽大忽小、不可忽遠忽近）；角色在格子裡的位置相同（左右置中、底部對齊同一條水平線）；桌子、筆電、椅子、枕頭等不會動的道具，大小與位置每一格完全相同。如果把同一組的各格疊在一起，不動的部分必須能完全重合。
+- **整齊排列：** 20 格排成整齊的 5 欄 × 4 列：每一欄的角色上下對齊成一直線，每一列的角色左右對齊成一橫線，格與格之間的間距相等。不可有格子偏左、偏右或被擠到別格的位置，也不可有角色被畫布邊緣切掉。
 - **視覺效果：** 動作誇張、生動、有趣，但符合自然運動邏輯。
 
 ## 五、視覺風格（動態帶入）
@@ -2633,23 +2716,23 @@ ${p.style}
 - 背景完全透明，無場景、陰影或棋盤格。
 
 ## 六、最終要求
-**5 組不同動作 × 每組 4 個連續影格 = 20 格。**
+**${G > 1 ? `${G} 組不同動作 × 每組 ${N} 個連續影格 = 20 格。` : "1 個動作 × 20 個連續影格 = 20 格。"}**
 
-**同角色、同尺寸、同位置、動作方向合理、首尾自然循環。**
+**同角色、同尺寸、同位置、同一邊不換邊、動作方向合理、首尾自然循環。**
 
 **無格線、無分隔框、透明背景；除第七節允許的文字外，不出現任何文字。**
 
-**貼圖之間保留足夠的空白間距，任何角色、道具、特效都不可碰到或跨入相鄰的格子。**
+**每格中間留足空間：角色只佔格子的 65%，相鄰貼圖之間的空白至少是格寬的 30%；任何角色、道具、特效、文字都不可碰到或跨入相鄰的格子。**
 
-**每列必須呈現真正連續的動畫分鏡，而不是 4 張獨立姿勢圖。**
+**每組必須呈現真正連續的動畫分鏡，而不是 ${N} 張獨立姿勢圖。**
 
 ## 七、文字生成規則
 每一組貼圖都要在其中一格加入文字，加在最需要文字的那一格。
 
 - **文字呈現：** 可直排或橫排，簡短易讀，與動作情境相符。
-- **文字數量：** 每組 4 格只有 1 格出現文字，由 AI 判斷哪一格最需要文字來表達語意或情緒，就加在那一格。
+- **文字數量：** 每組 ${N} 格只有 1 格出現文字，由 AI 判斷哪一格最需要文字來表達語意或情緒，就加在那一格。
 - **文字位置：** 不得遮擋角色、跨格或侵入透明留白區。
-- **動畫連續性：** 其餘 3 格不出現文字，保持動作自然循環。
+- **動畫連續性：** 其餘 ${N - 1} 格不出現文字，保持動作自然循環。
 - **文字正確性：** 不得出現錯字、亂碼或簡體字。
 `;
 }
@@ -3003,11 +3086,11 @@ function setupSplitTab() {
 
   $("#splitConfirmBtn").addEventListener("click", confirmSplit);
   $("#splitResetLinesBtn").addEventListener("click", () => {
-    AppState.split.vLines = [0.25, 0.5, 0.75];
-    AppState.split.hLines = [0.2, 0.4, 0.6, 0.8];
+    AppState.split.vLines = [0.2, 0.4, 0.6, 0.8];
+    AppState.split.hLines = [0.25, 0.5, 0.75];
     drawSplitPreview();
     updateSplitGridInfo();
-    toast("✅ 已還原為 4×5 等分格線", "success");
+    toast("✅ 已還原為 5×4 等分格線", "success");
   });
 
   $("#splitAutoLinesBtn").addEventListener("click", () => autoDetectSplitLines(false));
@@ -3060,6 +3143,7 @@ function setupSplitTab() {
   $("#bgRmContig").addEventListener("change", e => { BgRm.contig = e.target.checked; });
   $("#bgRmTol").addEventListener("input", e => { BgRm.tol = parseInt(e.target.value); $("#bgRmTolVal").textContent = e.target.value; });
   setBgRmMode("green");
+  setupFrameDrag();
   $("#downloadZipBtn").addEventListener("click", downloadSplitZip);
 
   $("#selectAllFramesBtn").addEventListener("click", () => {
@@ -3079,10 +3163,8 @@ function relabelSplitFrames() {
   if (!AppState.split.frames.length) return;
   const start = AppState.split.startNum;
   AppState.split.frames.forEach((f, idx) => {
-    const ncol = AppState.split.ncol || 4;   // frames per row at the time of the cut
-    const row = Math.floor(idx / ncol);
-    const col = idx % ncol;
-    f.label = `${row + start}-${col + 1}`;
+    const per = seqFrames();   // frames per animation group (10 or 20), in reading order
+    f.label = `${Math.floor(idx / per) + start}-${(idx % per) + 1}`;
   });
   renderSplitFramesGrid();
 }
@@ -3105,18 +3187,21 @@ function showSplitEditor() {
   const c = AppState.split.sourceCanvas;
   $("#splitUploader").style.display = "none";
   $("#splitEditor").style.display = "block";
-  $("#splitImgInfo").textContent = `來源尺寸：${c.width} × ${c.height} px ${(c.width === 2400 && c.height === 2600) ? "✅ 完全符合規格" : "⚠ 與建議 2400×2600 不同，仍可使用"}`;
+  // AI tools keep the requested proportions but not the pixel size (a 2600×2400 request came back
+  // as 1305×1205), so the check is on the 3:2 shape, not on exact pixels
+  const ratio = c.width / c.height;
+  $("#splitImgInfo").textContent = `來源尺寸：${c.width} × ${c.height} px ${Math.abs(ratio - 1.5) < 0.06 ? "✅ 比例符合 3:2" : `⚠ 比例約 ${ratio.toFixed(2)}:1，建議為 3:2（1.50:1），仍可使用`}`;
   // reset adjustments
   $("#splitX").value = 0; $("#splitY").value = 0; $("#splitScale").value = 100;
   $("#splitXVal").textContent = "0 px"; $("#splitYVal").textContent = "0 px"; $("#splitScaleVal").textContent = "100%";
   // Reset split lines to even grid every time a new image is loaded
-  AppState.split.vLines = [0.25, 0.5, 0.75];
-  AppState.split.hLines = [0.2, 0.4, 0.6, 0.8];
+  AppState.split.vLines = [0.2, 0.4, 0.6, 0.8];
+  AppState.split.hLines = [0.25, 0.5, 0.75];
   setSplitZoom(1);   // also redraws the preview
   drawSplitPreview();
   updateSplitGridInfo();
   setupSplitCanvasInteraction();
-  // Try to place the lines on the real gaps; keeps the even 4×5 grid when nothing clear is found
+  // Try to place the lines on the real gaps; keeps the even 5×4 grid when nothing clear is found
   autoDetectSplitLines(true);
 }
 
@@ -3591,7 +3676,38 @@ function detectSplitLines() {
   }
   for (let i = 0; i < W; i++) colR[i] /= H;
   for (let i = 0; i < H; i++) rowR[i] /= W;
-  return { v: splitBands(colR, 12), h: splitBands(rowR, 10) };
+  // Clean background bands first. Real AI boards are often crowded (a pillow or a raised fist reaches
+  // into the neighbour's column), so a gap may have no fully empty band: when the bands do not give
+  // the standard 5 × 4 layout, look for the emptiest line near each expected position instead.
+  const pick = (R, expected, maxN) => {
+    const bands = splitBands(R, maxN);
+    if (bands && bands.length + 1 === expected) return bands;
+    return snapSplitLines(R, expected) || bands;
+  };
+  return { v: pick(colR, 5, 12), h: pick(rowR, 4, 10) };
+}
+// One line per expected gap: the emptiest position within reach of k/N, or null when some gap
+// has no reasonably empty position (then the image probably is not an N-way grid).
+function snapSplitLines(R, N) {
+  const L = R.length, sm = new Float32Array(L);
+  for (let i = 0; i < L; i++) { let a = 0, c = 0; for (let j = Math.max(0, i - 2); j <= Math.min(L - 1, i + 2); j++) { a += R[j]; c++; } sm[i] = a / c; }
+  const out = [], win = 0.3 / N * L;
+  for (let k = 1; k < N; k++) {
+    const c0 = k / N * L, lo = Math.max(1, Math.floor(c0 - win)), hi = Math.min(L - 2, Math.ceil(c0 + win));
+    let best = -1, bs = -1;
+    for (let i = lo; i <= hi; i++) {
+      const s = sm[i] - 0.1 * Math.abs(i - c0) / win;   // slight preference for the even position
+      if (s > bs) { bs = s; best = i; }
+    }
+    if (best < 0 || sm[best] < 0.5) return null;
+    // middle of the plateau around the best position
+    let a = best, b = best;
+    while (a - 1 >= lo && sm[a - 1] >= sm[best] - 0.03) a--;
+    while (b + 1 <= hi && sm[b + 1] >= sm[best] - 0.03) b++;
+    out.push(((a + b) / 2 + 0.5) / L);
+  }
+  for (let i = 1; i < out.length; i++) if (out[i] - out[i - 1] < 0.04) return null;
+  return out;
 }
 // silent: no error toast when nothing is found (used right after loading an image)
 function autoDetectSplitLines(silent) {
@@ -3635,22 +3751,35 @@ function confirmSplit() {
   const NCOL = xs.length - 1;
   const NROW = ys.length - 1;
   const frames = [];
+  // Smart cut: follow each sticker's own outline instead of the straight grid lines, then line the
+  // frames of a group up on a common anchor. "off" keeps the plain rectangular cut.
+  const alignMode = $("#splitAlignMode") ? $("#splitAlignMode").value : "off";
+  let smart = null;
+  if (alignMode !== "off") {
+    try { smart = smartCutFrames(adjusted, xs, ys, alignMode, seqFrames()); }
+    catch (e) { console.error("[smartCut]", e); smart = null; }
+  }
   for (let row = 0; row < NROW; row++) {
     for (let col = 0; col < NCOL; col++) {
-      const sx = Math.round(xs[col]);
-      const sy = Math.round(ys[row]);
-      const sw = Math.round(xs[col + 1] - xs[col]);
-      const sh = Math.round(ys[row + 1] - ys[row]);
-      const fc = document.createElement("canvas");
-      fc.width = sw; fc.height = sh;
-      const fctx = fc.getContext("2d", { willReadFrequently: true });
-      fctx.drawImage(adjusted, sx, sy, sw, sh, 0, 0, sw, sh);
+      let fc;
+      if (smart) {
+        fc = smart[row * NCOL + col];
+      } else {
+        const sx = Math.round(xs[col]);
+        const sy = Math.round(ys[row]);
+        fc = document.createElement("canvas");
+        fc.width = Math.round(xs[col + 1] - xs[col]); fc.height = Math.round(ys[row + 1] - ys[row]);
+        fc.getContext("2d", { willReadFrequently: true }).drawImage(adjusted, sx, sy, fc.width, fc.height, 0, 0, fc.width, fc.height);
+      }
+      const sw = fc.width, sh = fc.height;
       // label uses live startNum (row+startNum)-(col+1)
       // orig: untouched copy, so background removal can be re-run with other settings
       const oc = document.createElement("canvas");
       oc.width = sw; oc.height = sh;
       oc.getContext("2d", { willReadFrequently: true }).drawImage(fc, 0, 0);
-      frames.push({ canvas: fc, orig: oc, label: `${row + AppState.split.startNum}-${col + 1}` });
+      // label = group - frame, counted in reading order (a group spans 2 rows of 5, or all 4 rows)
+      const fi = row * NCOL + col, per = seqFrames();
+      frames.push({ canvas: fc, orig: oc, label: `${Math.floor(fi / per) + AppState.split.startNum}-${(fi % per) + 1}` });
     }
   }
   AppState.split.frames = frames;
@@ -3665,6 +3794,147 @@ function confirmSplit() {
   toast(`✅ 已切割為 ${frames.length} 張影格`, "success");
   // Smooth-scroll to results
   setTimeout(() => $("#splitResultsCard").scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+}
+
+/* ----- Smart cut + alignment -----
+ * AI boards are rarely on a perfect grid: a sticker pokes into the next cell, or sits off-centre, so a
+ * straight cut clips it and leaves a piece of its neighbour behind. Here every connected blob of
+ * non-background pixels is given to the cell that holds most of it; a cell's frame is the bounding box
+ * of its own blobs with everybody else's pixels erased. The frames of one animation group are then put
+ * on equally sized canvases around a common anchor, so the character does not jump between frames.
+ *   mode "bottom": anchor = bottom edge, horizontal centre of the lowest quarter (desk, feet, body)
+ *   mode "center": anchor = centre of the sticker's bounding box
+ *   mode "grid"  : anchor = centre of the grid cell (positions exactly as drawn)                    */
+function borderBgColor(d, w, h) {
+  const bins = new Map(); let clear = 0, total = 0;
+  const add = (x, y) => {
+    const q = (y * w + x) * 4; total++;
+    if (d[q + 3] < 16) { clear++; return; }
+    const key = ((d[q] >> 4) << 8) | ((d[q + 1] >> 4) << 4) | (d[q + 2] >> 4);
+    let e = bins.get(key); if (!e) bins.set(key, e = [0, 0, 0, 0]);
+    e[0] += d[q]; e[1] += d[q + 1]; e[2] += d[q + 2]; e[3]++;
+  };
+  for (let x = 0; x < w; x++) { add(x, 0); add(x, h - 1); }
+  for (let y = 0; y < h; y++) { add(0, y); add(w - 1, y); }
+  if (clear >= total * 0.5) return null;   // transparent background
+  let best = null; bins.forEach(e => { if (!best || e[3] > best[3]) best = e; });
+  return best ? [best[0] / best[3], best[1] / best[3], best[2] / best[3]] : null;
+}
+function smartCutFrames(adjusted, xs, ys, mode, per) {
+  const W = adjusted.width, H = adjusted.height, NC = xs.length - 1, NR = ys.length - 1, NCELL = NC * NR;
+  // work on a reduced copy: fast, and enough to tell which sticker a pixel belongs to
+  const s = Math.min(1, 1100 / Math.max(W, H));
+  const w = Math.max(2, Math.round(W * s)), h = Math.max(2, Math.round(H * s));
+  const sc = document.createElement("canvas"); sc.width = w; sc.height = h;
+  const sctx = sc.getContext("2d", { willReadFrequently: true });
+  sctx.drawImage(adjusted, 0, 0, w, h);
+  const d = sctx.getImageData(0, 0, w, h).data;
+  const bg = borderBgColor(d, w, h);
+  const n = w * h, fg = new Uint8Array(n);
+  for (let i = 0, q = 0; i < n; i++, q += 4) {
+    if (d[q + 3] < 24) continue;
+    if (bg) { const dr = d[q] - bg[0], dg = d[q + 1] - bg[1], db = d[q + 2] - bg[2]; if (dr * dr + dg * dg + db * db < 42 * 42) continue; }
+    fg[i] = 1;
+  }
+  const colOf = new Uint8Array(w), rowOf = new Uint8Array(h);
+  for (let x = 0, c = 0; x < w; x++) { while (c < NC - 1 && (x + 0.5) / s >= xs[c + 1]) c++; colOf[x] = c; }
+  for (let y = 0, r = 0; y < h; y++) { while (r < NR - 1 && (y + 0.5) / s >= ys[r + 1]) r++; rowOf[y] = r; }
+  const cellAt = i => rowOf[(i / w) | 0] * NC + colOf[i % w];
+
+  // connected blobs (8-neighbour); owner[id] = cell that holds most of the blob,
+  // or -1 when it is spread over two cells (two stickers touching): then the grid line decides
+  const lab = new Int32Array(n), owner = [0], stack = new Int32Array(n), counts = new Uint32Array(NCELL);
+  for (let i0 = 0; i0 < n; i0++) {
+    if (!fg[i0] || lab[i0]) continue;
+    const id = owner.length; counts.fill(0);
+    let sp = 0, total = 0; stack[sp++] = i0; lab[i0] = id;
+    while (sp) {
+      const i = stack[--sp], x = i % w, y = (i / w) | 0;
+      counts[rowOf[y] * NC + colOf[x]]++; total++;
+      for (let yy = Math.max(0, y - 1); yy <= Math.min(h - 1, y + 1); yy++)
+        for (let xx = Math.max(0, x - 1); xx <= Math.min(w - 1, x + 1); xx++) {
+          const j = yy * w + xx;
+          if (fg[j] && !lab[j]) { lab[j] = id; stack[sp++] = j; }
+        }
+    }
+    let top = 0, second = -1;
+    for (let k = 1; k < NCELL; k++) { if (counts[k] > counts[top]) { second = top; top = k; } else if (second < 0 || counts[k] > counts[second]) second = k; }
+    owner.push(second >= 0 && counts[second] > total * 0.35 ? -1 : top);
+  }
+  // grow the labels by 2 px into the background so the soft edge of a sticker follows that sticker
+  for (let pass = 0; pass < 2; pass++) {
+    const prev = lab.slice();
+    for (let i = 0; i < n; i++) {
+      if (prev[i]) continue;
+      const x = i % w;
+      lab[i] = (x > 0 && prev[i - 1]) || (x < w - 1 && prev[i + 1]) || (i >= w && prev[i - w]) || (i < n - w && prev[i + w]) || 0;
+    }
+  }
+  const cellOfPixel = i => { const l = lab[i]; if (!l) return -1; const o = owner[l]; return o >= 0 ? o : cellAt(i); };
+
+  // bounding box of each cell's own pixels, and the centre of mass of its lowest quarter
+  const box = Array.from({ length: NCELL }, () => ({ x0: w, y0: h, x1: -1, y1: -1 }));
+  for (let i = 0; i < n; i++) {
+    const k = cellOfPixel(i); if (k < 0) continue;
+    const b = box[k], x = i % w, y = (i / w) | 0;
+    if (x < b.x0) b.x0 = x; if (x > b.x1) b.x1 = x; if (y < b.y0) b.y0 = y; if (y > b.y1) b.y1 = y;
+  }
+  const baseX = new Float64Array(NCELL), baseN = new Uint32Array(NCELL);
+  for (let i = 0; i < n; i++) {
+    const k = cellOfPixel(i); if (k < 0) continue;
+    const b = box[k], y = (i / w) | 0;
+    if (y >= b.y1 - (b.y1 - b.y0) * 0.25) { baseX[k] += i % w; baseN[k]++; }
+  }
+
+  const cut = [];
+  for (let k = 0; k < NCELL; k++) {
+    const r = (k / NC) | 0, c = k % NC, b = box[k];
+    const gx0 = Math.round(xs[c]), gy0 = Math.round(ys[r]), gx1 = Math.round(xs[c + 1]), gy1 = Math.round(ys[r + 1]);
+    const empty = b.x1 < 0;
+    let X0 = empty ? gx0 : Math.max(0, Math.floor(b.x0 / s) - 2), Y0 = empty ? gy0 : Math.max(0, Math.floor(b.y0 / s) - 2);
+    let X1 = empty ? gx1 : Math.min(W, Math.ceil((b.x1 + 1) / s) + 2), Y1 = empty ? gy1 : Math.min(H, Math.ceil((b.y1 + 1) / s) + 2);
+    const fw = Math.max(1, X1 - X0), fh = Math.max(1, Y1 - Y0);
+    const fc = document.createElement("canvas"); fc.width = fw; fc.height = fh;
+    const fx = fc.getContext("2d", { willReadFrequently: true });
+    fx.drawImage(adjusted, X0, Y0, fw, fh, 0, 0, fw, fh);
+    if (!empty) {
+      // erase everything inside the box that belongs to another cell
+      const id = fx.getImageData(0, 0, fw, fh), p = id.data;
+      for (let y = 0; y < fh; y++) {
+        const iy = Math.min(h - 1, ((Y0 + y) * s) | 0) * w;
+        for (let x = 0; x < fw; x++) {
+          const o = cellOfPixel(iy + Math.min(w - 1, ((X0 + x) * s) | 0));
+          if (o >= 0 && o !== k) {
+            const q = (y * fw + x) * 4;
+            if (bg) { p[q] = bg[0]; p[q + 1] = bg[1]; p[q + 2] = bg[2]; p[q + 3] = 255; } else p[q + 3] = 0;
+          }
+        }
+      }
+      fx.putImageData(id, 0, 0);
+    }
+    let ax, ay;
+    if (mode === "grid" || empty) { ax = (gx0 + gx1) / 2 - X0; ay = (gy0 + gy1) / 2 - Y0; }
+    else if (mode === "center") { ax = fw / 2; ay = fh / 2; }
+    else { ax = baseN[k] ? (baseX[k] / baseN[k] + 0.5) / s - X0 : fw / 2; ay = fh; }
+    cut.push({ canvas: fc, ax, ay });
+  }
+
+  // one canvas size per animation group, every frame placed by its anchor
+  const out = [];
+  for (let g0 = 0; g0 < NCELL; g0 += per) {
+    const grp = cut.slice(g0, g0 + per);
+    let L = 0, R = 0, T = 0, B = 0;
+    grp.forEach(f => { L = Math.max(L, f.ax); R = Math.max(R, f.canvas.width - f.ax); T = Math.max(T, f.ay); B = Math.max(B, f.canvas.height - f.ay); });
+    const cw = Math.max(1, Math.ceil(L + R)), ch = Math.max(1, Math.ceil(T + B));
+    grp.forEach(f => {
+      const c2 = document.createElement("canvas"); c2.width = cw; c2.height = ch;
+      const x2 = c2.getContext("2d", { willReadFrequently: true });
+      if (bg) { x2.fillStyle = `rgb(${Math.round(bg[0])},${Math.round(bg[1])},${Math.round(bg[2])})`; x2.fillRect(0, 0, cw, ch); }
+      x2.drawImage(f.canvas, Math.round(L - f.ax), Math.round(T - f.ay));
+      out.push(c2);
+    });
+  }
+  return out;
 }
 
 /* ----- Per-row animation preview: tick a row's「預覽動畫」to play its frames in a loop ----- */
@@ -3698,6 +3968,84 @@ function splitPreviewRestart() {
   const sel = $("#splitPrevSpeed");
   splitPreviewTick();
   SplitPreview.timer = setInterval(splitPreviewTick, sel ? parseInt(sel.value) : 200);
+}
+
+/* ----- Drag a cut frame onto another one to swap their positions -----
+ * Mouse: drag from anywhere on the frame. Touch: drag by the ⠿ handle, so a finger on the picture
+ * still scrolls the page. Labels belong to the position, so the two pictures trade labels too. */
+const FrameDrag = { pending: null, active: false, ghost: null, over: null, justDragged: false };
+function swapSplitFrames(a, b) {
+  const fr = AppState.split.frames, sel = AppState.split.selected;
+  if (a === b || !fr[a] || !fr[b]) return;
+  [fr[a].canvas, fr[b].canvas] = [fr[b].canvas, fr[a].canvas];
+  [fr[a].orig, fr[b].orig] = [fr[b].orig, fr[a].orig];
+  // a tick stays with its picture
+  const sa = sel.has(a), sb = sel.has(b);
+  sel.delete(a); sel.delete(b);
+  if (sa) sel.add(b);
+  if (sb) sel.add(a);
+  renderSplitFramesGrid();
+  toast(`✅ 已交換 ${fr[a].label} 與 ${fr[b].label} 的位置`, "success");
+}
+function setupFrameDrag() {
+  const root = $("#splitFramesGrid");
+  if (!root || root._dragInited) return;
+  root._dragInited = true;
+  const begin = () => {
+    const p = FrameDrag.pending;
+    FrameDrag.active = true;
+    p.cell.classList.add("dragging");
+    const img = p.cell.querySelector(".img-area img");
+    const g = document.createElement("img");
+    g.src = img.src; g.className = "frame-drag-ghost";
+    document.body.appendChild(g);
+    FrameDrag.ghost = g;
+  };
+  const move = e => {
+    const g = FrameDrag.ghost;
+    g.style.left = e.clientX + "px"; g.style.top = e.clientY + "px";
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const target = el && el.closest ? el.closest("#splitFramesGrid .frame-cell") : null;
+    if (FrameDrag.over && FrameDrag.over !== target) FrameDrag.over.classList.remove("drop-target");
+    FrameDrag.over = (target && target !== FrameDrag.pending.cell) ? target : null;
+    if (FrameDrag.over) FrameDrag.over.classList.add("drop-target");
+  };
+  const end = drop => {
+    const p = FrameDrag.pending;
+    if (!p) return;
+    const target = FrameDrag.over;
+    if (FrameDrag.ghost) FrameDrag.ghost.remove();
+    p.cell.classList.remove("dragging");
+    if (target) target.classList.remove("drop-target");
+    const wasActive = FrameDrag.active;
+    FrameDrag.pending = null; FrameDrag.active = false; FrameDrag.ghost = null; FrameDrag.over = null;
+    if (wasActive) {
+      // the click that follows this pointerup must not tick the frame
+      FrameDrag.justDragged = true; setTimeout(() => { FrameDrag.justDragged = false; }, 80);
+      if (drop && target) swapSplitFrames(p.idx, parseInt(target.dataset.idx));
+    }
+  };
+  root.addEventListener("pointerdown", e => {
+    const cell = e.target.closest(".frame-cell");
+    if (!cell || BgRm.picking || e.target.closest("input")) return;
+    const onHandle = !!e.target.closest(".drag-handle");
+    if (e.pointerType !== "mouse" && !onHandle) return;
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    FrameDrag.pending = { idx: parseInt(cell.dataset.idx), x: e.clientX, y: e.clientY, cell };
+    if (onHandle) { e.preventDefault(); begin(); move(e); }
+  });
+  document.addEventListener("pointermove", e => {
+    const p = FrameDrag.pending;
+    if (!p) return;
+    if (!FrameDrag.active) {
+      if (Math.hypot(e.clientX - p.x, e.clientY - p.y) < 6) return;   // still a click
+      begin();
+    }
+    e.preventDefault();
+    move(e);
+  });
+  document.addEventListener("pointerup", () => end(true));
+  document.addEventListener("pointercancel", () => end(false));
 }
 
 /* ----- Download one row in one tap -----
@@ -3778,14 +4126,15 @@ function renderSplitFramesGrid() {
   SplitPreview.players = [];
   SplitPreview.dlBtns = [];
   const frames = AppState.split.frames;
-  const ncol = AppState.split.ncol || 4;
+  const ncol = AppState.split.ncol || 5;   // thumbnails per line, same as the cut image
+  const per = seqFrames();                 // frames per animation group: 10 (2 groups) or 20 (1 group)
   const start = AppState.split.startNum;
   let grid = null;
   frames.forEach((f, idx) => {
-    if (idx % ncol === 0) {
-      // one block per row = one animation sequence
-      const row = idx / ncol;
-      const rowIdx = []; for (let i = idx; i < Math.min(idx + ncol, frames.length); i++) rowIdx.push(i);
+    if (idx % per === 0) {
+      // one block per animation group (it spans several lines of thumbnails)
+      const row = idx / per;
+      const rowIdx = []; for (let i = idx; i < Math.min(idx + per, frames.length); i++) rowIdx.push(i);
       const on = SplitPreview.rows.has(row);
       const group = document.createElement("div");
       group.className = "frame-group";
@@ -3793,6 +4142,7 @@ function renderSplitFramesGrid() {
         <div class="frame-group-head">
           <b>第 ${row + start} 組</b>
           <button type="button" class="btn outline grp-sel">☑ 選取整組</button>
+          <button type="button" class="btn outline grp-unsel">☐ 取消勾選</button>
           <button type="button" class="btn line grp-dl">⬇ 下載這組</button>
         </div>
         <div class="frame-group-body">
@@ -3823,20 +4173,24 @@ function renderSplitFramesGrid() {
         SplitPreview.dlBtns.push({ btn, rowIdx });
       });
       group.querySelector(".grp-sel").addEventListener("click", () => {
-        // select the whole row, or clear it when it is already fully selected
-        const all = rowIdx.every(i => AppState.split.selected.has(i));
-        rowIdx.forEach(i => all ? AppState.split.selected.delete(i) : AppState.split.selected.add(i));
+        rowIdx.forEach(i => AppState.split.selected.add(i));
+        renderSplitFramesGrid();
+      });
+      group.querySelector(".grp-unsel").addEventListener("click", () => {
+        rowIdx.forEach(i => AppState.split.selected.delete(i));
         renderSplitFramesGrid();
       });
       root.appendChild(group);
     }
     const cell = document.createElement("div");
     cell.className = "frame-cell";
+    cell.dataset.idx = idx;
     if (AppState.split.selected.has(idx)) cell.classList.add("selected");
     const url = f.canvas.toDataURL("image/png");
     cell.innerHTML = `
       <input type="checkbox" data-idx="${idx}" ${AppState.split.selected.has(idx) ? "checked" : ""} />
-      <div class="img-area"><img src="${url}" alt="${f.label}" /></div>
+      <button type="button" class="drag-handle" title="拖曳到另一格可交換位置" aria-label="拖曳 ${f.label} 交換位置">⠿</button>
+      <div class="img-area"><img src="${url}" alt="${f.label}" draggable="false" /></div>
       <div class="label">${f.label}</div>`;
     const cb = cell.querySelector("input");
     cb.addEventListener("change", e => {
@@ -3851,6 +4205,7 @@ function renderSplitFramesGrid() {
     // while the eyedropper is armed, the click picks the background colour instead
     cell.addEventListener("click", e => {
       if (e.target === cb) return;
+      if (FrameDrag.justDragged || e.target.closest(".drag-handle")) return;   // that was a drag, not a tap
       if (BgRm.picking) { pickBgColorFromFrame(e, cell.querySelector(".img-area img"), idx); return; }
       cb.checked = !cb.checked;
       cb.dispatchEvent(new Event("change"));
@@ -6212,6 +6567,7 @@ async function bootstrap() {
   setupWatermarkTab();
   setupSplitTab();
   setupComposeTab();
+  setSeqMode(PromptState.groups);   // sync headings, placeholders and both mode switches
   try {
     await loadWatermarkMask();
     console.log("Watermark mask loaded.");
