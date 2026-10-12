@@ -1333,8 +1333,8 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
             <div class="card-title" bis_skin_checked="1"><span class="num">1</span>模式設定</div>
             <div class="row" bis_skin_checked="1">
               <div class="btn-group">
-                <button type="button" class="btn" data-seq="4">4 個動作 × 每個 5 格</button>
-             <button type="button" class="btn sel" data-seq="2">2 個動作 × 每個 10 格</button>
+                <button type="button" class="btn sel" data-seq="4">4 個動作 × 每個 5 格</button>
+             <button type="button" class="btn" data-seq="2">2 個動作 × 每個 10 格</button>
                 <button type="button" class="btn" data-seq="1">1 個動作 × 20 格</button>
               </div>
               <span class="muted" style="flex-basis:100%">一張圖固定 20 格（5 欄 × 4 列）：可以做成 4 組各 5 格、2 組各 10 格，或 1 組 20 格的連續動畫，每一種都符合 LINE 動態貼圖 5～20 格的規定。格數越多動作越細緻；每組會在最需要的那一格加入文字。</span>
@@ -1541,8 +1541,8 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
         <div class="row" style="margin-bottom:12px;gap:8px">
           <span class="label" style="margin-bottom:0">分組方式</span>
           <div class="btn-group">
-            <button type="button" class="btn" data-seq="4">4 組 × 每組 5 格</button>
-         <button type="button" class="btn sel" data-seq="2">2 組 × 每組 10 格</button>
+            <button type="button" class="btn sel" data-seq="4">4 組 × 每組 5 格</button>
+         <button type="button" class="btn" data-seq="2">2 組 × 每組 10 格</button>
             <button type="button" class="btn" data-seq="1">1 組 × 20 格</button>
           </div>
           <span class="muted" style="font-size:11px;flex-basis:100%">要和產生這張圖時在分頁 1 選的模式相同；切割後也可以隨時切換，影格會重新分組與編號。</span>
@@ -2339,7 +2339,7 @@ function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 const PromptState = {
   source: "ref",           // ref | custom
   customText: "",
-  groups: 2,               // 2 = two actions × 10 frames each, 1 = one action × 20 frames
+  groups: 4,               // 2 = two actions × 10 frames each, 1 = one action × 20 frames
   selectedActions: [],     // array of action keywords (as many as there are groups)
   customActions: "",       // optional override (free text)
   style: "qcute",
@@ -2347,12 +2347,12 @@ const PromptState = {
   lang: "en"               // "en" (English standard) | "zh" (full Chinese)
 };
 // how many animation groups the 20 cells hold: 4 actions x 5 frames, 2 actions x 10 frames, or 1 action x 20 frames
-const seqGroups = () => ([1, 2, 4].includes(PromptState.groups) ? PromptState.groups : 2);
+const seqGroups = () => ([1, 2, 4].includes(PromptState.groups) ? PromptState.groups : 4);
 const seqFrames = () => 20 / seqGroups();
 const maxActions = () => seqGroups();
 // Switch between the two layouts. Shared by tab 1 (the prompt) and tab 2 (how cut frames are grouped).
 function setSeqMode(groups) {
-  PromptState.groups = [1, 2, 4].includes(groups) ? groups : 2;
+  PromptState.groups = [1, 2, 4].includes(groups) ? groups : 4;
   const G = seqGroups(), N = seqFrames();
   if (PromptState.selectedActions.length > G) PromptState.selectedActions.length = G;
   $$("[data-seq]").forEach(b => b.classList.toggle("sel", parseInt(b.dataset.seq) === G));
