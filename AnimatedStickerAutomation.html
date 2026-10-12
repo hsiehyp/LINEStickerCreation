@@ -1088,6 +1088,23 @@ textarea.input{resize:vertical;min-height:80px;line-height:1.5}
 .kw-clear{padding:5px 11px;border-radius:999px;border:1px solid var(--c-danger);color:var(--c-danger);font-size:12.5px;font-weight:600;background:transparent}
 .kw-clear:hover{background:var(--c-danger);color:#fff}
 @media(pointer:coarse){.kw-clear{padding:8px 13px}}
+/* cut frames: the picture is left completely clear; the drag handle, the number and the tick box
+   sit in a bar under it (on phones the thumbnails are small and the controls used to cover them) */
+.frame-group .frame-cell{aspect-ratio:auto}
+.frame-group .frame-cell .img-area{flex:none;aspect-ratio:1}
+.frame-group .cell-bar{display:flex;align-items:center;gap:4px;padding:3px 5px;background:rgba(0,0,0,.45)}
+.frame-group .cell-bar .label{flex:1;min-width:0;margin:0;padding:0;background:none;white-space:nowrap}
+.frame-group .cell-bar input[type=checkbox]{position:static;flex:none;margin:0;width:16px;height:16px}
+.frame-group .cell-bar .drag-handle{position:static;flex:none;width:22px;height:20px;background:rgba(255,255,255,.18);font-size:13px}
+@media(pointer:coarse){
+  .frame-group .cell-bar input[type=checkbox]{width:22px;height:22px}
+  .frame-group .cell-bar .drag-handle{width:28px;height:26px;font-size:16px}
+}
+/* narrow thumbnails: the number on its own line, handle and tick box at the two ends below it */
+@media(max-width:700px){
+  .frame-group .cell-bar{flex-wrap:wrap;justify-content:space-between;row-gap:3px;padding:3px 4px 4px}
+  .frame-group .cell-bar .label{flex-basis:100%;order:-1}
+}
 /* under the frames of a row: the「預覽動畫」tick box on the left, the animation to its right,
    so the frames keep the full width (they were tiny on phones with the preview beside them) */
 .frame-group-foot{display:flex;align-items:center;gap:14px;margin-top:10px}
@@ -4188,10 +4205,12 @@ function renderSplitFramesGrid() {
     if (AppState.split.selected.has(idx)) cell.classList.add("selected");
     const url = f.canvas.toDataURL("image/png");
     cell.innerHTML = `
-      <input type="checkbox" data-idx="${idx}" ${AppState.split.selected.has(idx) ? "checked" : ""} />
-      <button type="button" class="drag-handle" title="拖曳到另一格可交換位置" aria-label="拖曳 ${f.label} 交換位置">⠿</button>
       <div class="img-area"><img src="${url}" alt="${f.label}" draggable="false" /></div>
-      <div class="label">${f.label}</div>`;
+      <div class="cell-bar">
+        <button type="button" class="drag-handle" title="拖曳到另一格可交換位置" aria-label="拖曳 ${f.label} 交換位置">⠿</button>
+        <div class="label">${f.label}</div>
+        <input type="checkbox" data-idx="${idx}" aria-label="勾選 ${f.label}" ${AppState.split.selected.has(idx) ? "checked" : ""} />
+      </div>`;
     const cb = cell.querySelector("input");
     cb.addEventListener("change", e => {
       e.stopPropagation();
