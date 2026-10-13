@@ -1586,7 +1586,9 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
             <button class="btn primary" id="splitAutoLinesBtn" type="button">🔍 自動偵測分割線</button>
             <button class="btn" id="splitResetLinesBtn" type="button">📐 還原分割線等分</button>
             <button class="btn outline" id="addVLineBtn" type="button">＋ 加垂直線</button>
+            <button class="btn outline" id="delVLineBtn" type="button">－ 減垂直線</button>
             <button class="btn outline" id="addHLineBtn" type="button">＋ 加水平線</button>
+            <button class="btn outline" id="delHLineBtn" type="button">－ 減水平線</button>
             <span class="muted mono" style="font-size:11px" id="splitGridInfo">目前：5 欄 × 4 列 = 20 格</span>
           </div>
           <div class="row" style="margin-bottom:10px;gap:8px" role="group" aria-label="檢視大小">
@@ -3262,6 +3264,8 @@ function setupSplitTab() {
   // Add-line buttons: insert into the widest existing gap so the new line sits in the middle of it
   $("#addVLineBtn").addEventListener("click", () => insertLineIntoWidestGap("v"));
   $("#addHLineBtn").addEventListener("click", () => insertLineIntoWidestGap("h"));
+  $("#delVLineBtn").addEventListener("click", () => removeLineFromNarrowestGap("v"));
+  $("#delHLineBtn").addEventListener("click", () => removeLineFromNarrowestGap("h"));
 
   // Start number — live updates labels everywhere
   $("#zipStartNum").addEventListener("input", e => {
@@ -3482,6 +3486,32 @@ function insertLineIntoWidestGap(kind) {
   const ncol = AppState.split.vLines.length + 1;
   const nrow = AppState.split.hLines.length + 1;
   toast(`✅ 已新增${kind === "v" ? "垂直" : "水平"}分割線（現為 ${ncol}×${nrow} = ${ncol * nrow} 格）`, "success");
+}
+
+// The reverse of insertLineIntoWidestGap: remove the line whose two neighbouring cells are the
+// smallest together, so pressing － right after ＋ takes away the line that was just added.
+function removeLineFromNarrowestGap(kind) {
+  const arr = kind === "v" ? AppState.split.vLines : AppState.split.hLines;
+  if (!arr.length) { toast(`已經沒有${kind === "v" ? "垂直" : "水平"}分割線可以減少`, "error"); return; }
+  const bounds = [0, ...arr, 1];
+  // lines still evenly spaced: keep them even with one line fewer (5 columns -> 4 equal columns)
+  const even = bounds.every((b, i) => Math.abs(b - i / (bounds.length - 1)) < 0.004);
+  if (even) {
+    const n = arr.length;   // cells after removing one line
+    arr.length = 0;
+    for (let i = 1; i < n; i++) arr.push(i / n);
+    drawSplitPreview();
+    updateSplitGridInfo();
+    const ncol = AppState.split.vLines.length + 1, nrow = AppState.split.hLines.length + 1;
+    toast(`✅ 已減少一條${kind === "v" ? "垂直" : "水平"}分割線並重新等分（現為 ${ncol}×${nrow} = ${ncol * nrow} 格）`, "success");
+    return;
+  }
+  let best = 0, bestSpan = Infinity;
+  for (let i = 0; i < arr.length; i++) {
+    const span = bounds[i + 2] - bounds[i];
+    if (span < bestSpan - 1e-9) { bestSpan = span; best = i; }
+  }
+  removeSplitLine(kind, best);
 }
 
 // Remove a specific line by kind + index; enforces minimum 1 column/row (i.e., can delete all lines).
