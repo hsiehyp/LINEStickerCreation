@@ -998,6 +998,7 @@ textarea.input{resize:vertical;min-height:80px;line-height:1.5}
 .kw-selected-bar{padding:10px 12px;background:var(--c-well);border:1px solid var(--c-border);border-radius:8px;min-height:46px;margin-bottom:12px;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
 .kw-selected-empty{color:var(--c-text-faint);font-size:12px;font-style:italic}
 .kw-selected-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 6px 5px 10px;background:var(--c-primary);color:#fff;border-radius:999px;font-size:12.5px;font-weight:500}
+.kw-selected-chip.custom{outline:2px dashed var(--c-warn,#d98a00);outline-offset:1px}
 .kw-selected-chip .idx{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;background:rgba(255,255,255,.25);border-radius:50%;font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace}
 .kw-selected-chip button{background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:11px;line-height:1;padding:0;transition:background .15s}
 .kw-selected-chip button:hover{background:rgba(255,255,255,.45)}
@@ -1401,9 +1402,17 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
       </div>
       <div class="kw-cat-body" bis_skin_checked="1"><button type="button" class="kw-chip" data-kw="大口咬下">大口咬下</button><button type="button" class="kw-chip" data-kw="流口水">流口水</button><button type="button" class="kw-chip" data-kw="舔嘴唇">舔嘴唇</button><button type="button" class="kw-chip" data-kw="乾杯">乾杯</button><button type="button" class="kw-chip" data-kw="捧肚子">捧肚子</button><button type="button" class="kw-chip" data-kw="幸福地嚼">幸福地嚼</button><button type="button" class="kw-chip" data-kw="大口吃">大口吃</button></div></div></div>
             <div style="margin-top:14px" bis_skin_checked="1">
-              <label class="label">✏️ 自訂動作（選填，填寫後將覆蓋上方選取）</label>
-              <textarea class="input" id="customActions" rows="2" placeholder="例：抱貓咪、彈吉他、打電動、追公車、煮泡麵  ← 以「、」或「,」分隔，建議 4 個動作"></textarea>
-              <p class="muted" style="margin-top:6px;font-size:11px">提示：動作主題分類僅是分類用，實際的 Prompt 會以你選的關鍵動作（或自訂內容）為主。</p>
+              <label class="label" for="customActions">✏️ 自行輸入動作（清單裡沒有的才需要輸入）</label>
+              <div class="row" style="gap:8px">
+                <input class="input flex-1" id="customActions" maxlength="120" style="width:auto;min-width:0" placeholder="例：抱貓咪、彈吉他  ← 可用「、」一次加入多個">
+                <button type="button" class="btn primary" id="customActionAdd">＋ 加入</button>
+              </div>
+              <div class="kw-selected-bar" id="kwSelectedBar2" style="margin:10px 0 0"></div>
+              <ul class="muted" style="margin:8px 0 0;padding-left:18px;font-size:12px;line-height:1.7">
+                <li>點選的和自行輸入的排在<b>同一份清單</b>，合計不能超過上面標題寫的動作數；清單上的號碼就是第幾組動畫。</li>
+                <li>自行輸入的會標上 ✏️，每個最多 20 個字；和已選的重複就不會再加。</li>
+                <li>選滿之後，要先按 × 移除一個才能再加。</li>
+              </ul>
             </div>
           </div>
 
@@ -1419,6 +1428,19 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
               <span>為角色加入白色貼圖邊框 (Add white sticker border)</span>
             </div>
           </div>
+
+          <div class="card">
+            <div class="card-title"><span class="num">6</span>背景</div>
+            <div class="row">
+              <div class="btn-group" id="promptBgGroup">
+                <button type="button" class="btn sel" data-pbg="green">純綠幕（之後再去背）</button>
+                <button type="button" class="btn" data-pbg="alpha">透明背景</button>
+              </div>
+              <span style="font-size:13px;font-weight:700;color:var(--c-warn,#d98a00)">👈 使用 Gemini 請選「純綠幕」</span>
+            </div>
+            <p class="muted" style="margin-top:8px">AI 給不出真的透明背景時請用純綠幕，到「2. 圖片分割 / 智慧去背」再用「綠幕」去背。</p>
+          </div>
+
         </div>
 
         <div bis_skin_checked="1">
@@ -1436,7 +1458,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
               <button class="btn line flex-1" id="goGeminiBtn">✨ 前往 Gemini</button>
               <button class="btn line flex-1" id="goChatGPTBtn">🤖 前往 ChatGPT</button>
             </div>
-            <p class="muted" style="margin-top:8px">已強制加入 <b>透明背景</b>、<b>角色一致</b> 與 <b>禁止格線</b> 指令。中文版適合丟給 ChatGPT 等中文友善模型。</p>
+            <p class="muted" style="margin-top:8px">已強制加入 <b>背景設定</b>、<b>角色一致</b> 與 <b>禁止格線</b> 指令。中文版適合丟給 ChatGPT 等中文友善模型。</p>
           </div>
         </div>
       </div>
@@ -2340,10 +2362,10 @@ const PromptState = {
   source: "ref",           // ref | custom
   customText: "",
   groups: 4,               // 2 = two actions × 10 frames each, 1 = one action × 20 frames
-  selectedActions: [],     // array of action keywords (as many as there are groups)
-  customActions: "",       // optional override (free text)
+  selectedActions: [],     // picked keywords and typed actions in one list (as many as there are groups)
   style: "qcute",
   border: false,
+  bg: "green",             // "green" (solid green screen, keyed out in tab 2) | "alpha" (transparent)
   lang: "en"               // "en" (English standard) | "zh" (full Chinese)
 };
 // how many animation groups the 20 cells hold: 4 actions x 5 frames, 2 actions x 10 frames, or 1 action x 20 frames
@@ -2363,7 +2385,7 @@ function setSeqMode(groups) {
     ? "5 欄 × 4 列，共 20 張；第 1～2 列是第 1 組（10 格），第 3～4 列是第 2 組（10 格），比例 3:2 的橫式圖片" : G === 4 ? "5 欄 × 4 列，共 20 張；每一列是一組 5 格的連續動畫，共 4 組，比例 3:2 的橫式圖片"
     : "5 欄 × 4 列，共 20 張；全部 20 格是同一組連續動畫，比例 3:2 的橫式圖片";
   const ca = $("#customActions");
-  if (ca) ca.placeholder = G === 1 ? "例：抱貓咪  ← 請填 1 個動作" : G === 2 ? "例：抱貓咪、彈吉他  ← 以「、」或「,」分隔，請填 2 個動作" : "例：抱貓咪、彈吉他、打電動、追公車  ← 以「、」或「,」分隔，請填 4 個動作";
+  if (ca) ca.placeholder = G === 1 ? "例：抱貓咪  ← 只能有 1 個動作" : "例：抱貓咪、彈吉他  ← 可用「、」一次加入多個";
   renderSelectedKeywordsBar();
   refreshChipStates();
   renderPrompt();
@@ -2407,10 +2429,15 @@ function setupPromptTab() {
   $("#charCustomText").addEventListener("input", e => {
     PromptState.customText = e.target.value; renderPrompt();
   });
-  // custom actions (overrides theme keywords when filled)
-  $("#customActions").addEventListener("input", e => {
-    PromptState.customActions = e.target.value; renderPrompt();
-  });
+  // typed actions join the same list as the picked keywords (same limit, same numbering)
+  $("#customActionAdd").addEventListener("click", addCustomActions);
+  $("#customActions").addEventListener("keydown", e => { if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); addCustomActions(); } });
+  // background: green screen (default) or transparent
+  $$("#promptBgGroup [data-pbg]").forEach(b => b.addEventListener("click", () => {
+    PromptState.bg = b.dataset.pbg;
+    $$("#promptBgGroup [data-pbg]").forEach(x => x.classList.toggle("sel", x === b));
+    renderPrompt();
+  }));
   // border switch
   $("#borderSwitch").addEventListener("change", e => {
     PromptState.border = e.target.checked; renderPrompt();
@@ -2483,19 +2510,51 @@ function toggleKeyword(kw) {
   renderPrompt();
 }
 
-function renderSelectedKeywordsBar() {
-  const bar = $("#kwSelectedBar");
-  if (!bar) return;
+const MAX_ACTION_LEN = 20;
+const isCustomAction = kw => !AppConfig.promptThemes.some(t => t.keywords.includes(kw));
+const escAttr = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+// Typed actions are added one by one to the same list as the chips. Duplicates, over-long entries
+// and anything beyond the limit are not added; the rejected ones stay in the box for the user to fix.
+function addCustomActions() {
+  const inp = $("#customActions"), max = maxActions();
+  const parts = inp.value.split(/[、,，;；\n]/).map(s => s.trim()).filter(Boolean);
+  if (!parts.length) { toast("請先輸入動作", "error"); return; }
+  const sel = PromptState.selectedActions, long = [], over = [];
+  let added = 0, dup = 0;
+  parts.forEach(s => {
+    if (sel.includes(s) || long.includes(s) || over.includes(s)) { dup++; return; }
+    if ([...s].length > MAX_ACTION_LEN) { long.push(s); return; }
+    if (sel.length >= max) {
+      if (max > 1 || added) { over.push(s); return; }
+      sel.length = 0;   // single-action mode: the typed action replaces the picked one
+    }
+    sel.push(s); added++;
+  });
+  inp.value = long.concat(over).join("、");
+  const msg = [];
+  if (added) msg.push(`已加入 ${added} 個`);
+  if (dup) msg.push(`${dup} 個已經在清單裡`);
+  if (long.length) msg.push(`${long.length} 個超過 ${MAX_ACTION_LEN} 個字，請縮短`);
+  if (over.length) msg.push(`${over.length} 個因為已選滿 ${max} 個沒有加入，請先按 × 移除`);
+  toast(msg.join("；"), added && !long.length && !over.length ? "success" : "error");
+  renderSelectedKeywordsBar();
+  refreshChipStates();
+  renderPrompt();
+}
+
+// the same list is shown above the categories and again below the typing box, so it is visible from both ends
+function renderSelectedKeywordsBar() { $$(".kw-selected-bar").forEach(renderSelectedBarInto); }
+function renderSelectedBarInto(bar) {
   const items = PromptState.selectedActions;
   let html = "";
   if (items.length === 0) {
-    html = `<span class="kw-selected-empty">尚未選取動作（請從下方分類點選 1–${maxActions()} 個）</span>`;
+    html = `<span class="kw-selected-empty">尚未選取動作（請從下方分類點選，或自行輸入，共 ${maxActions()} 個）</span>`;
   } else {
     html = items.map((kw, i) => `
-      <span class="kw-selected-chip">
+      <span class="kw-selected-chip${isCustomAction(kw) ? " custom" : ""}">
         <span class="idx">${i + 1}</span>
-        <span>${kw}</span>
-        <button type="button" data-kw="${kw}" aria-label="移除">×</button>
+        <span>${isCustomAction(kw) ? "✏️ " : ""}${escAttr(kw)}</span>
+        <button type="button" data-i="${i}" aria-label="移除">×</button>
       </span>`).join("");
   }
   if (items.length) html += `<button type="button" class="kw-clear">✕ 全部取消選取</button>`;
@@ -2513,8 +2572,7 @@ function renderSelectedKeywordsBar() {
   bar.querySelectorAll(".kw-selected-chip button").forEach(btn => {
     btn.addEventListener("click", e => {
       e.stopPropagation();
-      const kw = btn.dataset.kw;
-      const i = PromptState.selectedActions.indexOf(kw);
+      const i = parseInt(btn.dataset.i);
       if (i >= 0) PromptState.selectedActions.splice(i, 1);
       renderSelectedKeywordsBar();
       refreshChipStates();
@@ -2532,24 +2590,82 @@ function refreshChipStates() {
   });
 }
 
+// The prompts are written for a transparent background; for the green-screen option every mention
+// of transparency is reworded (the watercolour style's "半透明" is not about the background and is kept).
+function applyGreenBg(text, zh) {
+  if (zh) return text
+    .replace("透明 PNG（Alpha）", "純綠色（#00C800）背景，整張畫布平坦均勻，方便之後去背")
+    .replace("背景完全透明，無場景、陰影或棋盤格。", "背景只有純綠色（#00C800），無場景、陰影、漸層或棋盤格；角色、文字與外框本身不可使用綠色。")
+    .replace(/半透明/g, "\u0001").replace(/透明/g, "純綠色").replace(/\u0001/g, "半透明");
+  return text
+    .replace("transparent PNG (alpha)", "solid pure green (#00C800) background, flat and even across the whole canvas so it can be keyed out later")
+    .replace("Fully transparent background: no scenery, no shadows, no checkerboard pattern.", "The background is solid pure green (#00C800) only: no scenery, no shadows, no gradients, no checkerboard pattern. The character, text and outlines must not use green.")
+    .replace(/transparent/g, "pure green");
+}
 function renderPrompt() {
-  const out = PromptState.lang === "zh" ? buildPromptZH() : buildPromptEN();
+  const zh = PromptState.lang === "zh";
+  let out = zh ? buildPromptZH() : buildPromptEN();
+  if (PromptState.bg === "green") out = applyGreenBg(out, zh);
   $("#promptOutput").textContent = out;
+  renderListing();
+}
+
+/* ----- Store listing: title + description for LINE Creators Market (title ≤ 40, description ≤ 160) ----- */
+const STYLE_SHORT_EN = { qcute: "Cute Chibi", real: "Realistic", "3d": "3D Figure", flat: "Flat Illustration", book: "Storybook", doodle: "Doodle", chibi: "Japanese Chibi", anime: "Anime", water: "Watercolor", ink: "Ink Painting", pixel: "Pixel Art", pastel: "Pastel Crayon", bwline: "Line Doodle", kaomoji: "Funny Face", uscartoon: "Cartoon" };
+const LISTING_FIELDS = [
+  { key: "enTitle", label: "標題（English）", max: 40, rows: 1 },
+  { key: "enDesc",  label: "貼圖說明（English）", max: 160, rows: 3 },
+  { key: "zhTitle", label: "標題（中文繁體）", max: 40, rows: 1 },
+  { key: "zhDesc",  label: "貼圖說明（中文繁體）", max: 160, rows: 3 }
+];
+function buildListing() {
+  const st = AppConfig.promptStyles.find(s => s.id === PromptState.style) || AppConfig.promptStyles[0];
+  const stEn = STYLE_SHORT_EN[st.id] || "Cute", stZh = st.label.replace(/\s+/g, "");
+  const nEn = $("#lsNameEn").value.trim(), nZh = $("#lsNameZh").value.trim();
+  // the chosen actions (or the custom ones) are named in the Chinese description
+  const acts = PromptState.selectedActions.slice();
+  const enTitle = ((nEn ? nEn + " - " : "") + stEn + " Animated Stickers").slice(0, 40);
+  const zhTitle = ((nZh ? nZh + "的" : "") + stZh + "動態貼圖").slice(0, 40);
+  const enDesc = `${nEn ? nEn + "'s " + stEn.toLowerCase() : stEn} animated stickers with lively, looping motions. Great for everyday chats, greetings and reactions!`.slice(0, 160);
+  const zhBase = `${nZh || "原創角色"}的${stZh}動態貼圖，動作連續又生動，日常聊天、打招呼、回應都好用！`;
+  let used = [];
+  for (const a of acts) { if ((zhBase + "內容包含：" + [...used, a].join("、") + "等。").length > 160) break; used.push(a); }
+  const zhDesc = (used.length ? zhBase + "內容包含：" + used.join("、") + "等。" : zhBase).slice(0, 160);
+  return { enTitle, enDesc, zhTitle, zhDesc };
+}
+function renderListing() {
+  const box = $("#listingFields"); if (!box) return;
+  const v = buildListing();
+  if (!box.children.length) {
+    box.innerHTML = LISTING_FIELDS.map(f => `
+      <div style="margin-bottom:10px">
+        <div class="row" style="justify-content:space-between"><span class="label" style="margin-bottom:0">${f.label}</span><span class="muted mono" data-count="${f.key}"></span></div>
+        <div class="row" style="align-items:flex-start;margin-top:4px;gap:8px">
+          <textarea class="input flex-1" rows="${f.rows}" maxlength="${f.max}" data-field="${f.key}" style="min-height:0;width:auto"></textarea>
+          <button type="button" class="btn" data-copyfield="${f.key}">複製</button>
+        </div>
+      </div>`).join("");
+    LISTING_FIELDS.forEach(f => {
+      const ta = $(`[data-field="${f.key}"]`, box);
+      ta.oninput = () => { $(`[data-count="${f.key}"]`, box).textContent = `${ta.value.length}/${f.max}`; };
+      $(`[data-copyfield="${f.key}"]`, box).onclick = () => { const ok = copyText(ta.value); toast(ok ? "✅ 已複製" : "複製失敗，請手動選取", ok ? "success" : "error"); };
+    });
+    $("#lsNameEn").oninput = renderListing;
+    $("#lsNameZh").oninput = renderListing;
+  }
+  LISTING_FIELDS.forEach(f => { const ta = $(`[data-field="${f.key}"]`, box); ta.value = v[f.key]; ta.oninput(); });
 }
 
 // The three dynamic parts of the prompt, in the chosen language:
 // actions (one per row), visual style, and the sticker-border setting.
 function promptParts(zh) {
   const style = AppConfig.promptStyles.find(s => s.id === PromptState.style);
-  const customActs = PromptState.customActions.trim();
   const selectedActs = PromptState.selectedActions;
   const G = seqGroups(), N = seqFrames(), rowsPer = N / 5;   // 4 groups × 5 frames, 2 × 10, or 1 × 20
   const rowRange = g => { const a = g * rowsPer + 1, b = a + rowsPer - 1; return a === b ? (zh ? `第 ${a} 列` : `row ${a}`) : (zh ? `第 ${a}～${b} 列` : `rows ${a}-${b}`); };
 
   let actions;
-  if (customActs) {
-    actions = customActs;   // free text overrides the chips
-  } else if (selectedActs.length > 0) {
+  if (selectedActs.length > 0) {
     actions = selectedActs.slice(0, G).map((a, i) => zh ? `第 ${i + 1} 組（${rowRange(i)}，共 ${N} 格）：${a}` : `Group ${i + 1} (${rowRange(i)}, ${N} cells): ${a}`).join("\n");
   } else {
     actions = zh
@@ -2591,13 +2707,16 @@ function buildPromptEN() {
   const layout = G === 4 ? p.layout4 : G === 2
     ? "Rows 1-2 (10 cells) are animation group 1 and rows 3-4 (10 cells) are animation group 2. The 10 cells of a group are played in reading order and form one looping animation."
     : "All 4 rows (20 cells) are ONE animation group. The 20 cells are played in reading order and form one looping animation.";
-  return `# LINE Animated Sticker Prompt (Dynamic Selection · Continuous-Action Mode)
+  return `You are a professional LINE sticker character designer.
+
+# LINE Animated Sticker Prompt (Dynamic Selection · Continuous-Action Mode)
 
 ## 1. Canvas
 - Canvas: 3600 × 2400 px (aspect ratio 3:2, landscape), transparent PNG (alpha). **Even if the actual output has fewer pixels, it must keep the 3:2 landscape shape — never a square or portrait image.**
 - Layout: 5 columns × 4 rows, 20 keyframes in total. Reading and playing order: left to right, then top to bottom (the last cell of a row continues in the first cell of the next row).
 - ${layout}
-- **Visible grid lines, rectangular frames, separator lines and watermarks are ABSOLUTELY FORBIDDEN. Text may appear only as allowed by "7. Text Rules"; no other text anywhere.**
+- **Do NOT draw any grid of boxes:** "5 columns × 4 rows" only describes where things are placed. The image must not show any squares, frame lines, cell borders, separator lines or table lines, and no cell may have a rectangular outline around it. No watermarks either.
+- **Text may appear only as allowed by "7. Text Rules"; no other text anywhere.**
 - The character in each cell stands alone with transparent empty space on all sides; it must not cross into or overlap another cell.
 - **Leave plenty of space between stickers so the image can be split afterwards:** each cell is about 720 × 600 px (wider than tall, the same shape as a 320 × 270 LINE sticker); the character (including hair, limbs, props, effects and text) is drawn in the very centre of its cell and fills at most 65% of the cell's width and height. Keep at least 15% of transparent margin on every side of every cell (about 105 px for a 720 px wide cell; scale it down in proportion if the output is smaller), so the empty space between two neighbouring characters is at least 30% of the cell width (about 210 px) — roughly half a character wide. **Draw the character smaller rather than give up any of this space.** White sticker borders, pillows, blankets and effect lines all count as part of the character and must not touch a neighbouring character either.
 - The frames with the largest motion (stretched arms, jumps, flying effects) must stay out of the margin too; if space is tight, make the character smaller instead of shrinking the margin.
@@ -2653,7 +2772,7 @@ ${p.style}
 
 **Same character, same size, same position, same side with no switching, sensible direction of motion, natural loop from last frame to first.**
 
-**No grid lines, no separator frames, transparent background; no text other than what section 7 allows.**
+**No grid of boxes or lines, no separator frames, transparent background; no text other than what section 7 allows.**
 
 **Leave real space in every cell: the character fills only 65% of its cell and the gap between neighbouring stickers is at least 30% of the cell width; no character, prop, effect or text may touch or cross into a neighbouring cell.**
 
@@ -2675,13 +2794,16 @@ function buildPromptZH() {
   const layout = G === 4 ? p.layout4 : G === 2
     ? "第 1～2 列（共 10 格）是第 1 組動畫，第 3～4 列（共 10 格）是第 2 組動畫；每組 10 格依閱讀順序播放，組成一組循環動畫。"
     : "全部 4 列（共 20 格）是同一組動畫；20 格依閱讀順序播放，組成一組循環動畫。";
-  return `# LINE 動態貼圖生成指令（動態選擇・連續動作模式）
+  return `你是一位專業的 LINE 貼圖角色設計師。
+
+# LINE 動態貼圖生成指令（動態選擇・連續動作模式）
 
 ## 一、畫布規格
 - 畫布：3600 × 2400 px（比例 3:2，橫式），透明 PNG（Alpha）。**即使實際輸出的像素較小，也必須維持 3:2 的橫式比例，不可輸出成正方形或直式。**
 - 排版：5 欄 × 4 列，共 20 個關鍵影格。閱讀與播放順序：由左至右、由上而下（每一列的最後一格接下一列的第一格）。
 - ${layout}
-- **絕對禁止可見格線、矩形框、分隔線及浮水印；文字只能依「七、文字生成規則」出現，其餘一律不可有文字。**
+- **不可生成方框的格線：** 所謂 5 欄 × 4 列只是排列位置，畫面上不可畫出任何方格、框線、格子邊界、分隔線或表格線；每一格周圍也不可有矩形外框。也不可有浮水印。
+- **文字只能依「七、文字生成規則」出現，其餘一律不可有文字。**
 - 每格角色獨立，四周保留透明留白，不可跨格或互相重疊。
 - **貼圖之間一定要保留足夠的空間，以便後續分割圖片：** 每格約 720 × 600 px（寬大於高，與 LINE 貼圖 320 × 270 的形狀相同），角色（含頭髮、手腳、道具、特效與文字）畫在格子的正中央，最多只佔該格寬、高的 65%；每格上下左右各保留至少 15% 的透明留白（以 720 px 寬的格子計算約 105 px，輸出尺寸縮小時依比例縮小），因此相鄰兩個角色之間的空白至少是格寬的 30%（約 210 px），大約等於半個角色的寬度。**寧可把角色畫小一點，也一定要留足這段空白。**白色貼圖外框、枕頭、棉被、特效線條等也都算在角色範圍內，同樣不可碰到相鄰的角色。
 - 動作幅度最大的影格（伸手、跳躍、特效飛出）同樣不可進入留白區；空間不夠時請縮小角色，而不是擠壓留白。
@@ -2737,7 +2859,7 @@ ${p.style}
 
 **同角色、同尺寸、同位置、同一邊不換邊、動作方向合理、首尾自然循環。**
 
-**無格線、無分隔框、透明背景；除第七節允許的文字外，不出現任何文字。**
+**不可生成方框的格線、無分隔框、透明背景；除第七節允許的文字外，不出現任何文字。**
 
 **每格中間留足空間：角色只佔格子的 65%，相鄰貼圖之間的空白至少是格寬的 30%；任何角色、道具、特效、文字都不可碰到或跨入相鄰的格子。**
 
