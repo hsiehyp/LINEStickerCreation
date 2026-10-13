@@ -1674,6 +1674,10 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
               <div class="row" style="justify-content:space-between"><span class="label">容差值（越大去除越多）</span><span class="mono" id="bgRmTolVal">80</span></div>
               <input type="range" class="slider" id="bgRmTol" min="20" max="150" step="1" value="80">
             </div>
+            <label class="row" style="flex-basis:100%;gap:8px;cursor:pointer;font-size:13px;align-items:flex-start">
+              <input type="checkbox" id="bgRmHard" checked style="width:18px;height:18px;margin-top:2px;flex:none;accent-color:var(--c-primary)">
+              <span style="flex:1"><b>邊緣清乾淨（上傳 LINE 必開）</b>：去掉半透明的邊緣與殘留雜點。LINE 無法顯示半透明，沒開的話貼圖周圍會出現黑色、桃紅色的雜塊。</span>
+            </label>
             <button class="btn primary" id="runBgRmBtn" type="button">⚡ 執行去背處理</button>
             <span class="muted" style="flex:1;min-width:160px">可以換模式或調整容差後重複執行，每次都從切割後的原圖重新處理。</span>
           </div>
@@ -4489,6 +4493,34 @@ function keyOutColor(d, w, h, key, tol, contiguous) {
   }
 }
 
+// LINE (LINE 拍貼 in particular) cannot show half-transparent pixels: they turn into black / magenta
+// blotches around the sticker. So every pixel ends up either fully opaque or fully transparent,
+// and leftover specks of background (tiny isolated islands) are erased.
+function cleanAlphaForLine(d, w, h) {
+  const n = w * h;
+  for (let p = 0; p < n; p++) {
+    const i = p * 4;
+    if (d[i+3] < 128) d[i] = d[i+1] = d[i+2] = d[i+3] = 0; else d[i+3] = 255;
+  }
+  const seen = new Uint8Array(n), q = new Int32Array(n);
+  const minArea = Math.max(8, Math.round(n * 0.00015));
+  for (let s = 0; s < n; s++) {
+    if (seen[s] || !d[s*4+3]) continue;
+    let head = 0, tail = 0;
+    q[tail++] = s; seen[s] = 1;
+    while (head < tail) {
+      const p = q[head++], x = p % w, y = (p - x) / w;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        const nx = x + dx, ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+        const np = ny * w + nx;
+        if (!seen[np] && d[np*4+3]) { seen[np] = 1; q[tail++] = np; }
+      }
+    }
+    if (tail < minArea) for (let k = 0; k < tail; k++) { const i = q[k] * 4; d[i] = d[i+1] = d[i+2] = d[i+3] = 0; }
+  }
+}
+
 function runBackgroundRemoval() {
   if (!AppState.split.frames.length) { toast("請先切割影格", "error"); return; }
   if (!$("#bgRmEnable").checked) { toast("已停用智能去背，跳過", ""); return; }
@@ -4507,6 +4539,7 @@ function runBackgroundRemoval() {
       const key = BgRm.mode === "border" ? sampleBorderColor(d, w, h) : BgRm.color;
       if (key) keyOutColor(d, w, h, key, tol, BgRm.contig); else noBg++;
     }
+    if ($("#bgRmHard").checked) cleanAlphaForLine(d, w, h);
     ctx.putImageData(id, 0, 0);
   });
   AppState.split.bgRemoved = true;
