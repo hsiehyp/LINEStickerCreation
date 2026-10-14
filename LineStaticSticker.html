@@ -1047,11 +1047,16 @@
         </div>
         <div class="button-row">
           <button class="btn success" id="zip-download">📦 下載完整 ZIP</button>
+          <button class="btn pick" id="all-download">🖼️ 全部存成圖片（手機建議）</button>
           <a class="btn secondary" href="https://creator.line.me/zh-hant/" target="_blank" rel="noopener noreferrer" id="open-line-creators">
             🎨 前往 LINE Creators Market
           </a>
         </div>
         <div class="progress-bar hidden" id="zip-progress"><div class="fill"></div></div>
+        <div class="alert warning" style="margin-top:14px">
+          <span>⚠️</span>
+          <span>下載的是透明背景 PNG。<strong>Android 手機</strong>請用 Chrome 開啟本頁並按「全部存成圖片」，圖片會存到相簿的「Download」資料夾，再到 LINE 拍貼選用。<strong>請勿經由 LINE 聊天室以「照片」傳送，也不要用相簿編輯後另存</strong>，這些動作會把圖片轉成 JPG，透明背景會變成黑色。從電腦傳到手機請傳 ZIP 檔，或用雲端硬碟、傳輸線。</span>
+        </div>
       </div>
     </div>
   </section>
@@ -1147,6 +1152,8 @@ const Env = (() => {
     isLine,
     isInApp: isLine || /FBAN|FBAV|FB_IAB|Instagram|MicroMessenger|; wv\)/i.test(ua),
     isAndroid: /Android/i.test(ua),
+    // iPadOS 會偽裝成 Mac，需另外以觸控點數判斷
+    isIOS: /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1),
     isHttp: /^https?:$/.test(location.protocol),
     triedExternal: /[?&]openExternalBrowser=1/.test(location.search)
   };
@@ -1261,12 +1268,14 @@ function triggerDownload(blob, filename) {
 }
 
 // 統一的儲存入口。items: [{ blob, filename }]
-//   preferShare：手機/平板優先用 Web Share API（可直接存進相簿）
+//   preferShare：iPhone / iPad 優先用 Web Share API（分享面板有「儲存影像」可存進相簿）
 async function saveFiles(items, okMsg, preferShare) {
   if (Env.isInApp) { await openSaveModal(items); return; }
 
-  // 桌機一律跳過 share，因為桌機分享面板無法直接「下載到電腦」
-  if (preferShare && isTouchPrimaryDevice()) {
+  // 只有 iOS 走 share。Android 的分享面板沒有「儲存」，圖片只能轉交給其他 App，
+  // 途中常被轉成 JPG 而失去透明背景；直接下載才能把原始 PNG 存進「Download」資料夾。
+  // 桌機同樣直接下載。
+  if (preferShare && Env.isIOS) {
     const files = itemsToFiles(items);
     if (canShareFiles(files)) {
       try {
@@ -1322,7 +1331,7 @@ async function openSaveModal(items) {
   $("save-modal-desc").textContent =
     "App 內建瀏覽器無法直接下載檔案。請「長按圖片」選擇儲存" +
     (shareable ? "，或按下方「分享／儲存到相簿」" : "") +
-    "。若都無法儲存，請改用外部瀏覽器開啟後重新操作（目前的進度不會保留）。";
+    "。若存到相簿後透明背景變成黑色，或都無法儲存，請改用外部瀏覽器開啟後重新操作（目前的進度不會保留）。";
   $("save-modal").classList.remove("hidden");
 }
 
@@ -2186,6 +2195,7 @@ function initSplitTab() {
     updateFrameLabels();
   });
   $("zip-download").addEventListener("click", downloadZip);
+  $("all-download").addEventListener("click", downloadAllImages);
   updateZipPreviewName();
 }
 
@@ -2614,24 +2624,7 @@ function getFrameFilename(f) {
   return `${getDisplayLabel(f.col, f.row)}.png`;
 }
 
-// 判斷是否為觸控為主的裝置（手機/平板）
-// 桌機即使支援 navigator.canShare 也不走 share，避免分享面板取代真實下載
-function isTouchPrimaryDevice() {
-  try {
-    // Chromium 90+：最準確的識別
-    if (navigator.userAgentData && typeof navigator.userAgentData.mobile === "boolean") {
-      return navigator.userAgentData.mobile;
-    }
-    // 媒體查詢：主要指標裝置是否為粗指標（手指）
-    if (window.matchMedia && window.matchMedia("(pointer: coarse)").matches) return true;
-    // UA 後備
-    return /Android|iPhone|iPad|iPod|Mobile|Silk/i.test(navigator.userAgent);
-  } catch (e) {
-    return false;
-  }
-}
-
-// 單張下載：手機優先用 Web Share API，不支援則退回 <a download>
+// 單張下載：iOS 優先用 Web Share API，其餘直接 <a download>
 async function downloadSingleFrame(f, useNoBg) {
   const filename = getFrameFilename(f);
   let blob;
@@ -2839,6 +2832,52 @@ function updateZipPreviewName() {
     `輸出檔名：${start}-1.png ~ ${endCol}-${rows}.png（${cols}×${rows} = ${cols*rows} 張）`;
 }
 
+// 把去背後的每張貼圖轉成 PNG，並更新進度條（到 80%）。失敗時回傳 null
+async function buildFrameItems(fill) {
+  const total = Split.framesNoBg.length;
+  const items = [];
+  try {
+    for (let i = 0; i < total; i++) {
+      const f = Split.framesNoBg[i];
+      items.push({ blob: await canvasToPngBlob(f.canvas), filename: getFrameFilename(f) });
+      fill.style.width = ((i + 1) / total * 80) + "%";
+      await new Promise(r => setTimeout(r, 0));
+    }
+  } catch (e) {
+    toast("匯出失敗：" + e.message, "error");
+    return null;
+  }
+  return items;
+}
+
+// 不打包，逐張存成 PNG：手機不必解壓縮，圖片會直接出現在相簿
+async function downloadAllImages() {
+  if (!Split.framesNoBg.length) { toast("請先完成去背處理", "error"); return; }
+  const progress = $("zip-progress");
+  const fill = progress.querySelector(".fill");
+  progress.classList.remove("hidden");
+  fill.style.width = "0%";
+  const items = await buildFrameItems(fill);
+  if (!items) { progress.classList.add("hidden"); return; }
+
+  // iOS 無法連續下載多個檔案，改用儲存視窗（可一次分享全部或長按儲存）
+  if (Env.isInApp || Env.isIOS) {
+    fill.style.width = "100%";
+    setTimeout(() => progress.classList.add("hidden"), 600);
+    await openSaveModal(items);
+    return;
+  }
+
+  // 逐張下載要留間隔，太密集瀏覽器會漏掉
+  for (let i = 0; i < items.length; i++) {
+    triggerDownload(items[i].blob, items[i].filename);
+    fill.style.width = (80 + (i + 1) / items.length * 20) + "%";
+    await new Promise(r => setTimeout(r, 350));
+  }
+  setTimeout(() => progress.classList.add("hidden"), 600);
+  toast(`已下載 ${items.length} 張圖片（若瀏覽器詢問是否允許下載多個檔案，請按允許）`, "success");
+}
+
 async function downloadZip() {
   if (!Split.framesNoBg.length) { toast("請先完成去背處理", "error"); return; }
   const start = parseInt($("zip-start").value) || 1;
@@ -2848,22 +2887,9 @@ async function downloadZip() {
   fill.style.width = "0%";
 
   // 將每張 canvas 轉成 PNG
-  const total = Split.framesNoBg.length;
-  const items = [];
-  let maxCol = 1;
-  try {
-    for (let i = 0; i < total; i++) {
-      const f = Split.framesNoBg[i];
-      maxCol = Math.max(maxCol, f.col);
-      items.push({ blob: await canvasToPngBlob(f.canvas), filename: getFrameFilename(f) });
-      fill.style.width = ((i + 1) / total * 80) + "%";
-      await new Promise(r => setTimeout(r, 0));
-    }
-  } catch (e) {
-    progress.classList.add("hidden");
-    toast("匯出失敗：" + e.message, "error");
-    return;
-  }
+  const items = await buildFrameItems(fill);
+  if (!items) { progress.classList.add("hidden"); return; }
+  const maxCol = Split.framesNoBg.reduce((m, f) => Math.max(m, f.col), 1);
 
   // App 內建瀏覽器無法下載 ZIP，改為逐張顯示讓使用者長按 / 分享儲存
   if (Env.isInApp) {
