@@ -1,0 +1,2389 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LINE 特效／全螢幕貼圖小幫手</title>
+<script>
+// 主題要在畫面繪製前套用，避免先閃一下另一種底色
+(function () {
+  var t = "light";
+  try { t = localStorage.getItem("fullScreenStickerTheme") || t; } catch (e) {}
+  document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+})();
+</script>
+<style>
+:root{
+  --bg:#F3F2F8; --panel:#FFFFFF; --panel-2:#F7F6FB; --ink:#1B1A26; --muted:#5E5C72; --faint:#8E8CA3;
+  --line:#DEDCEB; --line-strong:#C6C3DA;
+  --accent:#6D4AE0; --accent-ink:#FFFFFF; --accent-soft:#ECE7FD; --accent-line:#B9A8F3;
+  --green:#06A648; --warn:#A96400; --warn-soft:#FFF2D9; --bad:#C62F2F; --bad-soft:#FCE6E4; --good:#0A8A43; --good-soft:#E2F2E7;
+  --well:#ECEAF5; --shadow:0 1px 2px rgba(27,26,38,.06),0 6px 20px rgba(27,26,38,.07);
+  --r:14px;
+  --sans:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --bg:#12111A; --panel:#1B1A26; --panel-2:#22212F; --ink:#ECEAF6; --muted:#A6A3BC; --faint:#77748F;
+  --line:#2F2D40; --line-strong:#423F58;
+  --accent:#9B80FF; --accent-ink:#130B33; --accent-soft:#2A2350; --accent-line:#55459B;
+  --green:#2FCB74; --warn:#F0AE45; --warn-soft:#33260F; --bad:#F27B72; --bad-soft:#3A1917; --good:#35C774; --good-soft:#16301F;
+  --well:#15141E; --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.28);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.6;padding-bottom:60px}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3{margin:0}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.top{display:flex;align-items:center;gap:12px;padding:14px 20px;background:var(--panel);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
+.top .logo{flex:none;width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,#6D4AE0,#F95F8E);color:#fff;display:grid;place-items:center;font-size:20px}
+.top h1{font-size:19px;font-weight:900}
+.top p{margin:0;color:var(--muted);font-size:12.5px}
+.top .grow{flex:1;min-width:0}
+.theme-toggle{flex:none;border:1px solid var(--line-strong);background:var(--panel-2);border-radius:999px;padding:8px 14px;font-weight:700;cursor:pointer;white-space:nowrap}
+.tabs{max-width:1200px;margin:0 auto;display:flex;gap:8px;overflow-x:auto;padding:14px 20px 0;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab-btn{flex:none;border:1px solid transparent;background:var(--well);color:var(--muted);border-radius:999px;padding:10px 18px;font-weight:700;cursor:pointer;white-space:nowrap}
+.tab-btn.on{background:var(--accent);color:var(--accent-ink)}
+main{max-width:1200px;margin:0 auto;padding:16px 20px}
+.panel{display:none}
+.panel.on{display:block}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:18px;margin-bottom:16px}
+.card-title{font-size:16px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card-title .num{flex:none;width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-size:12px}
+.muted{color:var(--muted);font-size:12.5px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.row>*{min-width:0}
+.grow{flex:1}
+.label{font-size:12.5px;color:var(--muted);font-weight:600;display:block;margin-bottom:6px}
+.btn{border:1px solid var(--line-strong);background:var(--panel);border-radius:10px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:6px;color:var(--ink);text-decoration:none}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.08);color:var(--accent-ink)}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.green:hover{filter:brightness(1.08);color:#fff}
+.btn.sel{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent)}
+.btn[disabled]{opacity:.45;cursor:not-allowed;pointer-events:none}
+.btn.sm{padding:5px 9px;font-size:12px}
+.btn-group{display:flex;flex-wrap:wrap;gap:8px}
+.input,.select,textarea.input{width:100%;padding:9px 12px;border-radius:8px;background:var(--panel-2);border:1px solid var(--line-strong);font-size:13px;outline:none}
+.input:focus,.select:focus{border-color:var(--accent)}
+textarea.input{resize:vertical;min-height:64px;line-height:1.5}
+.select{width:auto;max-width:100%}
+input[type=range]{accent-color:var(--accent);width:100%}
+input[type=checkbox]{accent-color:var(--accent);width:18px;height:18px;flex:none}
+.chip{border:1px solid transparent;background:var(--well);color:var(--muted);border-radius:999px;padding:6px 12px;font-size:12.5px;cursor:pointer}
+.chip.sel{background:var(--accent);color:var(--accent-ink)}
+.chip.off{opacity:.4}
+.btn.again{background:var(--warn-soft);border:2px solid var(--warn);color:var(--warn);font-weight:800;padding:9px 16px}
+.btn.again:hover{background:var(--warn);color:#fff}
+.picked{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:10px 12px;background:var(--well);border:1px solid var(--line);border-radius:10px;min-height:46px;margin-bottom:12px}
+.pk{display:inline-flex;align-items:center;gap:6px;padding:4px 5px;background:var(--accent);color:var(--accent-ink);border-radius:999px;font-size:12.5px;font-weight:600}
+.pk.custom{outline:2px dashed var(--warn);outline-offset:1px}
+.pk b{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,.25);font-size:11px}
+.pk button{border:none;background:rgba(255,255,255,.22);color:inherit;border-radius:50%;width:20px;height:20px;padding:0;line-height:1;cursor:pointer;font-size:13px}
+.pk-clear{border:1px solid var(--bad);color:var(--bad);background:transparent;border-radius:999px;padding:5px 11px;font-size:12.5px;font-weight:600;cursor:pointer}
+.pk-count{margin-left:auto;font-size:12.5px;color:var(--muted)}
+.pk-count.full b{color:var(--bad)}
+.cat{margin-bottom:8px}
+.cat summary{cursor:pointer;padding:6px 0;font-size:13px;color:var(--muted);user-select:none}
+.cat summary b{color:var(--ink)}
+.cat .btn-group{padding:4px 0 6px}
+.rules{margin:10px 0 0;padding-left:18px;font-size:12.5px;color:var(--muted)}
+.rules li{margin:2px 0}
+@media (pointer:coarse){.pk button{width:26px;height:26px}.pk-clear{padding:8px 13px}}
+.note{border-radius:12px;padding:12px 16px;margin-bottom:16px;color:#fff;font-size:13.5px;line-height:1.7;box-shadow:0 4px 14px rgba(0,0,0,.16)}
+.note b:first-child{display:block;font-size:16px;margin-bottom:4px}
+.note.purple{background:#5B3FD0}
+.note.blue{background:#1D4ED8}
+.note.green{background:#048C3C}
+.hint{font-size:12px;line-height:1.6;color:var(--muted);background:var(--well);border:1px solid var(--line);border-radius:8px;padding:8px 12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.prompt{background:var(--well);border:1px solid var(--line);border-radius:10px;padding:12px;font-family:var(--mono);font-size:12px;line-height:1.65;white-space:pre-wrap;word-break:break-word;max-height:420px;overflow:auto}
+
+.drop{border:2px dashed var(--accent-line);border-radius:14px;padding:32px 16px;text-align:center;cursor:pointer;background:var(--panel-2)}
+.drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.board-wrap{background:#111;border-radius:10px;overflow:auto;max-height:520px;padding:6px;text-align:center}
+.board-wrap canvas{max-width:100%;height:auto;display:inline-block;vertical-align:top}
+.board-wrap.pick canvas{cursor:crosshair}
+.strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.fr{border:2px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel-2)}
+.fr.off{opacity:.35}
+.fr .pic{aspect-ratio:1;background:#8CABD8;display:grid;place-items:center}
+.fr .pic img{max-width:100%;max-height:100%;display:block}
+.fr .bar{display:flex;align-items:center;gap:2px;padding:3px;background:rgba(0,0,0,.45);color:#fff;font-family:var(--mono);font-size:11px}
+.fr .bar b{flex:1;text-align:center}
+.fr .bar button{border:0;background:rgba(255,255,255,.2);color:#fff;border-radius:5px;width:24px;height:22px;cursor:pointer;line-height:1;padding:0}
+/* 特效清單：一格一張貼圖的全螢幕動畫 */
+.slots{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px}
+.slot{border:2px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel-2);cursor:pointer;padding:0;text-align:center;position:relative}
+.slot.cur{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.slot .pic{aspect-ratio:1;background:#8CABD8;display:grid;place-items:center;font-size:22px;color:#fff;position:relative;overflow:hidden}
+.slot .pic img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
+.slot .cap{font-size:12px;padding:4px 2px;position:relative;background:var(--panel-2);line-height:1.3;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot .cap b{color:var(--ink);font-family:var(--mono)}
+.slot.ok .cap b{color:var(--good)}
+.slot.bad .cap b{color:var(--bad)}
+.slot .star{position:absolute;top:2px;right:4px;font-size:14px}
+.slot .redo{position:absolute;top:4px;left:4px;font-size:11px;font-weight:700;padding:2px 6px;border-radius:6px;background:rgba(0,0,0,.6);color:#fff}
+.slot .redo:hover{background:var(--accent)}
+@media (max-width:820px){.slots{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.stk{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.stk .fr .pic{aspect-ratio:370/320}
+.stk .acts{display:grid;gap:4px;padding:6px}
+
+/* 聊天室預覽：全螢幕動畫蓋在聊天畫面上播放 */
+.phone{position:relative;width:min(300px,100%);aspect-ratio:9/16;margin:0 auto;border-radius:22px;overflow:hidden;background:#8CABD8;border:6px solid #222;box-shadow:var(--shadow)}
+.phone .bubble{position:absolute;max-width:62%;padding:7px 11px;border-radius:16px;font-size:12px;line-height:1.4;color:#111}
+.phone .b1{left:10px;top:12%;background:#fff}
+.phone .b2{right:10px;top:24%;background:#8DE055}
+.phone .b3{left:10px;top:36%;background:#fff}
+.phone .stkimg{position:absolute;right:10px;bottom:9%;width:44%;display:grid;place-items:center;font-size:54px}
+.phone .stkimg img{max-width:100%;display:block}
+.phone canvas{position:absolute;left:0;top:50%;width:100%;transform:translateY(-50%);pointer-events:none;z-index:2}
+.phone .bubble,.phone .stkimg{z-index:1}
+/* 特效貼圖在聊天室背景播放：動畫放到訊息後面 */
+[data-kind="effect"] .phone canvas{z-index:0}
+.kind-card{border:2px solid var(--accent)}
+.checks{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:5px;font-size:13px}
+.checks li{display:flex;gap:8px;align-items:flex-start}
+.checks li::before{content:"✔";color:var(--good);font-weight:900}
+.checks li.bad::before{content:"✘";color:var(--bad)}
+.checks li.warn::before{content:"!";color:var(--warn)}
+.spec{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;font-size:12.5px}
+.spec div{background:var(--well);border-radius:8px;padding:8px 10px}
+.spec b{display:block;color:var(--accent)}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:10px;font-size:13.5px;z-index:200;width:max-content;max-width:calc(100vw - 28px);text-align:center;box-shadow:var(--shadow)}
+.modal{position:fixed;inset:0;z-index:150;background:rgba(0,0,0,.72);display:grid;place-items:center;padding:16px}
+.modal .box{background:var(--panel);border-radius:14px;padding:18px;max-width:420px;width:100%;text-align:center}
+.modal img{max-width:100%;max-height:46vh;border-radius:8px;background:#8CABD8}
+
+@media (pointer:coarse){
+  .btn{min-height:40px}
+  .input,.select,textarea.input{font-size:16px}
+  .chip{padding:8px 13px}
+  .fr .bar button{width:30px;height:28px}
+  input[type=checkbox]{width:22px;height:22px}
+}
+@media (max-width:820px){.grid2{grid-template-columns:1fr}}
+@media (max-width:560px){
+  .top{padding:12px 14px}
+  .top h1{font-size:16px}
+  .top p{font-size:11px}
+  .tabs{padding:12px 14px 0}
+  .tab-btn{padding:8px 14px;font-size:13px}
+  main{padding:14px}
+  .card{padding:14px}
+  .strip{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+  .stk{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="logo" aria-hidden="true">✨</div>
+  <div class="grow">
+    <h1 data-kind-fixed>LINE 特效／全螢幕貼圖小幫手</h1>
+    <p>提示詞 ・ 全螢幕圖片製作 ・ 貼圖圖片／主圖／標籤</p>
+  </div>
+  <button type="button" class="theme-toggle" id="themeToggle" aria-label="切換網站底色"></button>
+</header>
+<nav class="tabs" id="tabs">
+  <button type="button" class="tab-btn on" data-tab="prompt">1. 貼圖主題提示詞</button>
+  <button type="button" class="tab-btn" data-tab="sticker">2. 貼圖圖片／主圖／標籤</button>
+  <button type="button" class="tab-btn" data-tab="fxprompt">3. 全螢幕圖片提示詞</button>
+  <button type="button" class="tab-btn" data-tab="effect">4. 全螢幕圖片製作</button>
+  <button type="button" class="tab-btn" data-tab="pack">5. 打包上架</button>
+</nav>
+
+<main id="main">
+  <!-- 貼圖類型：兩種貼圖的設計方式一樣，這個網頁共用 -->
+  <div class="card kind-card" data-kind-fixed>
+    <div class="row">
+      <span class="label" style="margin:0;font-size:15px">🎯 要做哪一種貼圖？</span>
+      <div class="btn-group" id="kindGroup">
+        <button type="button" class="btn" data-kind="effect">✨ 特效貼圖</button>
+        <button type="button" class="btn sel" data-kind="popup">🎆 全螢幕貼圖</button>
+      </div>
+    </div>
+    <p style="margin:10px 0 0;font-size:14px;line-height:1.7"><b>這兩種貼圖的設計方式完全一樣，所以這個網頁兩種共用。</b>規格（8／16／24 張、貼圖圖片 370 × 320、動畫 480 × 480、5～20 格、最長 3 秒）和 1 → 5 的製作步驟都相同，差別只有：</p>
+    <ul class="rules" style="font-size:13.5px">
+      <li><b>播放位置</b>：特效貼圖在聊天室的<b>背景</b>播放（在訊息後面，像佈景）；全螢幕貼圖<b>蓋在整個聊天畫面上</b>播放（在訊息前面，像跳出來）。</li>
+      <li><b>提示詞 B 的寫法</b>：特效貼圖要元素佈滿畫面；全螢幕貼圖要一個大大的主體、有衝擊感。選好類型，提示詞會自動換。</li>
+      <li><b>檔名</b>：特效貼圖是 01_effect.png、main_effect.png；全螢幕貼圖是 01_popup.png、main_popup.png。</li>
+    </ul>
+    <p class="muted" style="margin:8px 0 0">做到一半也可以切換，已做好的內容不會清掉；下載時才依目前選的類型命名。</p>
+  </div>
+  <!-- 進度存檔：一次做不完時先存檔，下次開啟接著做；兩個存檔也可以合併 -->
+  <div class="card" style="padding:12px 16px">
+    <div class="row">
+      <span style="flex:1;min-width:220px;font-size:14px;line-height:1.6"><b>💾 做不完沒關係</b>：先按「下載貼圖」下載存檔（ZIP，<b>貼圖圖片和全螢幕動畫都會一起存</b>，「成品」資料夾裡是可直接使用的 01.png、01_popup.png…），下次按「開啟存檔」就能接著做。在不同時間、不同電腦做的存檔，也能一個一個開啟合併在一起；也可以直接選多個編號檔名的圖片（01.png、01_popup.png…）加入。</span>
+      <button type="button" class="btn primary" id="projSave">💾 下載貼圖（含動畫）</button>
+      <button type="button" class="btn" id="projOpen">📂 開啟／合併存檔</button>
+      <input type="file" id="projFile" accept=".zip,application/zip,.png,image/png" multiple hidden>
+    </div>
+  </div>
+  <!-- ================= 1. 貼圖主題提示詞 ================= -->
+  <section class="panel on" id="panel-prompt">
+    <div class="note purple">
+      <b>✨ 全螢幕貼圖和動態貼圖哪裡不一樣？</b>
+      每一張全螢幕貼圖要準備兩張圖：一張不會動的「貼圖圖片」（顯示在訊息位置），以及一張會動的「全螢幕圖片」（送出後蓋在整個聊天畫面上播放）。請照上面 1 → 5 的順序做：先做好貼圖圖片（分頁 1、2），再做全螢幕圖片（分頁 3、4），最後打包（分頁 5）。
+    </div>
+    <div class="card">
+      <div class="card-title">📋 全螢幕貼圖規格（LINE Creators Market）</div>
+      <div class="spec">
+        <div><b>貼圖圖片（靜態）</b>370 × 320 以內，PNG</div>
+        <div><b>全螢幕圖片（動態）</b>480 × 480 以內，APNG，其中一邊須為 480</div>
+        <div><b>全螢幕貼圖主要圖片</b>480 × 480，APNG，1 張</div>
+        <div><b>主要圖片</b>240 × 240，PNG，1 張</div>
+        <div><b>聊天室標籤</b>96 × 74，PNG，1 張</div>
+        <div><b>畫格／時間</b>5～20 格，最長 3 秒，循環 1～3 次</div>
+        <div><b>張數</b>8、16 或 24 張</div>
+        <div><b>檔案大小</b>每張小於 1 MB</div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div>
+        <div class="card">
+          <div class="card-title"><span class="num">1</span>角色來源</div>
+          <div class="btn-group" id="srcGroup">
+            <button type="button" class="btn sel" data-src="ref">📸 用我的照片當角色</button>
+            <button type="button" class="btn" data-src="custom">✏️ 自訂角色</button>
+          </div>
+          <p class="muted" id="srcRefNote" style="margin:10px 0 0">📌 這裡不需要上傳照片。等一下把提示詞貼到 Gemini 等 AI 工具時，請一併附上您的照片。</p>
+          <textarea class="input" id="charText" hidden style="margin-top:10px" placeholder="例：一隻穿著太空衣喝珍奶的機器人"></textarea>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="num">2</span>貼圖主題（最多 <span class="maxN">8</span> 個，可以點選，也可以自行輸入）</div>
+          <div class="row" style="margin-bottom:12px">
+            <span class="label" style="margin:0">整套貼圖張數</span>
+            <div class="btn-group" id="countGroup">
+              <button type="button" class="btn sel" data-stk="8">8 張</button>
+              <button type="button" class="btn" data-stk="16">16 張</button>
+              <button type="button" class="btn" data-stk="24">24 張</button>
+            </div>
+            <span class="muted">LINE 只接受 8、16 或 24 張</span>
+          </div>
+          <div class="picked" id="themePicked"></div>
+          <div id="themeCats"></div>
+          <label class="label" for="themeCustom" style="margin-top:12px">✏️ 自行輸入主題（清單裡沒有的才需要輸入）</label>
+          <div class="row">
+            <input class="input grow" id="themeCustom" maxlength="80" placeholder="例：阿彌陀佛、揪團囉　← 可用「、」一次加入多個">
+            <button type="button" class="btn primary" id="themeAdd">＋ 加入</button>
+          </div>
+          <div class="picked" id="themePicked2" style="margin:10px 0 0"></div>
+          <ul class="rules">
+            <li>點選的和自行輸入的排在<b>同一份清單</b>，合計最多 <span class="maxN">8</span> 個；清單上的號碼就是貼圖編號（1 → 01.png、01_popup.png）。</li>
+            <li>自行輸入的會標上 ✏️，每個最多 10 個字（會當成貼圖上的文字）；和已選的重複就不會再加。</li>
+            <li>滿 <span class="maxN">8</span> 個之後，要先按 × 移除一個才能再加。沒選滿時 AI 會自動補上風格相近的貼圖。</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="num">3</span>畫風</div>
+          <div class="btn-group" id="styleChips"></div>
+          <label class="row" style="margin-top:12px;cursor:pointer"><input type="checkbox" id="stickerText" checked><span>靜態貼圖圖片上加入簡短的繁體中文字</span></label>
+          <div class="row" style="margin-top:12px">
+            <span class="label" style="margin:0">背景</span>
+            <div class="btn-group" id="stBgGroup">
+              <button type="button" class="btn sel" data-stbg="green">純綠幕（之後再去背）</button>
+              <button type="button" class="btn" data-stbg="alpha">透明背景</button>
+            </div>
+            <span style="font-size:13px;font-weight:700;color:var(--warn)">👈 使用 Gemini 請選「純綠幕」</span>
+          </div>
+          <p class="muted" style="margin:10px 0 0">預設用純綠幕，到分頁 2 分割時一起去背；AI 能給出真的透明背景時才需要改選「透明背景」。</p>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <div class="card-title">🅰 提示詞 A：貼圖圖片（靜態，一次 8 張）</div>
+          <div id="batchBox" hidden style="margin-bottom:10px">
+            <div class="btn-group" id="batchGroup"></div>
+            <p class="muted" style="margin:8px 0 0">一張大圖畫 8 張貼圖，所以要分 <b id="batchN">2</b> 次生成：每按一個按鈕就複製一次提示詞、生成一張大圖。第 2 張起，請把第 1 張大圖一起附給 AI，角色才會一致。</p>
+          </div>
+          <div class="prompt" id="promptA"></div>
+          <div class="row" style="margin-top:10px">
+            <button type="button" class="btn primary grow" data-copy="promptA">📑 複製提示詞 A</button>
+            <a class="btn" href="https://gemini.google.com/app" target="_blank" rel="noopener">✨ Gemini</a>
+            <a class="btn" href="https://chatgpt.com/" target="_blank" rel="noopener">🤖 ChatGPT</a>
+          </div>
+          <p class="muted" style="margin:8px 0 0">生成後到分頁「2. 貼圖圖片／主圖／標籤」切割與輸出。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 3. 全螢幕圖片提示詞 ================= -->
+  <section class="panel" id="panel-fxprompt">
+    <div class="note purple">
+      <b>🎇 一張貼圖配一個全螢幕動畫，每一張都要各生成一次</b>
+      選好要做哪一張貼圖的全螢幕動畫 → 複製提示詞 B 交給 AI 生圖 → 到分頁「4. 全螢幕圖片製作」做成動畫。做完一張再回來選下一張。角色與畫風沿用分頁 1 的設定。
+    </div>
+    <div class="grid2">
+      <div>
+        <div class="card">
+          <div class="card-title"><span class="num">1</span>動畫內容（一次做一張）</div>
+          <label class="label" for="fxTheme">要做哪一張貼圖的全螢幕動畫（只列出分頁 1 已選的貼圖主題，數字是貼圖編號）</label>
+          <select class="select" id="fxTheme" style="width:100%"></select>
+          <label class="label" for="fxText" id="fxTextLabel" style="margin-top:10px">動畫內容（可以自己改）</label>
+          <textarea class="input" id="fxText"></textarea>
+          <div class="row" style="margin-top:10px">
+            <span class="label" style="margin:0">畫面內容</span>
+            <div class="btn-group" id="fxCharGroup">
+              <button type="button" class="btn sel" data-fxchar="1">角色＋特效</button>
+              <button type="button" class="btn" data-fxchar="char">只有角色</button>
+              <button type="button" class="btn" data-fxchar="0">只有特效元素</button>
+            </div>
+          </div>
+          <div class="row" style="margin-top:10px">
+            <span class="label" style="margin:0">影格數</span>
+            <div class="btn-group" id="fxGridGroup">
+              <button type="button" class="btn" data-grid="3x3">9 格（3×3）</button>
+              <button type="button" class="btn sel" data-grid="4x3">12 格（4×3）</button>
+              <button type="button" class="btn" data-grid="4x4">16 格（4×4）</button>
+              <button type="button" class="btn" data-grid="5x4">20 格（5×4）</button>
+            </div>
+          </div>
+          <div class="row" style="margin-top:10px">
+            <span class="label" style="margin:0">背景</span>
+            <div class="btn-group" id="fxBgGroup">
+              <button type="button" class="btn sel" data-fxbg="green">純綠幕（之後再去背）</button>
+              <button type="button" class="btn" data-fxbg="alpha">透明背景</button>
+            </div>
+            <span style="font-size:13px;font-weight:700;color:var(--warn)">👈 使用 Gemini 請選「純綠幕」</span>
+          </div>
+          <p class="muted" style="margin:10px 0 0">格數越多動畫越細緻，但 AI 越難畫得連貫；建議先用 9 或 12 格試。背景預設用純綠幕，到分頁 4 分割時一起去背。</p>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <div class="card-title">🅱 提示詞 B：全螢幕圖片（連續動畫影格）</div>
+          <div class="prompt" id="promptB"></div>
+          <div class="row" style="margin-top:10px">
+            <button type="button" class="btn primary grow" data-copy="promptB">📑 複製提示詞 B</button>
+            <a class="btn" href="https://gemini.google.com/app" target="_blank" rel="noopener">✨ Gemini</a>
+            <a class="btn" href="https://chatgpt.com/" target="_blank" rel="noopener">🤖 ChatGPT</a>
+          </div>
+          <p class="muted" style="margin:8px 0 0">生成後到分頁「4. 全螢幕圖片製作」切割、預覽並輸出 480 × 480 的動畫檔。每一張貼圖的全螢幕動畫都要各做一次。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 4. 全螢幕圖片製作 ================= -->
+  <section class="panel" id="panel-effect">
+    <div class="note blue">
+      <b>🎬 把 AI 生成的動畫影格大圖，做成 480 × 480 的全螢幕圖片</b>
+      上傳用「提示詞 B」生成的大圖 → 依格數切割 → 需要時去背 → 在聊天室畫面預覽 → 下載 APNG。
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="num">1</span>選擇要做哪一張的全螢幕動畫
+        <span class="grow"></span>
+        <label class="row" style="gap:6px;font-size:13px;font-weight:600">貼圖張數
+          <select class="select" id="fxCount"><option value="8" selected>8 張</option><option value="16">16 張</option><option value="24">24 張</option></select>
+        </label>
+      </div>
+      <p class="muted" style="margin:0 0 10px">每一格代表一張貼圖的全螢幕動畫，檔名會是 01_popup.png、02_popup.png…（和同編號的貼圖圖片 01.png、02.png 成對）。點一格就切換到那一張；做好的會顯示縮圖。全部做完後到分頁「5. 打包上架」一次下載。</p>
+      <div class="slots" id="fxSlots"></div>
+      <div class="row" style="margin-top:12px">
+        <label class="label" style="margin:0" for="fxName" id="fxNameLabel">第 1 張的名稱</label>
+        <input class="input" id="fxName" maxlength="10" style="flex:1;min-width:120px;max-width:240px">
+        <span class="muted">可以自己改，只是方便辨認，不影響檔名與提示詞；清空就恢復成貼圖主題。</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="num">2</span>上傳、分割＋去背<span class="muted" id="fxCurLabel"></span></div>
+      <div id="fxBoard"></div>
+    </div>
+    <div class="card" id="fxWork" hidden>
+      <div class="card-title"><span class="num">3</span>影格、預覽與輸出　<span class="muted" id="fxCurLabel2"></span></div>
+      <div class="grid2">
+        <div>
+          <p class="muted" style="margin:0 0 8px">依播放順序排列。◀ ▶ 調整順序，✕ 排除不要的影格（再按一次恢復）。</p>
+          <div class="strip" id="fxStrip"></div>
+          <div class="row" style="margin-top:14px">
+            <span class="label" style="margin:0">單次播放時間</span>
+            <div class="btn-group" id="fxSecGroup">
+              <button type="button" class="btn sel" data-sec="1">1 秒</button>
+              <button type="button" class="btn" data-sec="2">2 秒</button>
+              <button type="button" class="btn" data-sec="3">3 秒</button>
+            </div>
+          </div>
+          <div class="row" style="margin-top:10px">
+            <span class="label" style="margin:0">循環次數</span>
+            <div class="btn-group" id="fxLoopGroup">
+              <button type="button" class="btn sel" data-loop="1">1 次</button>
+              <button type="button" class="btn" data-loop="2">2 次</button>
+              <button type="button" class="btn" data-loop="3">3 次</button>
+            </div>
+            <span class="muted" id="fxTimeInfo"></span>
+          </div>
+          <ul class="checks" id="fxChecks"></ul>
+          <div class="row" style="margin-top:14px">
+            <button type="button" class="btn green grow" id="fxExport">⬇ 單獨下載這一張</button>
+            <button type="button" class="btn" id="fxExportMain">⭐ 設為全螢幕貼圖主要圖片（main_popup）</button>
+          </div>
+          <p class="muted" id="fxSizeInfo" style="margin:8px 0 0"></p>
+        </div>
+        <div>
+          <div class="phone" id="phone">
+            <div class="bubble b1">在嗎？</div>
+            <div class="bubble b2">在呀～</div>
+            <div class="bubble b3">給你看我做的全螢幕貼圖！</div>
+            <div class="stkimg" id="phoneSticker">🙂</div>
+            <canvas id="fxCanvas" width="480" height="480"></canvas>
+          </div>
+          <div class="row" style="margin-top:12px;justify-content:center">
+            <button type="button" class="btn primary" id="fxPlay">▶ 在聊天室播放</button>
+            <label class="row" style="cursor:pointer;gap:6px"><input type="checkbox" id="fxRepeat"><span class="muted">連續重播</span></label>
+          </div>
+          <p class="muted" style="text-align:center;margin:8px 0 0">右下角的貼圖圖片，可在分頁 2 按「用於聊天室預覽」換成您自己的。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 2. 貼圖圖片／主圖／標籤 ================= -->
+  <section class="panel" id="panel-sticker">
+    <div class="note green">
+      <b>🖼 把靜態貼圖大圖切成一張一張的「貼圖圖片」，並做出主圖與標籤</b>
+      上傳用「提示詞 A」生成的大圖 → 切割去背 → 下載每張貼圖圖片（370 × 320 以內），再選一張當主要圖片（240 × 240）與聊天室標籤（96 × 74）。
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="num">1</span>上傳、分割＋去背</div>
+      <div id="stBatchBox" hidden style="margin-bottom:14px">
+        <div class="row">
+          <span class="label" style="margin:0">這次上傳的是</span>
+          <div class="btn-group" id="stBatchGroup"></div>
+        </div>
+        <p class="muted" style="margin:8px 0 0">整套 <span class="maxN">8</span> 張要分 <b id="stBatchN">2</b> 張大圖上傳（一張大圖 8 張貼圖）。<b>先選這是第幾張大圖，再上傳</b>，切好的貼圖會自動放到對應的編號；上傳完會自動跳到下一張。某一張大圖不滿意，選回那一張重新上傳即可，只會換掉那 8 張。</p>
+      </div>
+      <div id="stBoard"></div>
+    </div>
+    <div class="card" id="stWork" hidden>
+      <div class="card-title"><span class="num">2</span>輸出</div>
+      <div class="row" style="margin-bottom:12px">
+        <button type="button" class="btn" id="stZip" disabled>📦 只下載貼圖圖片 ZIP（不含全螢幕圖片）</button>
+        <button type="button" class="btn" id="stMain" disabled>⬇ 主要圖片 main.png（240×240）</button>
+        <button type="button" class="btn" id="stTab" disabled>⬇ 聊天室標籤 tab.png（96×74）</button>
+      </div>
+      <p id="stZipHint" style="margin:0 0 8px;font-size:13px;font-weight:600"></p>
+      <p class="muted" style="margin:0 0 10px">每張貼圖圖片會自動裁掉多餘的透明邊、四周留 10 px，並縮放到 370 × 320 以內。單張貼圖圖片隨時可以個別下載。</p>
+      <div class="stk" id="stGrid"></div>
+    </div>
+  </section>
+
+  <!-- ================= 5. 打包上架 ================= -->
+  <section class="panel" id="panel-pack">
+    <div class="note purple">
+      <b>📦 把貼圖圖片和全螢幕圖片合併成一個上架用的 ZIP，並產生貼圖標題與說明</b>
+      檔名依照 LINE Creators Market「登錄全螢幕貼圖圖片」頁面的欄位：main.png、main_popup.png、tab.png，以及每一張的 01.png ＋ 01_popup.png、02.png ＋ 02_popup.png…。下載後到上架頁面按「上傳壓縮檔」即可。⚠ 每一張的 01_popup… 這類檔名是依上架頁面「main_popup」欄位的命名方式推測的；如果上傳壓縮檔時對不上，請依上架頁面顯示的欄位名稱改檔名，或改成逐張上傳。
+    </div>
+    <div class="card">
+      <div class="card-title">✅ 打包前檢查</div>
+      <ul class="checks" id="packChecks"></ul>
+      <div class="row" style="margin-top:14px">
+        <button type="button" class="btn green" id="packZip" disabled>📦 下載上架用 ZIP</button>
+        <span class="muted" id="packInfo"></span>
+      </div>
+      <pre class="prompt" id="packFiles" style="margin-top:12px;max-height:220px"></pre>
+    </div>
+    <div class="card" id="listingCard">
+      <div class="card-title">🏷 上架用：貼圖標題與貼圖說明</div>
+      <p class="muted" style="margin:0 0 10px">依分頁 1 選的貼圖主題與畫風自動產生，可直接貼到 LINE Creators Market。英文是必填；中文要在上架頁面的「新增語言」選「Chinese (Traditional)」後再貼上。內容可以自己修改。</p>
+      <div class="grid2" style="gap:10px;margin-bottom:10px">
+        <label><span class="label">角色／系列名稱（英文，可不填）</span><input class="input" id="lsNameEn" maxlength="20" placeholder="例：Pei"></label>
+        <label><span class="label">角色／系列名稱（中文，可不填）</span><input class="input" id="lsNameZh" maxlength="12" placeholder="例：小佩"></label>
+      </div>
+      <div id="listingFields"></div>
+    </div>
+  </section>
+</main>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+"use strict";
+/* ============================================================
+   工具
+   ============================================================ */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+/* ============================================================
+   貼圖類型：特效貼圖與全螢幕貼圖的規格、製作步驟完全一樣，這個網頁兩種共用。
+   差別只有播放位置、提示詞 B 的寫法與檔名（01_effect.png／01_popup.png）。
+   畫面文字是用「全螢幕」寫的；選特效貼圖時，由 kt() 把用語換掉（頁面上的文字自動換，見 applyKind）。
+   ============================================================ */
+const KINDS = {
+  popup:  { name: "全螢幕貼圖", img: "全螢幕圖片", anim: "全螢幕動畫", suf: "popup",  place: "（送出後蓋在整個聊天畫面上播放）" },
+  effect: { name: "特效貼圖",   img: "特效圖片",   anim: "特效動畫",   suf: "effect", place: "（送出後在聊天室背景上播放，在訊息後面）" }
+};
+let KIND = "popup";
+try { if (localStorage.getItem("stickerHelperKind") === "effect") KIND = "effect"; } catch (e) {}
+const K = () => KINDS[KIND];
+const SUF = () => KINDS[KIND].suf;
+const KT_RE = /全螢幕|_popup/;
+function kt(s) {
+  if (KIND === "popup" || !s || !KT_RE.test(s)) return s;
+  const k = K();
+  return s.replace(/（送出後蓋在整個聊天畫面上播放）/g, k.place)
+    .replace(/全螢幕貼圖/g, k.name).replace(/全螢幕圖片/g, k.img).replace(/全螢幕動畫/g, k.anim)
+    .replace(/全螢幕/g, "特效").replace(/_popup/g, "_" + k.suf);
+}
+// 每個文字節點記住原文（全螢幕用語）與目前顯示的文字，切換類型時才能換回來
+const ktRec = new WeakMap();
+function ktNode(n) {
+  const p = n.parentElement;
+  if (!p || p.closest("[data-kind-fixed],script,style")) return;
+  const rec = ktRec.get(n);
+  const orig = rec && n.data === rec.shown ? rec.orig : n.data;
+  if (!KT_RE.test(orig)) { if (rec) ktRec.delete(n); return; }
+  const shown = kt(orig);
+  ktRec.set(n, { orig, shown });
+  if (n.data !== shown) n.data = shown;
+}
+function ktAll(root) {
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  for (let n = w.nextNode(); n; n = w.nextNode()) ktNode(n);
+}
+// 之後才畫出來的文字（提示詞、格子說明、檢查清單、提示訊息…）也一起換
+new MutationObserver(list => {
+  for (const m of list) {
+    if (m.type === "characterData") ktNode(m.target);
+    else m.addedNodes.forEach(n => { if (n.nodeType === 3) ktNode(n); else if (n.nodeType === 1) ktAll(n); });
+  }
+}).observe(document.body, { subtree: true, childList: true, characterData: true });
+function applyKind() {
+  document.documentElement.setAttribute("data-kind", KIND);
+  $$("[data-kind]", $("#kindGroup")).forEach(b => b.classList.toggle("sel", b.dataset.kind === KIND));
+  ktAll(document.body);
+}
+const pad2 = n => String(n).padStart(2, "0");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const mk = (w, h) => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
+const ctx2d = c => c.getContext("2d", { willReadFrequently: true });
+const toBlob = c => new Promise(res => c.toBlob(res, "image/png"));
+let toastT;
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, Math.max(2600, String(msg).length * 120)); }   // 訊息越長顯示越久
+function fileToCanvas(file) {
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => { const c = mk(img.naturalWidth, img.naturalHeight); ctx2d(c).drawImage(img, 0, 0); URL.revokeObjectURL(url); res(c); };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error("無法讀取這個圖片檔")); };
+    img.src = url;
+  });
+}
+function copyText(text) {
+  const ta = document.createElement("textarea");
+  ta.value = text; ta.style.cssText = "position:fixed;left:-9999px;top:0";
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  let ok = false; try { ok = document.execCommand("copy"); } catch (e) {}
+  ta.remove();
+  return ok;
+}
+
+/* ---------- 下載（含手機與 LINE 等 App 內建瀏覽器） ---------- */
+const Env = (() => {
+  const ua = navigator.userAgent || "", isLine = /\bLine\//i.test(ua);
+  return {
+    isLine, isInApp: isLine || /FBAN|FBAV|FB_IAB|Instagram|MicroMessenger|; wv\)/i.test(ua),
+    isIOS: /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1),
+    isHttp: /^https?:$/.test(location.protocol), tried: /[?&]openExternalBrowser=1/.test(location.search)
+  };
+})();
+function anchorDownload(blob, name) {
+  const a = document.createElement("a"), url = URL.createObjectURL(blob);
+  a.href = url; a.download = name; a.style.display = "none"; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+// iPhone 只有分享選單能存進相簿；App 內建瀏覽器完全不能下載，分享不了就改成長按儲存
+async function saveBlob(blob, name) {
+  const isImg = /^image\//.test(blob.type);
+  if ((Env.isIOS && isImg) || Env.isInApp) {
+    let file = null;
+    try { file = new File([blob], name, { type: blob.type }); if (!(navigator.canShare && navigator.canShare({ files: [file] }))) file = null; } catch (e) { file = null; }
+    if (file) { try { await navigator.share({ files: [file] }); return; } catch (e) { if (e && e.name === "AbortError") return; } }
+    saveModal(blob, name, file);
+    return;
+  }
+  anchorDownload(blob, name);
+  toast("已下載 " + name);
+}
+function saveModal(blob, name, file) {
+  const url = URL.createObjectURL(blob), isImg = /^image\//.test(blob.type);
+  const m = document.createElement("div");
+  m.className = "modal";
+  m.innerHTML = `<div class="box"><h3 style="margin-bottom:10px">📥 儲存 ${esc(name)}</h3>
+    ${isImg ? `<img src="${url}" alt=""><p class="muted">請「長按圖片」選擇儲存${file ? "，或按下方的分享按鈕" : ""}。</p>` : `<p class="muted">這個瀏覽器無法直接下載檔案，請改用 Safari／Chrome 開啟本頁。</p>`}
+    <div class="row" style="justify-content:center;margin-top:10px">
+      ${file ? `<button type="button" class="btn primary" data-a="share">📤 分享／儲存</button>` : ""}
+      <button type="button" class="btn" data-a="close">完成</button></div></div>`;
+  document.body.appendChild(m);
+  const close = () => { m.remove(); URL.revokeObjectURL(url); };
+  m.addEventListener("click", e => { if (e.target === m) close(); });
+  m.querySelector('[data-a="close"]').onclick = close;
+  const sh = m.querySelector('[data-a="share"]');
+  if (sh) sh.onclick = async () => { try { await navigator.share({ files: [file] }); close(); } catch (e) {} };
+}
+
+/* ============================================================
+   APNG / PNG / ZIP 編碼（與「動態貼圖工坊」相同的程式）
+   ============================================================ */
+/* ---------- CRC32 ---------- */
+const CRC_T = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(buf, crc = 0xFFFFFFFF) { for (let i = 0; i < buf.length; i++) crc = CRC_T[(crc ^ buf[i]) & 255] ^ (crc >>> 8); return crc; }
+const crcDone = c => (c ^ 0xFFFFFFFF) >>> 0;
+
+/* ---------- zlib via CompressionStream ---------- */
+async function zlib(bytes) {
+  const s = new Blob([bytes]).stream().pipeThrough(new CompressionStream('deflate'));
+  return new Uint8Array(await new Response(s).arrayBuffer());
+}
+
+/* ---------- PNG / APNG writer ---------- */
+function u32(v) { return [(v >>> 24) & 255, (v >>> 16) & 255, (v >>> 8) & 255, v & 255]; }
+function u16(v) { return [(v >>> 8) & 255, v & 255]; }
+function chunk(type, data) {
+  const len = data.length, out = new Uint8Array(12 + len);
+  out.set(u32(len), 0);
+  for (let i = 0; i < 4; i++) out[4 + i] = type.charCodeAt(i);
+  out.set(data, 8);
+  const c = crcDone(crc32(out.subarray(4, 8 + len)));
+  out.set(u32(c), 8 + len);
+  return out;
+}
+/* adaptive row filtering (RGBA, bpp 4) */
+function filterRGBA(px, w, h) {
+  const stride = w * 4, out = new Uint8Array((stride + 1) * h);
+  const cand = [new Uint8Array(stride), new Uint8Array(stride), new Uint8Array(stride), new Uint8Array(stride), new Uint8Array(stride)];
+  for (let y = 0; y < h; y++) {
+    const o = y * stride, p = (y - 1) * stride;
+    let best = 0, bestSum = Infinity;
+    for (let f = 0; f < 5; f++) {
+      const c = cand[f]; let sum = 0;
+      for (let i = 0; i < stride; i++) {
+        const x = px[o + i], a = i >= 4 ? px[o + i - 4] : 0, b = y > 0 ? px[p + i] : 0, cc = (i >= 4 && y > 0) ? px[p + i - 4] : 0;
+        let v;
+        if (f === 0) v = x;
+        else if (f === 1) v = x - a;
+        else if (f === 2) v = x - b;
+        else if (f === 3) v = x - ((a + b) >> 1);
+        else { const pp = a + b - cc, pa = Math.abs(pp - a), pb = Math.abs(pp - b), pc = Math.abs(pp - cc); v = x - (pa <= pb && pa <= pc ? a : pb <= pc ? b : cc); }
+        v &= 255; c[i] = v; sum += v < 128 ? v : 256 - v;
+        if (sum >= bestSum) break;
+      }
+      if (sum < bestSum) { bestSum = sum; best = f; }
+    }
+    // recompute chosen (candidate may be partial due to early break)
+    const c = cand[best];
+    for (let i = 0; i < stride; i++) {
+      const x = px[o + i], a = i >= 4 ? px[o + i - 4] : 0, b = y > 0 ? px[p + i] : 0, cc = (i >= 4 && y > 0) ? px[p + i - 4] : 0;
+      let v;
+      if (best === 0) v = x; else if (best === 1) v = x - a; else if (best === 2) v = x - b; else if (best === 3) v = x - ((a + b) >> 1);
+      else { const pp = a + b - cc, pa = Math.abs(pp - a), pb = Math.abs(pp - b), pc = Math.abs(pp - cc); v = x - (pa <= pb && pa <= pc ? a : pb <= pc ? b : cc); }
+      c[i] = v & 255;
+    }
+    out[y * (stride + 1)] = best;
+    out.set(c, y * (stride + 1) + 1);
+  }
+  return out;
+}
+function filterIndexed(ix, w, h) {
+  const out = new Uint8Array((w + 1) * h);
+  for (let y = 0; y < h; y++) { out[y * (w + 1)] = 0; out.set(ix.subarray(y * w, y * w + w), y * (w + 1) + 1); }
+  return out;
+}
+
+/* ---------- colour quantisation (median cut, shared palette) ---------- */
+function buildPalette(frames, maxColors) {
+  const total = frames.length * (frames[0].length >> 2);
+  const step = Math.max(1, Math.floor(total / 90000));
+  const S = [];
+  let k = 0;
+  for (const f of frames) for (let i = 0; i < f.length; i += 4) { if ((k++ % step) !== 0) continue; if (f[i + 3] >= 16) S.push(f[i], f[i + 1], f[i + 2], f[i + 3]); }
+  const n = S.length >> 2;
+  const pal = [[0, 0, 0, 0]];
+  if (!n) return pal;
+  const idx = new Uint32Array(n); for (let i = 0; i < n; i++) idx[i] = i;
+  const boxes = [{ s: 0, e: n }];
+  const stat = b => {
+    let mn = [255, 255, 255, 255], mx = [0, 0, 0, 0];
+    for (let i = b.s; i < b.e; i++) { const q = idx[i] * 4; for (let c = 0; c < 4; c++) { const v = S[q + c]; if (v < mn[c]) mn[c] = v; if (v > mx[c]) mx[c] = v; } }
+    let ch = 0, r = -1; for (let c = 0; c < 4; c++) { const rr = (mx[c] - mn[c]) * (c === 3 ? 1.2 : 1); if (rr > r) { r = rr; ch = c; } }
+    b.ch = ch; b.range = r; b.score = r * Math.sqrt(b.e - b.s);
+  };
+  stat(boxes[0]);
+  const tmp = new Uint32Array(n);
+  while (boxes.length < maxColors - 1) {
+    let bi = -1, bs = 0;
+    for (let i = 0; i < boxes.length; i++) if (boxes[i].e - boxes[i].s > 1 && boxes[i].range > 0 && boxes[i].score > bs) { bs = boxes[i].score; bi = i; }
+    if (bi < 0) break;
+    const b = boxes[bi], ch = b.ch, cnt = b.e - b.s;
+    const hist = new Uint32Array(256);
+    for (let i = b.s; i < b.e; i++) hist[S[idx[i] * 4 + ch]]++;
+    let acc = 0, m = 0; for (; m < 256; m++) { acc += hist[m]; if (acc >= cnt / 2) break; }
+    if (acc === cnt) { m--; while (m >= 0 && hist[m + 1] === 0) m--; }
+    // partition
+    let lo = b.s, hi = b.e - 1, t = 0;
+    for (let i = b.s; i < b.e; i++) tmp[t++] = idx[i];
+    let L = b.s, R = b.e - 1;
+    for (let i = 0; i < t; i++) { const q = tmp[i]; if (S[q * 4 + ch] <= m) idx[L++] = q; else idx[R--] = q; }
+    if (L === b.s || L === b.e) { b.range = 0; b.score = 0; continue; }
+    const b1 = { s: b.s, e: L }, b2 = { s: L, e: b.e };
+    stat(b1); stat(b2);
+    boxes.splice(bi, 1, b1, b2);
+  }
+  for (const b of boxes) {
+    let r = 0, g = 0, bl = 0, a = 0; const c = b.e - b.s;
+    for (let i = b.s; i < b.e; i++) { const q = idx[i] * 4; r += S[q]; g += S[q + 1]; bl += S[q + 2]; a += S[q + 3]; }
+    let A = Math.round(a / c); if (A >= 248) A = 255;
+    pal.push([Math.round(r / c), Math.round(g / c), Math.round(bl / c), A]);
+  }
+  return pal;
+}
+function mapToPalette(frames, pal) {
+  const cache = new Map(), out = [];
+  const P = pal.length;
+  for (const f of frames) {
+    const ix = new Uint8Array(f.length >> 2);
+    for (let i = 0, j = 0; i < f.length; i += 4, j++) {
+      const a = f[i + 3]; if (a < 16) { ix[j] = 0; continue; }
+      const r = f[i], g = f[i + 1], b = f[i + 2];
+      const key = ((r >> 2) << 18) | ((g >> 2) << 12) | ((b >> 2) << 6) | (a >> 2);
+      let v = cache.get(key);
+      if (v === undefined) {
+        let bd = Infinity; v = 1;
+        for (let p = 1; p < P; p++) { const c = pal[p]; const dr = c[0] - r, dg = c[1] - g, db = c[2] - b, da = c[3] - a; const d = dr * dr + dg * dg + db * db + 1.6 * da * da; if (d < bd) { bd = d; v = p; } }
+        cache.set(key, v);
+      }
+      ix[j] = v;
+    }
+    out.push(ix);
+  }
+  return out;
+}
+
+/* encode APNG from RGBA frames (Uint8ClampedArray W*H*4) */
+async function encodeAPNG(frames, W, H, delays, loops, colors, indexed) {
+  const pal = buildPalette(frames, colors);
+  const ixs = mapToPalette(frames, pal);
+  const parts = [new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10])];
+  parts.push(chunk('IHDR', new Uint8Array([...u32(W), ...u32(H), 8, indexed ? 3 : 6, 0, 0, 0])));
+  if (indexed) {
+    const plte = new Uint8Array(pal.length * 3), trns = [];
+    pal.forEach((c, i) => { plte[i * 3] = c[0]; plte[i * 3 + 1] = c[1]; plte[i * 3 + 2] = c[2]; trns.push(c[3]); });
+    while (trns.length && trns[trns.length - 1] === 255) trns.pop();
+    parts.push(chunk('PLTE', plte));
+    if (trns.length) parts.push(chunk('tRNS', new Uint8Array(trns)));
+  }
+  const multi = frames.length > 1;
+  if (multi) parts.push(chunk('acTL', new Uint8Array([...u32(frames.length), ...u32(loops)])));
+  let seq = 0;
+  // temporal snap: opaque pixels that barely changed keep last frame's colour
+  const SNAP = 22 * 22;
+  for (let f = 1; f < ixs.length; f++) {
+    const cur = ixs[f], pv = ixs[f - 1];
+    for (let j = 0; j < cur.length; j++) {
+      const a = cur[j], b = pv[j]; if (a === b || !a || !b) continue;
+      const ca = pal[a], cb = pal[b]; if (ca[3] !== 255 || cb[3] !== 255) continue;
+      const dr = ca[0] - cb[0], dg = ca[1] - cb[1], db = ca[2] - cb[2];
+      if (dr * dr + dg * dg + db * db < SNAP) cur[j] = b;
+    }
+  }
+  const regionBytes = (ix, x0, y0, w, h) => {
+    if (indexed) {
+      const sub = new Uint8Array(w * h);
+      for (let y = 0; y < h; y++) sub.set(ix.subarray((y0 + y) * W + x0, (y0 + y) * W + x0 + w), y * w);
+      return filterIndexed(sub, w, h);
+    }
+    const sub = new Uint8Array(w * h * 4);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const c = pal[ix[(y0 + y) * W + x0 + x]], o = (y * w + x) * 4; sub[o] = c[0]; sub[o + 1] = c[1]; sub[o + 2] = c[2]; sub[o + 3] = c[3]; }
+    return filterRGBA(sub, w, h);
+  };
+  for (let f = 0; f < frames.length; f++) {
+    let ix = ixs[f];
+    let x0 = 0, y0 = 0, w = W, h = H, blend = 0;
+    if (f > 0) {
+      const pv = ixs[f - 1]; let minX = W, minY = H, maxX = -1, maxY = -1, overOK = true;
+      for (let y = 0; y < H; y++) { const o = y * W; for (let x = 0; x < W; x++) if (ix[o + x] !== pv[o + x]) { if (x < minX) minX = x; if (x > maxX) maxX = x; if (y < minY) minY = y; if (y > maxY) maxY = y; if (pal[ix[o + x]][3] !== 255) overOK = false; } }
+      if (maxX < 0) { minX = 0; minY = 0; maxX = 0; maxY = 0; }
+      x0 = minX; y0 = minY; w = maxX - minX + 1; h = maxY - minY + 1;
+      if (overOK && maxX >= 0) {
+        // every changed pixel is opaque → paint only changes over the previous frame
+        const d = new Uint8Array(ix.length);
+        for (let j = 0; j < ix.length; j++) d[j] = ix[j] !== pv[j] ? ix[j] : 0;
+        ix = d; blend = 1;
+      }
+    }
+    if (multi) {
+      const d = delays[f] | 0;
+      parts.push(chunk('fcTL', new Uint8Array([...u32(seq++), ...u32(w), ...u32(h), ...u32(x0), ...u32(y0), ...u16(d), ...u16(1000), 0, blend])));
+    }
+    const z = await zlib(regionBytes(ix, x0, y0, w, h));
+    if (f === 0) parts.push(chunk('IDAT', z));
+    else { const d = new Uint8Array(4 + z.length); d.set(u32(seq++), 0); d.set(z, 4); parts.push(chunk('fdAT', d)); }
+  }
+  parts.push(chunk('IEND', new Uint8Array(0)));
+  const blob = new Blob(parts, { type: 'image/png' });
+  return { blob, colorsUsed: pal.length };
+}
+async function encodePNG(rgba, W, H) { // browser encoder: plain 8-bit RGBA PNG
+  const c = mk(W, H); c.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(rgba), W, H), 0, 0);
+  const b = await new Promise(res => c.toBlob(res, 'image/png'));
+  return b || (await encodeAPNG([rgba], W, H, [0], 0, 256, false)).blob;
+}
+
+/* ---------- ZIP (stored) ---------- */
+function makeZip(files) {
+  const enc = new TextEncoder(), chunks = [], central = [];
+  let off = 0;
+  const d = new Date(), time = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1), date = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+  const le16 = v => [v & 255, (v >>> 8) & 255], le32 = v => [v & 255, (v >>> 8) & 255, (v >>> 16) & 255, (v >>> 24) & 255];
+  for (const f of files) {
+    const name = enc.encode(f.name), crc = crcDone(crc32(f.data)), sz = f.data.length;
+    const lh = new Uint8Array([...le32(0x04034b50), ...le16(20), ...le16(0x0800), ...le16(0), ...le16(time), ...le16(date), ...le32(crc), ...le32(sz), ...le32(sz), ...le16(name.length), ...le16(0)]);
+    chunks.push(lh, name, f.data);
+    central.push(new Uint8Array([...le32(0x02014b50), ...le16(20), ...le16(20), ...le16(0x0800), ...le16(0), ...le16(time), ...le16(date), ...le32(crc), ...le32(sz), ...le32(sz), ...le16(name.length), ...le16(0), ...le16(0), ...le16(0), ...le16(0), ...le32(0), ...le32(off)]), name);
+    off += lh.length + name.length + sz;
+  }
+  const cdSize = central.reduce((a, b) => a + b.length, 0);
+  const end = new Uint8Array([...le32(0x06054b50), ...le16(0), ...le16(0), ...le16(files.length), ...le16(files.length), ...le32(cdSize), ...le32(off), ...le16(0)]);
+  return new Blob([...chunks, ...central, end], { type: 'application/zip' });
+}
+
+
+/* ============================================================
+   去背
+   ============================================================ */
+// 由外框取樣背景色（各色版取中位數）；外框大多透明時回傳 null
+function borderColor(d, w, h) {
+  const ch = [[], [], []]; let clear = 0, total = 0;
+  const step = Math.max(1, Math.floor((w + h) / 300));
+  const push = (x, y) => { const i = (y * w + x) * 4; total++; if (d[i + 3] < 16) { clear++; return; } ch[0].push(d[i]); ch[1].push(d[i + 1]); ch[2].push(d[i + 2]); };
+  for (let x = 0; x < w; x += step) { push(x, 0); push(x, h - 1); }
+  for (let y = 0; y < h; y += step) { push(0, y); push(w - 1, y); }
+  if (!ch[0].length || clear > total * 0.5) return null;
+  return ch.map(v => { v.sort((a, b) => a - b); return v[v.length >> 1]; });
+}
+// 去除指定顏色；contiguous：只去掉和格子外框相連的背景
+function keyOutColor(d, w, h, key, tol, contiguous) {
+  const thr = tol * 0.75, soft = thr * 1.5, thr2 = thr * thr, n = w * h;
+  const dist2 = i => { const dr = d[i] - key[0], dg = d[i + 1] - key[1], db = d[i + 2] - key[2]; return dr * dr + dg * dg + db * db; };
+  const feather = i => { const ds = Math.sqrt(dist2(i)); if (ds < soft) d[i + 3] = Math.round(d[i + 3] * (ds - thr) / (soft - thr)); };
+  if (!contiguous) { for (let p = 0; p < n; p++) { const i = p * 4; if (dist2(i) <= thr2) d[i + 3] = 0; else feather(i); } return; }
+  const gone = new Uint8Array(n), st = new Int32Array(n); let sp = 0;
+  const tryPush = p => { if (!gone[p] && (d[p * 4 + 3] < 16 || dist2(p * 4) <= thr2)) { gone[p] = 1; st[sp++] = p; } };
+  for (let x = 0; x < w; x++) { tryPush(x); tryPush((h - 1) * w + x); }
+  for (let y = 0; y < h; y++) { tryPush(y * w); tryPush(y * w + w - 1); }
+  while (sp) { const p = st[--sp], x = p % w; if (x > 0) tryPush(p - 1); if (x < w - 1) tryPush(p + 1); if (p >= w) tryPush(p - w); if (p < n - w) tryPush(p + w); }
+  for (let p = 0; p < n; p++) {
+    const i = p * 4; if (gone[p]) { d[i + 3] = 0; continue; }
+    const x = p % w;
+    if ((x > 0 && gone[p - 1]) || (x < w - 1 && gone[p + 1]) || (p >= w && gone[p - w]) || (p < n - w && gone[p + w])) feather(i);
+  }
+}
+// 綠幕：依「綠色比紅、藍多出多少」去背，並消除邊緣的綠色溢色
+function keyOutGreen(d, tol) {
+  const hi = Math.max(12, 160 * (1 - tol / 160)), lo = hi * 0.4;
+  for (let i = 0; i < d.length; i += 4) {
+    const r = d[i], g = d[i + 1], b = d[i + 2], gr = g - Math.max(r, b);
+    if (gr >= hi) d[i + 3] = 0;
+    else if (gr > lo) { const t = (gr - lo) / (hi - lo); d[i + 3] = Math.round(d[i + 3] * (1 - t)); d[i + 1] = Math.min(g, Math.round((r + b) / 2) + 5); }
+  }
+}
+// LINE 的動態圖片無法顯示半透明的像素，會變成黑色、桃紅色的雜塊。
+// 所以每個像素只留「完全不透明」或「完全透明」，並把殘留的小雜點（很小的獨立色塊）清掉。
+function cleanAlphaForLine(d, w, h) {
+  const n = w * h;
+  for (let p = 0; p < n; p++) {
+    const i = p * 4;
+    if (d[i + 3] < 128) d[i] = d[i + 1] = d[i + 2] = d[i + 3] = 0; else d[i + 3] = 255;
+  }
+  const seen = new Uint8Array(n), q = new Int32Array(n);
+  const minArea = Math.max(8, Math.round(n * 0.00015));
+  for (let s = 0; s < n; s++) {
+    if (seen[s] || !d[s * 4 + 3]) continue;
+    let head = 0, tail = 0;
+    q[tail++] = s; seen[s] = 1;
+    while (head < tail) {
+      const p = q[head++], x = p % w, y = (p - x) / w;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        const nx = x + dx, ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+        const np = ny * w + nx;
+        if (!seen[np] && d[np * 4 + 3]) { seen[np] = 1; q[tail++] = np; }
+      }
+    }
+    if (tail < minArea) for (let k = 0; k < tail; k++) { const i = q[k] * 4; d[i] = d[i + 1] = d[i + 2] = d[i + 3] = 0; }
+  }
+}
+// 裁掉四周多餘的透明邊
+function trimCanvas(c, pad) {
+  const w = c.width, h = c.height, d = ctx2d(c).getImageData(0, 0, w, h).data;
+  let x0 = w, y0 = h, x1 = -1, y1 = -1;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (d[(y * w + x) * 4 + 3] > 12) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  if (x1 < 0) return c;
+  x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad); x1 = Math.min(w - 1, x1 + pad); y1 = Math.min(h - 1, y1 + pad);
+  const o = mk(x1 - x0 + 1, y1 - y0 + 1);
+  ctx2d(o).drawImage(c, x0, y0, o.width, o.height, 0, 0, o.width, o.height);
+  return o;
+}
+
+/* ============================================================
+   大圖切割元件（分頁 2、4 共用）
+   opt: { cols, rows, trim, contiguous, hint, onFrames(canvases) }
+   ============================================================ */
+function createBoard(root, opt) {
+  const B = { src: null, cols: opt.cols, rows: opt.rows, mode: "none", color: [255, 255, 255], tol: 80, contig: !!opt.contiguous, picking: false };
+  root.innerHTML = `
+    <div class="drop" data-e="drop"><div style="font-size:36px">📤</div><b>點這裡選擇圖片，或把圖片拖進來</b><div class="muted">${esc(opt.hint)}</div></div>
+    <input type="file" accept="image/*" hidden data-e="file">
+    <div data-e="editor" hidden>
+      <div class="row" style="margin-bottom:10px">
+        <button type="button" class="btn again" data-e="again">🔄 換一張圖</button>
+        <span class="muted" data-e="info"></span>
+      </div>
+      <div class="row" style="margin-bottom:10px">
+        <label class="row" style="gap:6px">欄 <input type="number" class="input" data-e="cols" min="1" max="10" style="width:70px"></label>
+        <label class="row" style="gap:6px">列 <input type="number" class="input" data-e="rows" min="1" max="10" style="width:70px"></label>
+        <span class="muted" data-e="count"></span>
+      </div>
+      <div class="row" style="margin-bottom:10px">
+        <button type="button" class="btn primary" data-e="auto">🔍 自動偵測分割線</button>
+        <button type="button" class="btn" data-e="even">📐 還原分割線等分</button>
+        <span class="muted">粉紅虛線可以直接拖曳調整。</span>
+      </div>
+      <div class="board-wrap" data-e="wrap"><canvas data-e="cv" style="touch-action:none"></canvas></div>
+      <div class="row" style="margin-top:12px">
+        <span class="label" style="margin:0">去背</span>
+        <div class="btn-group" data-e="modes">
+          <button type="button" class="btn sel" data-mode="none">不用（已是透明背景）</button>
+          <button type="button" class="btn" data-mode="green">綠幕</button>
+          <button type="button" class="btn" data-mode="auto">自動偵測背景色</button>
+          <button type="button" class="btn" data-mode="pick">吸取顏色</button>
+        </div>
+      </div>
+      <div data-e="bgopts" hidden>
+        <div class="row" data-e="pickrow" hidden style="margin-top:10px">
+          <input type="color" data-e="color" value="#ffffff" style="width:52px;height:38px;padding:2px;border:1px solid var(--line-strong);border-radius:8px;background:var(--panel-2)">
+          <span class="muted">選「吸取顏色」後，直接點上面圖片的背景就會取那一點的顏色。</span>
+        </div>
+        <div style="margin-top:10px"><div class="row" style="justify-content:space-between"><span class="label" style="margin:0">容差值（越大去除越多）</span><span data-e="tolv">80</span></div>
+          <input type="range" data-e="tol" min="20" max="150" value="80"></div>
+        <label class="row" data-e="contigrow" style="margin-top:8px;cursor:pointer"><input type="checkbox" data-e="contig"><span class="muted">只去除和格子外框相連的背景（保留畫面裡相同的顏色）</span></label>
+      </div>
+      <label class="row" style="margin-top:10px;cursor:pointer;align-items:flex-start"><input type="checkbox" data-e="hard" checked style="margin-top:3px"><span style="flex:1"><b>邊緣清乾淨（建議開啟）</b><span class="muted">：去掉半透明的邊緣與殘留雜點。LINE 的動態圖片無法顯示半透明，沒開的話周圍可能出現黑色、桃紅色的雜塊。</span></span></label>
+      <div class="row" style="margin-top:14px"><button type="button" class="btn primary" data-e="cut">✂️ 分割＋去背</button></div>
+    </div>`;
+  const el = {}; $$("[data-e]", root).forEach(n => { el[n.dataset.e] = n; });
+  el.cols.value = B.cols; el.rows.value = B.rows; el.contig.checked = B.contig;
+  // 分割線的位置（0～1 的比例，不含外框）；預設等分
+  const evenLines = n => Array.from({ length: Math.max(0, n - 1) }, (_, i) => (i + 1) / n);
+  B.vx = evenLines(B.cols); B.hy = evenLines(B.rows);
+  const setEven = () => { B.vx = evenLines(B.cols); B.hy = evenLines(B.rows); };
+  // 自動偵測：找出幾乎全是背景的直帶與橫帶，分割線放在帶子正中央
+  const detect = silent => {
+    if (!B.src) return false;
+    const r = detectBoardLines(B.src, B.cols, B.rows);
+    if (!r.v && !r.h) { if (!silent) toast("偵測不到明顯的背景間隔，維持等分；可以直接拖曳粉紅虛線調整"); return false; }
+    if (r.v) { B.vx = r.v; B.cols = r.v.length + 1; el.cols.value = B.cols; }
+    if (r.h) { B.hy = r.h; B.rows = r.h.length + 1; el.rows.value = B.rows; }
+    draw();
+    toast(`已自動偵測為 ${B.cols} 欄 × ${B.rows} 列` + (r.v && r.h ? "" : `（${r.v ? "水平" : "垂直"}線偵測不到，維持等分）`));
+    return true;
+  };
+
+  const draw = () => {
+    if (!B.src) return;
+    const s = Math.min(1, 1000 / B.src.width), cv = el.cv;
+    cv.width = Math.round(B.src.width * s); cv.height = Math.round(B.src.height * s);
+    const x = ctx2d(cv);
+    x.drawImage(B.src, 0, 0, cv.width, cv.height);
+    const k = cv.width / (cv.getBoundingClientRect().width || cv.width);
+    x.strokeStyle = "#ff5c93"; x.lineWidth = Math.max(1.5, 1.5 * k); x.setLineDash([7 * k, 5 * k]);
+    B.vx.forEach(f => { const px = f * cv.width; x.beginPath(); x.moveTo(px, 0); x.lineTo(px, cv.height); x.stroke(); });
+    B.hy.forEach(f => { const py = f * cv.height; x.beginPath(); x.moveTo(0, py); x.lineTo(cv.width, py); x.stroke(); });
+    el.count.textContent = `共 ${B.cols * B.rows} 格，每格約 ${Math.round(B.src.width / B.cols)} × ${Math.round(B.src.height / B.rows)} px`;
+  };
+  const load = async file => {
+    try { B.src = await fileToCanvas(file); } catch (e) { toast(e.message); return; }
+    el.drop.hidden = true; el.editor.hidden = false;
+    el.info.textContent = `來源尺寸：${B.src.width} × ${B.src.height} px`;
+    setEven();
+    draw();
+    detect(true);   // 找得到間隔就自動對好，找不到就維持等分
+    if (opt.onLoad) opt.onLoad();
+  };
+  const setMode = m => {
+    B.mode = m; B.picking = m === "pick";
+    $$("[data-mode]", el.modes).forEach(b => b.classList.toggle("sel", b.dataset.mode === m));
+    el.bgopts.hidden = m === "none"; el.pickrow.hidden = m !== "pick"; el.contigrow.hidden = m === "green";
+    el.wrap.classList.toggle("pick", B.picking);
+  };
+  const cut = () => {
+    if (!B.src) return;
+    const W = B.src.width, H = B.src.height, out = [];
+    let key = null;
+    if (B.mode === "auto") {
+      key = borderColor(ctx2d(B.src).getImageData(0, 0, W, H).data, W, H);
+      if (!key) toast("這張圖的外圍已經是透明的，不需要去背");
+    } else if (B.mode === "pick") key = B.color;
+    const xs = [0, ...B.vx, 1].map(f => Math.round(f * W)), ys = [0, ...B.hy, 1].map(f => Math.round(f * H));
+    for (let r = 0; r < B.rows; r++) for (let c = 0; c < B.cols; c++) {
+      const x0 = xs[c], y0 = ys[r], x1 = xs[c + 1], y1 = ys[r + 1];
+      let fc = mk(x1 - x0, y1 - y0);
+      const fx = ctx2d(fc);
+      fx.drawImage(B.src, x0, y0, fc.width, fc.height, 0, 0, fc.width, fc.height);
+      if (B.mode === "green" || key || el.hard.checked) {
+        const id = fx.getImageData(0, 0, fc.width, fc.height);
+        if (B.mode === "green") keyOutGreen(id.data, B.tol); else if (key) keyOutColor(id.data, fc.width, fc.height, key, B.tol, B.contig);
+        if (el.hard.checked) cleanAlphaForLine(id.data, fc.width, fc.height);
+        fx.putImageData(id, 0, 0);
+      }
+      if (opt.trim) fc = trimCanvas(fc, 2);
+      out.push(fc);
+    }
+    toast(`已分割為 ${out.length} 張`);
+    opt.onFrames(out);   // 放在 toast 之後，讓 onFrames 可以顯示更具體的訊息
+  };
+
+  el.drop.onclick = () => el.file.click();
+  el.again.onclick = () => el.file.click();
+  el.file.onchange = e => { const f = e.target.files[0]; e.target.value = ""; if (f) load(f); };
+  ["dragenter", "dragover"].forEach(t => el.drop.addEventListener(t, e => { e.preventDefault(); el.drop.classList.add("over"); }));
+  ["dragleave", "drop"].forEach(t => el.drop.addEventListener(t, e => { e.preventDefault(); el.drop.classList.remove("over"); }));
+  el.drop.addEventListener("drop", e => { const f = e.dataTransfer.files[0]; if (f) load(f); });
+  el.cols.oninput = () => { B.cols = clamp(parseInt(el.cols.value) || 1, 1, 10); setEven(); draw(); };
+  el.rows.oninput = () => { B.rows = clamp(parseInt(el.rows.value) || 1, 1, 10); setEven(); draw(); };
+  el.auto.onclick = () => detect(false);
+  el.even.onclick = () => { setEven(); draw(); toast("已還原為等分"); };
+  // 拖曳分割線（滑鼠與手指都可以）
+  let dragLine = null, dragged = false;
+  const pos = e => { const r = el.cv.getBoundingClientRect(); return { fx: (e.clientX - r.left) / r.width, fy: (e.clientY - r.top) / r.height, w: r.width, h: r.height }; };
+  el.cv.addEventListener("pointerdown", e => {
+    if (!B.src) return;
+    const p = pos(e), hit = e.pointerType === "touch" ? 22 : 9;
+    let best = null, bd = hit;
+    B.vx.forEach((f, i) => { const d = Math.abs(p.fx - f) * p.w; if (d < bd) { bd = d; best = { arr: B.vx, i, v: true }; } });
+    B.hy.forEach((f, i) => { const d = Math.abs(p.fy - f) * p.h; if (d < bd) { bd = d; best = { arr: B.hy, i, v: false }; } });
+    if (!best) return;
+    dragLine = best; dragged = false;
+    e.preventDefault();
+    try { el.cv.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  el.cv.addEventListener("pointermove", e => {
+    if (!dragLine) return;
+    const p = pos(e), a = dragLine.arr, i = dragLine.i;
+    a[i] = clamp(dragLine.v ? p.fx : p.fy, (i > 0 ? a[i - 1] : 0) + 0.02, (i < a.length - 1 ? a[i + 1] : 1) - 0.02);
+    dragged = true; draw();
+  });
+  const endDrag = () => { if (dragLine) { dragLine = null; if (dragged) setTimeout(() => { dragged = false; }, 60); } };
+  el.cv.addEventListener("pointerup", endDrag);
+  el.cv.addEventListener("pointercancel", endDrag);
+  el.modes.addEventListener("click", e => { const b = e.target.closest("[data-mode]"); if (b) setMode(b.dataset.mode); });
+  el.tol.oninput = () => { B.tol = parseInt(el.tol.value); el.tolv.textContent = el.tol.value; };
+  el.contig.onchange = () => { B.contig = el.contig.checked; };
+  el.color.oninput = () => { const v = el.color.value; B.color = [1, 3, 5].map(i => parseInt(v.slice(i, i + 2), 16)); };
+  el.cv.addEventListener("click", e => {
+    if (!B.picking || !B.src || dragged) return;   // 剛拖完分割線的那一下不算取色
+    const r = el.cv.getBoundingClientRect();
+    const px = clamp(Math.floor((e.clientX - r.left) / r.width * B.src.width), 0, B.src.width - 1), py = clamp(Math.floor((e.clientY - r.top) / r.height * B.src.height), 0, B.src.height - 1);
+    const p = ctx2d(B.src).getImageData(px, py, 1, 1).data;
+    if (p[3] < 16) { toast("這一點已經是透明的，請點有顏色的背景"); return; }
+    B.color = [p[0], p[1], p[2]];
+    el.color.value = "#" + B.color.map(v => v.toString(16).padStart(2, "0")).join("");
+    toast("已選取背景色 " + el.color.value.toUpperCase() + "，請按「分割＋去背」");
+  });
+  el.cut.onclick = cut;
+  addEventListener("resize", draw);
+  return {
+    setGrid(c, r) { B.cols = c; B.rows = r; el.cols.value = c; el.rows.value = r; setEven(); draw(); }, redraw: draw, hard: () => el.hard.checked,
+    // 記住／換回某一張大圖（含分割線）；傳 null 回到「選擇圖片」畫面
+    getState: () => B.src ? { src: B.src, vx: [...B.vx], hy: [...B.hy], cols: B.cols, rows: B.rows } : null,
+    setState(s) {
+      if (!s) { B.src = null; el.drop.hidden = false; el.editor.hidden = true; return; }
+      Object.assign(B, { src: s.src, vx: [...s.vx], hy: [...s.hy], cols: s.cols, rows: s.rows });
+      el.cols.value = B.cols; el.rows.value = B.rows;
+      el.drop.hidden = true; el.editor.hidden = false;
+      el.info.textContent = `來源尺寸：${B.src.width} × ${B.src.height} px`;
+      draw();
+    },
+    setHint(text) { const d = el.drop.querySelector(".muted"); if (d) d.textContent = text; },
+    pick: () => el.file.click()   // 直接開啟選擇檔案（要在使用者點擊的當下呼叫）
+  };
+}
+
+/* ---------- 自動偵測分割線 ----------
+   每一欄、每一列算出「背景佔多少」；幾乎全是背景的帶子就是貼圖之間的間隔。
+   找不到乾淨的間隔時，改在預期位置附近找最空的那條線（AI 生成的圖常常擠在一起）。 */
+function lineBands(R, maxN) {
+  const L = R.length, sm = new Float32Array(L);
+  for (let i = 0; i < L; i++) { let a = 0, c = 0; for (let j = Math.max(0, i - 2); j <= Math.min(L - 1, i + 2); j++) { a += R[j]; c++; } sm[i] = a / c; }
+  const e0 = Math.ceil(L * 0.04), e1 = Math.floor(L * 0.96);
+  let mx = 0; for (let i = e0; i < e1; i++) mx = Math.max(mx, sm[i]);
+  if (mx < 0.8) return null;
+  const thr = Math.max(0.8, mx - 0.07), out = [];
+  for (let i = e0; i < e1; i++) {
+    if (sm[i] < thr) continue;
+    let j = i; while (j + 1 < e1 && sm[j + 1] >= thr) j++;
+    const c = (i + j) / 2, last = out.length ? out[out.length - 1] : null;
+    if (last != null) { let dip = Infinity; for (let q = Math.floor(last); q <= Math.ceil(c); q++) dip = Math.min(dip, sm[q]); if (dip > thr - 0.15) { out[out.length - 1] = (last + c) / 2; i = j; continue; } }
+    out.push(c); i = j;
+  }
+  const hasContent = (a, b) => { let dip = Infinity; for (let q = Math.max(0, Math.floor(a)); q <= Math.min(L - 1, Math.ceil(b)); q++) dip = Math.min(dip, sm[q]); return dip < thr - 0.15; };
+  while (out.length && !hasContent(0, out[0])) out.shift();
+  while (out.length && !hasContent(out[out.length - 1], L - 1)) out.pop();
+  if (!out.length || out.length + 1 > maxN) return null;
+  return out.map(c => (c + 0.5) / L);
+}
+function lineSnap(R, N) {
+  if (N < 2) return null;
+  const L = R.length, sm = new Float32Array(L);
+  for (let i = 0; i < L; i++) { let a = 0, c = 0; for (let j = Math.max(0, i - 2); j <= Math.min(L - 1, i + 2); j++) { a += R[j]; c++; } sm[i] = a / c; }
+  const out = [], win = 0.3 / N * L;
+  for (let k = 1; k < N; k++) {
+    const c0 = k / N * L, lo = Math.max(1, Math.floor(c0 - win)), hi = Math.min(L - 2, Math.ceil(c0 + win));
+    let best = -1, bs = -1;
+    for (let i = lo; i <= hi; i++) { const s = sm[i] - 0.1 * Math.abs(i - c0) / win; if (s > bs) { bs = s; best = i; } }
+    if (best < 0 || sm[best] < 0.5) return null;
+    let a = best, b = best;
+    while (a - 1 >= lo && sm[a - 1] >= sm[best] - 0.03) a--;
+    while (b + 1 <= hi && sm[b + 1] >= sm[best] - 0.03) b++;
+    out.push(((a + b) / 2 + 0.5) / L);
+  }
+  for (let i = 1; i < out.length; i++) if (out[i] - out[i - 1] < 0.04) return null;
+  return out;
+}
+function detectBoardLines(src, cols, rows) {
+  const W = Math.min(480, src.width), H = Math.max(2, Math.round(W * src.height / src.width));
+  const c = mk(W, H), x = ctx2d(c);
+  x.drawImage(src, 0, 0, W, H);
+  const d = x.getImageData(0, 0, W, H).data, bg = borderColor(d, W, H);
+  const colR = new Float32Array(W), rowR = new Float32Array(H);
+  for (let y = 0; y < H; y++) for (let xx = 0; xx < W; xx++) {
+    const q = (y * W + xx) * 4;
+    let isBg = d[q + 3] < 16;
+    if (!isBg && bg) { const dr = d[q] - bg[0], dg = d[q + 1] - bg[1], db = d[q + 2] - bg[2]; isBg = dr * dr + dg * dg + db * db < 42 * 42; }
+    if (isBg) { colR[xx]++; rowR[y]++; }
+  }
+  for (let i = 0; i < W; i++) colR[i] /= H;
+  for (let i = 0; i < H; i++) rowR[i] /= W;
+  const pick = (R, expected) => { const b = lineBands(R, 10); return (b && b.length + 1 === expected) ? b : (lineSnap(R, expected) || b); };
+  return { v: pick(colR, cols), h: pick(rowR, rows) };
+}
+
+/* ============================================================
+   分頁 1、3：提示詞（1 貼圖主題、3 全螢幕圖片）
+   ============================================================ */
+// 貼圖主題目錄。「熱門特效」每個主題有自己的姿勢與特效；其他分類的主題寫成「中文|English」，共用該分類的動畫內容
+const THEME_CATS = [
+  { label: "熱門特效", items: [
+    { label: "愛你",     en: "Love you",        pose: "雙手比愛心、甜笑",   fx: "大大小小的愛心從畫面下方不斷往上飄，越來越多，佈滿整個畫面後逐漸淡出" },
+    { label: "恭喜",     en: "Congrats",        pose: "拉開拉炮、開心大笑", fx: "彩帶與彩色紙花從畫面上方大量灑落，佈滿畫面後飄落消失" },
+    { label: "生日快樂", en: "Happy Birthday",  pose: "捧著生日蛋糕",       fx: "彩色氣球由下往上升起，伴隨彩帶與星星，最後飄出畫面" },
+    { label: "謝謝",     en: "Thank you",       pose: "雙手合十鞠躬",       fx: "花瓣從上方緩緩飄落，逐漸鋪滿畫面後飄走" },
+    { label: "加油",     en: "Go for it",       pose: "握拳吶喊",           fx: "火焰與放射狀光芒從畫面中心向外爆開，再逐漸收束消失" },
+    { label: "晚安",     en: "Good night",      pose: "抱著枕頭閉眼",       fx: "月亮從下方升起，星星一顆一顆亮起閃爍，最後慢慢變暗" },
+    { label: "嗚嗚",     en: "So sad",          pose: "大哭噴淚",           fx: "雨滴從上方不斷落下，水位由下往上慢慢升高再退去" },
+    { label: "氣死我",   en: "So angry",        pose: "爆青筋、跺腳",       fx: "火焰從下方竄起、閃電從上方劈下，畫面震動後熄滅" },
+    { label: "嚇死寶寶", en: "OMG",             pose: "驚嚇、張大嘴",       fx: "驚嘆號與集中線從中心向外爆開，畫面震動後散去" },
+    { label: "新年快樂", en: "Happy New Year",  pose: "拱手拜年",           fx: "煙火一朵接一朵在畫面中綻放、散開後消失" },
+    { label: "讚啦",     en: "Great job",       pose: "比大拇指",           fx: "金色星星與光點從中心向外擴散、閃亮後淡出" },
+    { label: "聖誕快樂", en: "Merry Christmas", pose: "戴聖誕帽揮手",       fx: "雪花從上方飄落，慢慢鋪滿畫面" }
+  ] },
+  { label: "日常問候", fx: "彩色的對話泡泡與小星星從畫面下方一個一個冒出來、往上飄，佈滿畫面後逐漸淡出",
+    items: "哈囉|Hello、嗨呀|Hi、早安|Good morning、午安|Good afternoon、掰掰|Bye、好久不見|Long time no see、吃飽沒|Have you eaten、在嗎|Are you there、辛苦了|Good work、平安|Stay safe" },
+  { label: "回應", fx: "大大的圈圈、勾勾與驚嘆號從畫面中心彈出放大，閃一下之後縮小消失",
+    items: "OK|OK、收到|Got it、好的|Sure、沒問題|No problem、了解|I see、真的假的|Really、不要|No、等一下|Wait、拜託|Please、求求你|Pretty please、對不起|Sorry" },
+  { label: "開心慶祝", fx: "彩帶、紙花與閃亮的星星從畫面上方大量灑落，佈滿畫面後飄落消失",
+    items: "推爆|Awesome、太棒了|Great、耶|Yay、開心|So happy、哈哈哈|Hahaha、乾杯|Cheers、發財了|Got rich、中獎了|Jackpot、畢業快樂|Happy graduation" },
+  { label: "愛與關心", fx: "粉紅色的愛心與小花從畫面四周慢慢飄進來，越來越多，佈滿畫面後逐漸淡出",
+    items: "超愛你|Love you so much、想你|Miss you、抱抱|Hug、親一個|Kiss、保重|Take care、早日康復|Get well soon、有你真好|Glad to have you、感恩|Grateful" },
+  { label: "難過生氣", fx: "烏雲從畫面上方飄進來，下起雨並打出閃電，最後雲散開、畫面變乾淨",
+    items: "人生好難|Life is hard、炸裂中|Exploding、心碎|Heartbroken、好累|So tired、無言|Speechless、崩潰|Breaking down、哼|Hmph、睏了|Sleepy" },
+  { label: "祝福", fx: "金色的光芒與祥雲從畫面中心向外擴散，金色光點閃閃發亮後慢慢淡出",
+    items: "平安喜樂|Peace and joy、身體健康|Stay healthy、福氣滿滿|Full of blessings、心想事成|Wishes come true、萬事如意|All the best、一路順風|Safe travels、恭喜發財|Wishing you prosperity" },
+  { label: "節慶", fx: "煙火在畫面中一朵接一朵綻放，搭配應景的節慶裝飾飄落，最後散開消失",
+    items: "元宵節快樂|Happy Lantern Festival、情人節快樂|Happy Valentine's Day、母親節快樂|Happy Mother's Day、端午安康|Happy Dragon Boat Festival、父親節快樂|Happy Father's Day、中秋節快樂|Happy Mid-Autumn Festival、教師節快樂|Happy Teachers' Day、萬聖節快樂|Happy Halloween" }
+];
+THEME_CATS.forEach(c => {
+  if (typeof c.items === "string") c.items = c.items.split("、").map(s => { const [label, en] = s.split("|"); return { label, en, pose: "", fx: c.fx }; });
+});
+const MAX_THEME_LEN = 10;   // 主題數量的上限就是整套貼圖的張數 P.count（8／16／24）
+const findTheme = label => { for (const c of THEME_CATS) { const t = c.items.find(x => x.label === label); if (t) return t; } return null; };
+const genericFx = label => `和「${label}」有關的圖案與符號從畫面邊緣出現，逐格變多、變大，佈滿整個畫面後逐漸淡出`;
+// 已選清單裡放的是複本：動畫內容（fx）可以在分頁 3 各自修改，不會改到目錄
+const pickTheme = (label, custom) => { const t = findTheme(label); return t ? { ...t, custom: false } : { label, en: "", pose: "", fx: genericFx(label), custom: !!custom }; };
+const curFxTheme = () => P.picked.find(t => t.label === P.fxTheme) || null;
+const STYLES = [
+  { id: "q",     label: "可愛 Q 版",   zh: "可愛 Q 版風格，大頭身比例、柔和粉嫩配色" },
+  { id: "anime", label: "日系動漫風",  zh: "日系動漫風格，乾淨的賽璐珞上色與俐落線稿、帶高光的大眼睛、鮮明色彩" },
+  { id: "3d",    label: "3D 公仔",     zh: "3D 公仔風格，絨毛玩具質感、平滑著色" },
+  { id: "flat",  label: "扁平插畫",    zh: "扁平插畫風格，乾淨向量感、大膽純色、無漸層" },
+  { id: "book",  label: "童書繪本",    zh: "童書繪本插畫風格，溫暖的水彩質感、柔和線條" },
+  { id: "water", label: "清新水彩",    zh: "清新水彩風格，半透明渲染、柔邊處理" },
+  { id: "us",    label: "美式卡通風",  zh: "美式卡通風格，粗黑外框線、誇張的比例、鮮豔飽和的扁平上色" }
+];
+const GRIDS = { "3x3": [3, 3, "2880 × 2880", "1:1"], "4x3": [4, 3, "3840 × 2880", "4:3"], "4x4": [4, 4, "3840 × 3840", "1:1"], "5x4": [5, 4, "4800 × 3840", "5:4"] };
+const P = { src: "ref", charText: "", picked: ["愛你", "恭喜", "謝謝", "加油"].map(l => pickTheme(l)), fxTheme: "愛你", fxText: findTheme("愛你").fx, fxChar: true, grid: "4x3", fxBg: "green", stBg: "green", style: "q", text: true, count: 8, batch: 0 };
+// 整套貼圖的張數（LINE 只接受 8／16／24）。一張大圖固定畫 8 張，所以 16／24 張要分 2／3 張大圖生成（P.batch 是第幾張大圖）
+let afterCountChange = () => {};
+let refreshPromptUI = () => {};   // 開啟存檔後，依 P 重畫分頁 1、3 的所有選項
+function setStickerCount(n) {
+  n = [8, 16, 24].includes(n) ? n : 8;
+  const lostTh = P.picked.length > n, lostFx = SLOTS.slice(n).some(s => s.frames.length), lostSt = ST.items.slice(n).some(Boolean);
+  const lost = [lostTh ? "貼圖主題" : "", lostSt ? "貼圖圖片" : "", lostFx ? "已做好的全螢幕動畫" : ""].filter(Boolean);
+  if (lost.length && !confirm(`改成 ${n} 張後，第 ${n + 1} 張之後的${lost.join("、")}會被刪除，確定嗎？`)) { afterCountChange(); return false; }
+  P.count = n;
+  if (P.batch >= n / 8) P.batch = 0;
+  if (lostTh) P.picked.length = n;
+  // 貼圖圖片依編號固定位置存放（沒上傳的位置是空的），張數變多時補空位
+  while (ST.items.length < n) ST.items.push(null);
+  ST.items.length = n;
+  if (!ST.items.includes(ST.main)) ST.main = null;
+  if (!ST.items.includes(ST.tab)) ST.tab = null;
+  if (ST.batch >= n / 8) ST.batch = 0;
+  while (SLOTS.length < n) SLOTS.push(newSlot());
+  SLOTS.length = n;
+  if (FX.mainSlot >= n) FX.mainSlot = -1;
+  if (FX.cur >= n) FX.cur = 0;
+  afterCountChange();
+  renderStickers();
+  return true;
+}
+
+function charLine() {
+  return P.src === "ref" ? "依使用者上傳的照片生成角色。（送出時請一併附上您的照片）" : "依下列描述生成角色：" + (P.charText.trim() || "（請填寫角色特徵）");
+}
+function buildPromptA() {
+  const st = STYLES.find(s => s.id === P.style), green = P.stBg === "green";
+  const from = P.batch * 8, picks = P.picked.slice(from, from + 8), boards = P.count / 8;   // 這一張大圖負責的 8 張
+  const list = picks.length ? picks.map((t, i) => `${from + i + 1}. ${t.label}：${t.pose || `最能表達「${t.label}」的表情與姿勢`}` + (P.text ? `（文字「${t.label}」）` : "")).join("\n") : `（⚠ 這一張大圖還沒有主題，請先在左邊選取或輸入第 ${from + 1}～${from + 8} 個）`;
+  const series = boards > 1 ? `
+這是一套 ${P.count} 張貼圖的第 ${P.batch + 1} 張大圖（共 ${boards} 張大圖，每張 8 張貼圖），這一張是貼圖編號 ${from + 1}～${from + 8}。${P.batch > 0 ? "\n**角色、畫風、線條粗細與貼圖大小必須和前面生成的大圖完全相同**（請一併附上第 1 張大圖作為參考）。" : ""}
+` : "";
+  return `你是一位專業的 LINE 貼圖角色設計師。
+
+# LINE 全螢幕貼圖 —「貼圖圖片」生成指令（靜態，共 8 張）
+${series}
+## 一、畫布規格
+- 畫布：2960 × 1280 px（約 21:9 的寬幅橫式），${green ? "純綠色（#00C800）背景，整張畫布平坦均勻，方便之後去背" : "透明 PNG（Alpha）"}。即使實際輸出的像素較小，也要維持這個橫式比例。
+- 排版：4 欄 × 2 列，共 8 張獨立的貼圖；每格約 740 × 640 px（與 LINE 貼圖圖片 370 × 320 的形狀相同）。
+- **不可生成方框的格線：** 所謂 4 欄 × 2 列只是排列位置，畫面上不可畫出任何方格、框線、格子邊界、分隔線或表格線；每張貼圖周圍也不可有矩形外框。也不可有浮水印。
+- 每張貼圖畫在格子正中央，最多只佔該格寬、高的 70%；相鄰兩張之間至少保留格寬 25% 的${green ? "純綠色" : "透明"}空白，任何部分都不可碰到或跨入隔壁的格子。
+
+## 二、角色一致性
+- ${charLine()}
+- 8 張貼圖是同一個角色：臉型、髮型、服裝、配色、身體比例完全一致，大小也一致。
+
+## 三、8 張貼圖的內容（每格一個姿勢，這是靜態貼圖，不是連續動作）
+${list}
+- 不足 8 張時，請自動補上風格相近、適合聊天使用的貼圖。
+- 表情鮮明、姿勢誇張，一眼就看得出意思。
+${P.text ? "- 每張貼圖加上括號內的繁體中文字：簡短、清楚、不可遮住角色，不得有錯字、亂碼或簡體字。" : "- 不要加入任何文字。"}
+
+## 四、視覺風格
+${st.zh}
+
+- 角色有粗細一致、清楚的輪廓線，並加上白色貼圖外框（die-cut sticker style）。
+- ${green ? "背景只有純綠色（#00C800）：無場景、無陰影、無漸層、無棋盤格；角色、文字與外框本身不可使用綠色。" : "背景完全透明：無場景、無陰影、無棋盤格。"}
+
+## 五、最終要求
+**8 張獨立的靜態貼圖、同一個角色、彼此分得很開、${green ? "純綠色背景" : "透明背景"}；不可生成方框的格線。**
+`;
+}
+// 畫面內容：P.fxChar 為 true（角色＋特效）、"char"（只有角色）、false（只有特效元素）
+const fxCharOnly = () => P.fxChar === "char";
+// 「只有角色」時，動畫內容改成角色動作；每個主題各自記住改過的內容
+const defaultMotion = t => `${t.pose || `做出最能表達「${t.label}」的表情與姿勢`}；從自然的姿勢開始，動作逐格加大到最明顯，再慢慢回到原本的姿勢`;
+const fxTextOf = t => !t ? "" : fxCharOnly() ? (t.motion ?? (t.motion = defaultMotion(t))) : t.fx;
+function buildPromptB() {
+  const st = STYLES.find(s => s.id === P.style), th = curFxTheme() || { label: "自訂" }, no = P.picked.indexOf(th) + 1;
+  const [cols, rows, size, ratio] = GRIDS[P.grid], N = cols * rows, per = N / 4;
+  const span = k => { const a = Math.round(k * per) + 1, b = Math.round((k + 1) * per); return a === b ? `第 ${a} 格` : `第 ${a}～${b} 格`; };
+  const only = fxCharOnly();
+  const bg = P.fxBg === "alpha"
+    ? "透明 PNG（Alpha），背景完全透明：無場景、無陰影、無棋盤格。"
+    : `純綠色（#00C800）背景，整張畫布平坦均勻，方便之後去背；${only ? "角色" : "特效元素"}本身不可使用綠色。`;
+  const who = only
+    ? "畫面內容「只有角色」：角色在畫面中央，大約佔格子高度的六到七成；**不要任何特效元素、符號、背景圖案或文字**，只靠角色的動作與表情表現主題。"
+    : P.fxChar
+    ? `畫面內容是「角色＋特效」：角色（${th.pose || "配合主題的姿勢"}）在畫面中央，大約佔格子高度的一半，特效在角色周圍與整個畫面中展開。`
+    : "畫面內容只有特效元素，不要畫角色。";
+  const motion = only ? `## 四、動畫連續性（最重要）
+${N} 格是同一個角色動作的連續影格，依序播放約 1～3 秒：
+
+1. **準備（${span(0)}）：** 角色從自然的姿勢開始，準備做動作。
+2. **動作（${span(1)}）：** 動作逐格加大，表情逐漸變化。
+3. **高峰（${span(2)}）：** 動作與表情最誇張、最明顯的時刻。
+4. **收尾（${span(3)}）：** 動作逐格放鬆，最後一格回到接近第 1 格的姿勢，方便循環播放。
+
+- **逐格小幅變化：** 身體、手臂、頭部每格只移動一小段距離，像動畫的中間格，不可突然跳到另一個姿勢。
+- **角色一致：** 每一格的臉型、髮型、服裝、配色、大小完全相同，只有姿勢與表情改變。
+- **不可重複或靜止：** 相鄰兩格一定要看得出變化。` : `## 四、動畫連續性（最重要）
+${N} 格是同一段特效的連續影格，依序播放約 1～3 秒：
+
+1. **出現（${span(0)}）：** 特效剛開始，元素很少、很小，或才從畫面邊緣進來。
+2. **展開（${span(1)}）：** 元素逐格變多、變大、依固定方向移動。
+3. **高峰（${span(2)}）：** 特效最滿、最熱鬧的時刻。
+4. **收尾（${span(3)}）：** 元素逐格減少、變淡或移出畫面，最後一格幾乎是空的，特效自然結束。
+
+- **逐格小幅變化：** 每個元素在下一格只移動一小段距離（例如往上飄的愛心每格往上一點），不可隨機換位置。
+- **數量漸進：** 元素數量逐格增加再逐格減少，不可忽多忽少。
+- **方向一致：** 所有元素依同一個合理的方向移動（往上飄、往下落、由中心向外），不可中途反向。
+- **不可重複或靜止：** 相鄰兩格一定要看得出變化。`;
+  return `你是一位專業的 LINE 貼圖角色設計師。
+
+# LINE 全螢幕貼圖 —「全螢幕圖片」生成指令（連續動畫影格）
+
+主題：${th.label}${no > 0 ? `（第 ${no} 張貼圖的全螢幕動畫，要和同主題的靜態貼圖圖片搭配）` : ""}
+${only ? "角色動作" : "動畫內容"}：${P.fxText.trim() || "（請填寫動畫內容）"}
+
+## 一、畫布規格
+- 畫布：${size} px（比例 ${ratio}）。${bg}即使實際輸出的像素較小，也要維持這個比例。
+- 排版：${cols} 欄 × ${rows} 列，共 ${N} 格，**每一格都是正方形**；閱讀與播放順序由左至右、由上而下（每一列的最後一格接下一列的第一格）。
+- ${N} 格大小完全相同、排列整齊，欄與欄、列與列對齊成直線。
+- **不可生成方框的格線：** 所謂幾欄幾列只是排列位置，畫面上不可畫出任何方格、框線、格子邊界、分隔線或表格線；每一格周圍也不可有矩形外框。也不可有文字及浮水印。
+
+${KIND === "effect" ? `## 二、這是「在聊天室背景上播放的特效」，不是一張小貼圖
+- 特效要大、要滿：元素分佈在整個正方形格子裡，播放時才會有佈滿聊天室背景的效果；訊息會疊在特效前面，所以元素可以細碎、多一點。` : `## 二、這是「蓋在整個聊天畫面上播放的全螢幕動畫」，不是一張小貼圖
+- 畫面要大、要滿：主角（角色，或大大的立體字、圖案）佔滿大半個正方形格子，像從螢幕裡跳出來一樣；播放時會蓋在聊天訊息上面，所以要醒目、有衝擊感。`}
+- ${who}
+- ${only ? "角色可以畫大一點" : "特效可以畫到貼近格子邊緣"}，但不可超出自己的格子畫到隔壁格。
+- 不要白色貼圖外框。
+
+## 三、角色與鏡頭
+- ${P.fxChar ? charLine() : "（本特效沒有角色）"}
+- 固定鏡頭：${N} 格的視角、比例完全相同${P.fxChar ? "；角色的大小與位置每一格都相同，只有姿勢與表情小幅改變" : ""}。
+
+${motion}
+
+## 五、視覺風格
+${st.zh}
+
+- 色彩鮮明、對比清楚，${KIND === "effect" ? "疊在聊天室背景上也看得清楚" : "蓋在聊天訊息上面也看得清楚"}。
+
+## 六、最終要求
+**${N} 個正方形影格、排列整齊、固定鏡頭、${only ? "只有角色、動作由開始到結束連續變化、沒有任何特效元素" : "特效由出現到消失連續變化"}、無文字；不可生成方框的格線。**
+`;
+}
+/* ---------- 上架用的標題與說明（LINE Creators Market：標題 40 字、說明 160 字以內） ---------- */
+const STYLE_EN = { q: "Cute Chibi", anime: "Anime", "3d": "3D Figure", flat: "Flat Illustration", book: "Storybook", water: "Watercolor", us: "Cartoon" };
+const LISTING = [
+  { key: "enTitle", label: "標題（English）", max: 40, rows: 1 },
+  { key: "enDesc",  label: "貼圖說明（English）", max: 160, rows: 3 },
+  { key: "zhTitle", label: "標題（中文繁體）", max: 40, rows: 1 },
+  { key: "zhDesc",  label: "貼圖說明（中文繁體）", max: 160, rows: 3 }
+];
+// 把項目一個一個接上去，接到快超過字數上限為止
+function joinWithin(head, items, sep, tail, max) {
+  let used = [];
+  for (const it of items) { const next = head + [...used, it].join(sep) + tail; if (next.length > max) break; used.push(it); }
+  return used.length ? head + used.join(sep) + tail : "";
+}
+function buildListing() {
+  const st = STYLES.find(s => s.id === P.style), stEn = STYLE_EN[P.style] || "Cute";
+  const nEn = $("#lsNameEn").value.trim(), nZh = $("#lsNameZh").value.trim();
+  const picks = P.picked;   // 自行輸入的主題沒有英文，只列在中文說明裡
+  const fx = KIND === "effect";
+  const enTitle = ((nEn ? nEn + " - " : "") + stEn + (fx ? " Effect Stickers" : " Full Screen Stickers")).slice(0, 40);
+  const zhTitle = ((nZh ? nZh + "的" : "") + st.label.replace(/\s+/g, "") + K().name).slice(0, 40);
+  const enBase = `${nEn ? nEn + "'s " + stEn.toLowerCase() : stEn} ` + (fx ? "effect stickers that fill your chat room with animated effects." : "full screen stickers that play big animations across your whole chat screen.");
+  const enDesc = (joinWithin(enBase + " Includes ", picks.filter(t => t.en).map(t => t.en), ", ", " and more.", 160) || enBase).slice(0, 160);
+  const zhBase = `${nZh || "原創角色"}的${st.label.replace(/\s+/g, "")}${K().name}，` + (fx ? "送出後會在聊天室背景播放動態特效" : "送出後會在整個聊天畫面播放動畫") + "，讓聊天更熱鬧！";
+  const zhDesc = (joinWithin(zhBase + "內容包含：", picks.map(t => t.label), "、", "等。", 160) || zhBase).slice(0, 160);
+  return { enTitle, enDesc, zhTitle, zhDesc };
+}
+function renderListing() {
+  const box = $("#listingFields"); if (!box) return;
+  const v = buildListing();
+  if (!box.children.length) {
+    box.innerHTML = LISTING.map(f => `
+      <div style="margin-bottom:10px">
+        <div class="row" style="justify-content:space-between"><span class="label" style="margin:0">${f.label}</span><span class="muted" data-count="${f.key}"></span></div>
+        <div class="row" style="align-items:flex-start;margin-top:4px">
+          <textarea class="input grow" rows="${f.rows}" maxlength="${f.max}" data-field="${f.key}" style="min-height:0"></textarea>
+          <button type="button" class="btn sm" data-copyfield="${f.key}">複製</button>
+        </div>
+      </div>`).join("");
+    LISTING.forEach(f => {
+      const ta = $(`[data-field="${f.key}"]`, box);
+      ta.oninput = () => { $(`[data-count="${f.key}"]`, box).textContent = `${ta.value.length}/${f.max}`; };
+      $(`[data-copyfield="${f.key}"]`, box).onclick = () => toast(copyText(ta.value) ? "✅ 已複製" : "複製失敗，請手動選取文字");
+    });
+  }
+  LISTING.forEach(f => { const ta = $(`[data-field="${f.key}"]`, box); ta.value = v[f.key]; ta.oninput(); });
+}
+function renderPrompts() { $("#promptA").textContent = buildPromptA(); $("#promptB").textContent = buildPromptB(); renderListing(); }
+function initPromptTab() {
+  const cats = $("#themeCats"), bars = $$(".picked"), fxSel = $("#fxTheme"), styles = $("#styleChips");
+  const pickedAt = label => P.picked.findIndex(t => t.label === label);
+  // 特效主題只能從已選的貼圖主題裡挑，編號就是那張貼圖的編號（全螢幕圖片要和同編號的貼圖圖片成對）
+  // 文字框顯示目前主題的動畫內容；「只有角色」時改成角色動作
+  const syncFxText = t => {
+    P.fxText = fxTextOf(t); $("#fxText").value = P.fxText;
+    $("#fxTextLabel").textContent = fxCharOnly() ? "角色動作（可以自己改）" : "動畫內容（可以自己改）";
+  };
+  const setFxTheme = label => {
+    P.fxTheme = label;
+    const t = curFxTheme();
+    syncFxText(t);   // 每個主題各自記住改過的動畫內容
+    const no = P.picked.indexOf(t) + 1;
+    if (no > 0 && no <= SLOTS.length) selectFxSlot(no - 1);   // 分頁 4 跟著切到同編號的那一張
+  };
+  const syncFxOptions = () => {
+    fxSel.innerHTML = "";
+    if (!P.picked.length) {
+      const o = document.createElement("option"); o.value = ""; o.textContent = "請先在分頁 1 選擇貼圖主題"; fxSel.appendChild(o);
+      fxSel.disabled = true; P.fxTheme = ""; P.fxText = ""; $("#fxText").value = "";
+      return;
+    }
+    fxSel.disabled = false;
+    P.picked.forEach((t, i) => {
+      const o = document.createElement("option"); o.value = t.label; o.textContent = `${i + 1}. ${t.label}` + (t.custom ? "（自行輸入）" : ""); fxSel.appendChild(o);
+    });
+    setFxTheme(curFxTheme() ? P.fxTheme : P.picked[0].label);   // 原本選的被取消時，改用第一個
+    fxSel.value = P.fxTheme;
+  };
+  // 已選清單：點選的和自行輸入的排在一起，號碼就是貼圖編號；分類上方和輸入框下方各顯示一份
+  const renderPicked = () => {
+    const n = P.picked.length;
+    const html = (n
+      ? P.picked.map((t, i) => `<span class="pk${t.custom ? " custom" : ""}"><b>${i + 1}</b><span>${t.custom ? "✏️ " : ""}${esc(t.label)}</span><button type="button" data-rm="${i}" aria-label="移除 ${esc(t.label)}">×</button></span>`).join("") + `<button type="button" class="pk-clear">✕ 全部取消</button>`
+      : `<span class="muted">尚未選擇（從下方分類點選，或自行輸入，共 1～${P.count} 個）</span>`)
+      + `<span class="pk-count${n >= P.count ? " full" : ""}">已選 <b>${n}</b>/${P.count}</span>`;
+    bars.forEach(b => { b.innerHTML = html; });
+  };
+  const syncChips = () => {
+    const full = P.picked.length >= P.count;
+    $$(".chip", cats).forEach(c => { const on = pickedAt(c.dataset.label) >= 0; c.classList.toggle("sel", on); c.classList.toggle("off", !on && full); });
+    renderPicked(); syncFxOptions();
+  };
+  const fullMsg = () => toast(`已經選滿 ${P.count} 個，請先按 × 移除一個`);
+  // 移除主題時，後面的貼圖編號會往前遞補；分頁 4 已做好的全螢幕動畫要跟著移動，才不會配錯張
+  const removeTheme = i => {
+    const t = P.picked[i]; if (!t) return;
+    if (SLOTS[i] && SLOTS[i].frames.length && !confirm(`第 ${i + 1} 張「${t.label}」的全螢幕動畫已經做好了，移除主題會一併刪除這張全螢幕動畫，確定嗎？`)) return;
+    P.picked.splice(i, 1);
+    if (i < SLOTS.length) {
+      SLOTS.splice(i, 1); SLOTS.push(newSlot());
+      if (FX.mainSlot === i) FX.mainSlot = -1; else if (FX.mainSlot > i) FX.mainSlot--;
+      if (FX.cur > i) FX.cur--;
+      selectFxSlot(FX.cur);
+    }
+    syncChips(); renderPrompts();
+  };
+  const addTheme = (label, custom) => { P.picked.push(pickTheme(label, custom)); };
+  THEME_CATS.forEach((cat, k) => {
+    const d = document.createElement("details"); d.className = "cat"; d.open = k === 0;
+    d.innerHTML = `<summary><b>${esc(cat.label)}</b> · ${cat.items.length} 個</summary><div class="btn-group"></div>`;
+    cat.items.forEach(t => {
+      const c = document.createElement("button"); c.type = "button"; c.className = "chip"; c.dataset.label = t.label; c.textContent = t.label;
+      c.onclick = () => {
+        const i = pickedAt(t.label);
+        if (i >= 0) { removeTheme(i); return; }
+        if (P.picked.length >= P.count) { fullMsg(); return; }
+        addTheme(t.label); syncChips(); renderPrompts();
+      };
+      d.lastElementChild.appendChild(c);
+    });
+    cats.appendChild(d);
+  });
+  bars.forEach(bar => bar.addEventListener("click", e => {
+    const rm = e.target.closest("[data-rm]");
+    if (rm) { removeTheme(parseInt(rm.dataset.rm)); return; }
+    if (!e.target.closest(".pk-clear")) return;
+    if (SLOTS.some(s => s.frames.length) && !confirm("分頁 4 已經做好的全螢幕動畫會全部刪除，確定要全部取消嗎？")) return;
+    P.picked = [];
+    SLOTS.forEach((_, k) => { SLOTS[k] = newSlot(); }); FX.mainSlot = -1; selectFxSlot(0);
+    syncChips(); renderPrompts();
+  }));
+  // 自行輸入：一個一個加進同一份清單，重複、太長、超過上限的都不加，並留在輸入框裡讓使用者處理
+  const addCustom = () => {
+    const inp = $("#themeCustom"), parts = inp.value.split(/[、,，;；\n]/).map(s => s.trim()).filter(Boolean);
+    if (!parts.length) { toast("請先輸入主題文字"); return; }
+    let added = 0, dup = 0; const long = [], over = [];
+    parts.forEach(s => {
+      if (pickedAt(s) >= 0 || long.includes(s) || over.includes(s)) { dup++; return; }
+      if ([...s].length > MAX_THEME_LEN) { long.push(s); return; }
+      if (P.picked.length >= P.count) { over.push(s); return; }
+      addTheme(s, true); added++;
+    });
+    inp.value = long.concat(over).join("、");
+    const msg = [];
+    if (added) msg.push(`已加入 ${added} 個`);
+    if (dup) msg.push(`${dup} 個已經在清單裡`);
+    if (long.length) msg.push(`${long.length} 個超過 ${MAX_THEME_LEN} 個字，請縮短`);
+    if (over.length) msg.push(`${over.length} 個因為已滿 ${P.count} 個沒有加入`);
+    toast(msg.join("；"));
+    syncChips(); renderPrompts();
+  };
+  // 整套張數：分頁 1 的按鈕和分頁 4 的下拉選單是同一個設定
+  afterCountChange = () => {
+    const boards = P.count / 8;
+    $$("[data-stk]").forEach(b => b.classList.toggle("sel", parseInt(b.dataset.stk) === P.count));
+    $("#fxCount").value = P.count;
+    $$(".maxN").forEach(e => { e.textContent = P.count; });
+    $("#batchBox").hidden = boards < 2; $("#batchN").textContent = boards;
+    $("#batchGroup").innerHTML = Array.from({ length: boards }, (_, b) => `<button type="button" class="btn${b === P.batch ? " sel" : ""}" data-batch="${b}">第 ${b + 1} 張大圖（貼圖 ${b * 8 + 1}～${b * 8 + 8}）</button>`).join("");
+    selectFxSlot(FX.cur);
+    syncChips(); renderPrompts();
+  };
+  $("#countGroup").addEventListener("click", e => { const b = e.target.closest("[data-stk]"); if (b) setStickerCount(parseInt(b.dataset.stk)); });
+  $("#batchGroup").addEventListener("click", e => { const b = e.target.closest("[data-batch]"); if (!b) return; P.batch = parseInt(b.dataset.batch); afterCountChange(); });
+  $("#themeAdd").onclick = addCustom;
+  $("#themeCustom").addEventListener("keydown", e => { if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); addCustom(); } });
+  STYLES.forEach(s => {
+    const c = document.createElement("button"); c.type = "button"; c.className = "chip" + (s.id === P.style ? " sel" : ""); c.dataset.id = s.id; c.textContent = s.label;
+    c.onclick = () => { P.style = s.id; $$(".chip", styles).forEach(x => x.classList.toggle("sel", x === c)); renderPrompts(); };
+    styles.appendChild(c);
+  });
+  $("#fxText").value = P.fxText;
+  fxSel.onchange = () => { setFxTheme(fxSel.value); renderPrompts(); };
+  $("#fxText").oninput = e => {
+    P.fxText = e.target.value;
+    const t = curFxTheme();
+    if (t) { if (fxCharOnly()) t.motion = P.fxText; else t.fx = P.fxText; }
+    renderPrompts();
+  };
+  const group = (sel, attr, fn) => $(sel).addEventListener("click", e => {
+    const b = e.target.closest(`[data-${attr}]`); if (!b) return;
+    $$(`[data-${attr}]`, $(sel)).forEach(x => x.classList.toggle("sel", x === b)); fn(b.dataset[attr]); renderPrompts();
+  });
+  group("#srcGroup", "src", v => { P.src = v; $("#charText").hidden = v !== "custom"; $("#srcRefNote").hidden = v !== "ref"; });
+  group("#fxCharGroup", "fxchar", v => { P.fxChar = v === "1" ? true : v === "char" ? "char" : false; syncFxText(curFxTheme()); });
+  group("#fxGridGroup", "grid", v => { P.grid = v; const g = GRIDS[v]; fxBoard.setGrid(g[0], g[1]); });
+  // 選了綠幕，切割那一頁的去背方式就先切到「綠幕」，省得再選一次
+  const boardMode = (root, v) => { const b = $(`${root} [data-mode="${v === "green" ? "green" : "none"}"]`); if (b) b.click(); };
+  group("#fxBgGroup", "fxbg", v => { P.fxBg = v; boardMode("#fxBoard", v); });
+  group("#stBgGroup", "stbg", v => { P.stBg = v; boardMode("#stBoard", v); });
+  boardMode("#fxBoard", P.fxBg); boardMode("#stBoard", P.stBg);   // 預設是純綠幕，去背方式也先選好
+  refreshPromptUI = () => {
+    const sel = (g, attr, v) => $$(`[data-${attr}]`, $(g)).forEach(x => x.classList.toggle("sel", x.dataset[attr] === String(v)));
+    sel("#srcGroup", "src", P.src);
+    $("#charText").value = P.charText; $("#charText").hidden = P.src !== "custom"; $("#srcRefNote").hidden = P.src !== "ref";
+    sel("#fxCharGroup", "fxchar", P.fxChar === "char" ? "char" : P.fxChar ? "1" : "0");
+    sel("#fxGridGroup", "grid", P.grid); const g = GRIDS[P.grid]; fxBoard.setGrid(g[0], g[1]);
+    sel("#fxBgGroup", "fxbg", P.fxBg); sel("#stBgGroup", "stbg", P.stBg);
+    boardMode("#fxBoard", P.fxBg); boardMode("#stBoard", P.stBg);
+    $$(".chip", styles).forEach(x => x.classList.toggle("sel", x.dataset.id === P.style));
+    $("#stickerText").checked = P.text;
+    afterCountChange();   // 張數、主題清單、提示詞
+  };
+  $("#charText").oninput = e => { P.charText = e.target.value; renderPrompts(); };
+  $("#stickerText").onchange = e => { P.text = e.target.checked; renderPrompts(); };
+  $("#lsNameEn").oninput = renderListing;
+  $("#lsNameZh").oninput = renderListing;
+  $$("[data-copy]").forEach(b => b.onclick = () => toast(copyText($("#" + b.dataset.copy).textContent) ? "✅ 提示詞已複製" : "複製失敗，請手動選取文字"));
+  syncChips(); renderPrompts();
+}
+
+/* ============================================================
+   分頁 4：全螢幕圖片
+   ============================================================ */
+// 一張貼圖一個特效：SLOTS[i] 對應檔名 (i+1)_popup.png；FX 是「目前正在編輯的那一張」的視窗
+const newSlot = () => ({ frames: [], sec: 1, loop: 1, name: "" });   // name：使用者自己取的名稱，空白就顯示貼圖主題
+const SLOTS = Array.from({ length: 8 }, newSlot);
+const FX = {
+  cur: 0, raf: 0, timer: 0, mainSlot: -1, shown: null,   // shown：切割區目前顯示的是哪一張（SLOTS 的物件）
+  get frames() { return SLOTS[this.cur].frames; }, set frames(v) { SLOTS[this.cur].frames = v; },
+  get sec() { return SLOTS[this.cur].sec; }, set sec(v) { SLOTS[this.cur].sec = v; },
+  get loop() { return SLOTS[this.cur].loop; }, set loop(v) { SLOTS[this.cur].loop = v; }
+};
+const fxOn = () => FX.frames.filter(f => f.on);
+const slotOn = s => s.frames.filter(f => f.on);
+const slotOk = s => { const n = slotOn(s).length; return n >= 5 && n <= 20 && s.sec * s.loop <= 3; };
+const slotTheme = i => (SLOTS[i] && SLOTS[i].name) || (P.picked[i] ? P.picked[i].label : "");
+function renderSlots() {
+  const box = $("#fxSlots"); if (!box) return;
+  box.innerHTML = "";
+  SLOTS.forEach((s, i) => {
+    const on = slotOn(s), has = s.frames.length > 0;
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "slot" + (i === FX.cur ? " cur" : "") + (has ? (slotOk(s) ? " ok" : " bad") : "");
+    // 還沒做全螢幕動畫時，左下角用小圖顯示同編號的貼圖圖片（分頁 2），方便對照；刻意做小，避免誤以為動畫已做好
+    const stk = ST.items[i];
+    const pic = has && on.length ? `<img alt="" data-anim="${i}" src="${on[0].url}">`
+      : stk ? `<span style="font-size:13px;line-height:1.5;font-weight:700">📂<br>點這裡選大圖</span><img alt="同編號的貼圖圖片" src="${stk.url}" style="inset:auto;left:5px;bottom:5px;width:36%;height:36%;border-radius:6px;background:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.7)">` : "＋";
+    b.innerHTML = `<div class="pic">${pic}</div>
+      <div class="cap"><b>${pad2(i + 1)}</b> ${esc(slotTheme(i))}${has ? `<br>${on.length} 格${slotOk(s) ? " ✔" : " ✘"}` : stk ? "<br>動畫未製作" : "<br>未製作"}</div>${FX.mainSlot === i ? `<span class="star" title="全螢幕貼圖主要圖片">⭐</span>` : ""}` +
+      (has ? `<span class="redo" data-redo title="換一張影格大圖重做">📂 換圖</span>` : "");
+    // 還沒做的格子：點一下就選這一張並直接開啟選擇檔案。已做好的：點一下只切換（看影格與預覽），要重做按左上角「換圖」
+    b.onclick = e => {
+      selectFxSlot(i);
+      if (!has || e.target.closest("[data-redo]")) fxBoard.pick();
+    };
+    box.appendChild(b);
+  });
+  const lab = `目前：第 ${FX.cur + 1} 張` + (slotTheme(FX.cur) ? `「${slotTheme(FX.cur)}」` : "") + ` → ${pad2(FX.cur + 1)}_popup.png`;
+  $("#fxCurLabel").textContent = lab; $("#fxCurLabel2").textContent = lab;
+  const nm = $("#fxName");
+  $("#fxNameLabel").textContent = `第 ${FX.cur + 1} 張的名稱`;
+  nm.placeholder = (P.picked[FX.cur] ? P.picked[FX.cur].label : "") || "例：拜託";
+  if (document.activeElement !== nm) nm.value = SLOTS[FX.cur].name;
+}
+// 做好的全螢幕動畫，格子裡的縮圖直接循環播放（依各自設定的單次播放時間）
+setInterval(() => {
+  const now = performance.now();
+  $$("#fxSlots img[data-anim]").forEach(img => {
+    const s = SLOTS[+img.dataset.anim], on = s ? slotOn(s) : [];
+    if (!on.length || img.offsetParent === null) return;   // 分頁沒顯示時不更新
+    const T = s.sec * 1000, k = Math.min(on.length - 1, Math.floor((now % T) / (T / on.length)));
+    if (img.dataset.k !== String(k)) { img.dataset.k = k; img.src = on[k].url; }
+  });
+}, 50);
+function selectFxSlot(i) {
+  if (i < 0 || i >= SLOTS.length) return;
+  fxStop();
+  FX.cur = i;
+  // 每一張各自記住上傳的影格大圖：換到別張時，切割區也換成那一張的圖（還沒上傳就顯示「選擇圖片」）
+  const s = SLOTS[i];
+  if (FX.shown !== s) {
+    if (FX.shown) FX.shown.board = fxBoard.getState();
+    FX.shown = s;
+    if (s.board) fxBoard.setState(s.board);
+    else { fxBoard.setState(null); const g = GRIDS[P.grid]; fxBoard.setGrid(g[0], g[1]); }
+  }
+  fxBoard.setHint(`第 ${i + 1} 張${slotTheme(i) ? `「${slotTheme(i)}」` : ""}：用「提示詞 B」生成的動畫影格大圖（PNG / JPG）`);
+  $("#fxWork").hidden = !FX.frames.length;
+  renderSlots(); renderFxStrip(); fxChecks(); fxDrawFrame(0);
+  $("#fxSizeInfo").textContent = "";
+}
+// 把一格畫進 480×480：等比例縮放、置中
+function drawContain(ctx, src, W, H) {
+  const s = Math.min(W / src.width, H / src.height), w = src.width * s, h = src.height * s;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(src, (W - w) / 2, (H - h) / 2, w, h);
+}
+function renderFxStrip() {
+  const strip = $("#fxStrip"); strip.innerHTML = "";
+  FX.frames.forEach((f, i) => {
+    const d = document.createElement("div");
+    d.className = "fr" + (f.on ? "" : " off");
+    d.innerHTML = `<div class="pic"><img alt="影格 ${i + 1}" src="${f.url}"></div><div class="bar"><button type="button" data-a="l" aria-label="往前">◀</button><b>${i + 1}</b><button type="button" data-a="x" aria-label="排除或恢復">✕</button><button type="button" data-a="r" aria-label="往後">▶</button></div>`;
+    d.querySelector('[data-a="l"]').onclick = () => { if (i > 0) { FX.frames.splice(i - 1, 0, FX.frames.splice(i, 1)[0]); fxChanged(); } };
+    d.querySelector('[data-a="r"]').onclick = () => { if (i < FX.frames.length - 1) { FX.frames.splice(i + 1, 0, FX.frames.splice(i, 1)[0]); fxChanged(); } };
+    d.querySelector('[data-a="x"]').onclick = () => { f.on = !f.on; fxChanged(); };
+    strip.appendChild(d);
+  });
+}
+function fxChanged() { renderFxStrip(); fxChecks(); fxStop(); fxDrawFrame(0); $("#fxSizeInfo").textContent = ""; renderSlots(); }
+function fxChecks(sizeBytes) {
+  const n = fxOn().length, maxLoop = Math.floor(3 / FX.sec);
+  if (FX.loop > maxLoop) FX.loop = maxLoop;
+  $$("[data-loop]").forEach(b => { const v = parseInt(b.dataset.loop); b.disabled = v > maxLoop; b.classList.toggle("sel", v === FX.loop); });
+  $$("[data-sec]").forEach(b => b.classList.toggle("sel", parseInt(b.dataset.sec) === FX.sec));
+  const total = FX.sec * FX.loop;
+  $("#fxTimeInfo").textContent = `${FX.sec} 秒 × ${FX.loop} 次 = 共 ${total} 秒` + (n ? `，每格約 ${Math.round(FX.sec * 1000 / n)} ms` : "");
+  const li = [];
+  li.push([n >= 5 && n <= 20 ? "" : "bad", n >= 5 && n <= 20 ? `畫格數 ${n} 格（規定 5～20 格）` : `畫格數 ${n} 格，不在 5～20 格之間` + (n > 20 ? "，請用 ✕ 排除幾格" : "")]);
+  li.push([total <= 3 ? "" : "bad", `總播放時間 ${total} 秒（規定最長 3 秒）`]);
+  li.push(["", "輸出尺寸 480 × 480 px，APNG"]);
+  if (sizeBytes != null) li.push([sizeBytes < 1048576 ? "" : "bad", `檔案大小 ${(sizeBytes / 1024).toFixed(0)} KB（規定小於 1 MB）`]);
+  $("#fxChecks").innerHTML = li.map(([c, t]) => `<li class="${c}">${esc(t)}</li>`).join("");
+  const ok = n >= 5 && n <= 20 && total <= 3;
+  $("#fxExport").disabled = $("#fxExportMain").disabled = !ok;
+  $("#fxExportMain").classList.toggle("sel", FX.mainSlot === FX.cur);
+  $("#fxExportMain").textContent = FX.mainSlot === FX.cur ? "⭐ 已設為全螢幕貼圖主要圖片（main_popup）" : "⭐ 設為全螢幕貼圖主要圖片（main_popup）";
+  return ok;
+}
+function fxDrawFrame(i) {
+  const cv = $("#fxCanvas"), x = cv.getContext("2d"), on = fxOn();
+  x.clearRect(0, 0, 480, 480);
+  if (on.length && i >= 0) drawContain(x, on[i % on.length].canvas, 480, 480);
+}
+function fxStop() { cancelAnimationFrame(FX.raf); clearTimeout(FX.timer); FX.raf = 0; FX.timer = 0; $("#fxPlay").textContent = "▶ 在聊天室播放"; }
+function fxStart() {
+  const on = fxOn(); if (!on.length) return;
+  $("#fxPlay").textContent = "■ 停止";
+  const T = FX.sec * 1000, total = T * FX.loop, t0 = performance.now();
+  const step = now => {
+    const e = now - t0;
+    if (e >= total) {
+      // 播完特效就消失，和 LINE 裡一樣；勾了「連續重播」就隔半秒再播一次
+      FX.raf = 0; fxDrawFrame(-1);
+      if ($("#fxRepeat").checked) FX.timer = setTimeout(() => { FX.timer = 0; fxStart(); }, 500); else fxStop();
+      return;
+    }
+    fxDrawFrame(Math.min(on.length - 1, Math.floor((e % T) / T * on.length)));
+    FX.raf = requestAnimationFrame(step);
+  };
+  FX.raf = requestAnimationFrame(step);
+}
+function fxPlay() {
+  if (FX.raf || FX.timer) { fxStop(); fxDrawFrame(-1); return; }
+  fxStart();
+}
+async function fxEncode(slot) {
+  slot = slot || SLOTS[FX.cur];
+  const on = slotOn(slot), N = on.length, T = slot.sec * 1000;
+  if (typeof CompressionStream === "undefined") throw new Error("這個瀏覽器不支援 APNG 編碼，請使用最新版 Chrome、Edge 或 Safari");
+  // 縮放到 480 × 480 時邊緣又會變成半透明，輸出前再清一次
+  const hard = fxBoard.hard();
+  const frames = on.map(f => { const c = mk(480, 480), x = ctx2d(c); drawContain(x, f.canvas, 480, 480); const d = x.getImageData(0, 0, 480, 480).data; if (hard) cleanAlphaForLine(d, 480, 480); return d; });
+  // 每格的毫秒數加起來剛好等於單次播放時間
+  const delays = on.map((_, i) => Math.round((i + 1) * T / N) - Math.round(i * T / N));
+  let best = null;
+  for (const colors of [256, 128, 64, 32]) {   // 超過 1 MB 就減少色彩數
+    best = await encodeAPNG(frames, 480, 480, delays, slot.loop, colors, true);
+    best.colors = colors;
+    if (best.blob.size < 1000000) break;
+  }
+  return best;
+}
+async function fxExport(name) {
+  if (!fxChecks()) return;
+  const btns = [$("#fxExport"), $("#fxExportMain")];
+  btns.forEach(b => { b.disabled = true; });
+  $("#fxSizeInfo").textContent = "編碼中…";
+  try {
+    const r = await fxEncode();
+    fxChecks(r.blob.size);
+    $("#fxSizeInfo").textContent = `已輸出 ${name}：${(r.blob.size / 1024).toFixed(0)} KB` + (r.colors < 256 ? `（為了符合 1 MB，色彩數降為 ${r.colors}）` : "");
+    await saveBlob(r.blob, name);
+  } catch (e) { console.error(e); $("#fxSizeInfo").textContent = ""; toast("輸出失敗：" + e.message); }
+  btns.forEach(b => { b.disabled = false; });
+}
+function initEffectTab() {
+  $("#fxSecGroup").addEventListener("click", e => { const b = e.target.closest("[data-sec]"); if (!b) return; FX.sec = parseInt(b.dataset.sec); fxChecks(); fxStop(); });
+  $("#fxLoopGroup").addEventListener("click", e => { const b = e.target.closest("[data-loop]"); if (!b || b.disabled) return; FX.loop = parseInt(b.dataset.loop); fxChecks(); fxStop(); });
+  $("#fxPlay").onclick = fxPlay;
+  $("#fxExport").onclick = () => fxExport(`${pad2(FX.cur + 1)}_${SUF()}.png`);
+  $("#fxExportMain").onclick = () => { FX.mainSlot = FX.mainSlot === FX.cur ? -1 : FX.cur; fxChecks(); renderSlots(); toast(FX.mainSlot >= 0 ? `第 ${FX.cur + 1} 張的全螢幕動畫會存成 main_popup.png` : "已取消全螢幕貼圖主要圖片"); };
+  $("#fxName").oninput = e => { SLOTS[FX.cur].name = e.target.value.trim(); renderSlots(); };
+  $("#fxCount").onchange = e => setStickerCount(parseInt(e.target.value));   // 和分頁 1 的「整套貼圖張數」同一個設定
+  renderSlots();
+}
+const fxBoard = createBoard($("#fxBoard"), {
+  cols: 4, rows: 3, trim: false, contiguous: false, hint: "用「提示詞 B」生成的動畫影格大圖（PNG / JPG）",
+  // 從上方格子直接選檔時，選好後捲到切割區，接著按「分割＋去背」
+  onLoad() { $("#fxBoard").scrollIntoView({ behavior: "smooth", block: "start" }); },
+  onFrames(list) {
+    SLOTS[FX.cur].board = fxBoard.getState();   // 記住這一張用的影格大圖
+    FX.frames = list.map(c => ({ canvas: c, url: c.toDataURL("image/png"), on: true }));
+    $("#fxWork").hidden = false;
+    fxChanged();
+    $("#fxWork").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+});
+
+/* ============================================================
+   分頁 2：貼圖圖片／主圖／標籤
+   ============================================================ */
+// items[i] 是編號 i+1 的貼圖圖片（固定位置，沒上傳的是 null）；batch 是這次上傳的是第幾張大圖（每張 8 張）
+// srcs[b] 是第 b 張大圖目前的來源圖與分割線（切換大圖時換回來顯示）
+const ST = { items: Array(8).fill(null), main: null, tab: null, batch: 0, srcs: [], shown: 0 };
+const stFilled = () => ST.items.map((it, i) => it ? i : -1).filter(i => i >= 0);
+const stBatchDone = b => ST.items.slice(b * 8, b * 8 + 8).some(Boolean);
+const stBatchFull = b => ST.items.slice(b * 8, b * 8 + 8).every(Boolean);
+// 貼圖圖片：四周留 10 px，整張不超過 370 × 320，寬高取偶數
+function stickerCanvas(src) {
+  const s = Math.min(350 / src.width, 300 / src.height);
+  const w = Math.max(2, Math.round(src.width * s)), h = Math.max(2, Math.round(src.height * s));
+  const W = Math.min(370, (w + 21) & ~1), H = Math.min(320, (h + 21) & ~1), c = mk(W, H), x = ctx2d(c);
+  x.imageSmoothingQuality = "high";
+  x.drawImage(src, Math.round((W - w) / 2), Math.round((H - h) / 2), w, h);
+  return c;
+}
+function fixedCanvas(src, W, H) { const c = mk(W, H); drawContain(ctx2d(c), src, W, H); return c; }
+// 16／24 張時的「第幾張大圖」選擇
+function renderStBatch() {
+  const boards = P.count / 8;
+  $("#stBatchBox").hidden = boards < 2;
+  $("#stBatchN").textContent = boards;
+  $("#stBatchGroup").innerHTML = Array.from({ length: boards }, (_, b) =>
+    `<button type="button" class="btn${b === ST.batch ? " sel" : ""}" data-stbatch="${b}">${stBatchFull(b) ? "✅" : stBatchDone(b) ? "🧩" : "⬜"} 第 ${b + 1} 張大圖（${pad2(b * 8 + 1)}～${pad2(b * 8 + 8)}）</button>`).join("");
+  // 切換到另一張大圖時，下面的切割區也換成那一張的圖（還沒上傳就顯示「選擇圖片」）
+  if (ST.shown !== ST.batch) {
+    if (ST.shown != null) ST.srcs[ST.shown] = stBoard.getState();
+    ST.shown = ST.batch;
+    stBoard.setState(ST.srcs[ST.batch] || null);
+  }
+  stBoard.setHint(boards > 1
+    ? `第 ${ST.batch + 1} 張大圖（貼圖 ${pad2(ST.batch * 8 + 1)}～${pad2(ST.batch * 8 + 8)}）：用「提示詞 A」生成的靜態貼圖大圖（PNG / JPG）`
+    : "用「提示詞 A」生成的靜態貼圖大圖（PNG / JPG）");
+}
+function renderStickers() {
+  renderStBatch();
+  const grid = $("#stGrid");
+  grid.innerHTML = "";
+  ST.items.forEach((it, i) => {
+    const name = pad2(i + 1) + ".png";
+    const d = document.createElement("div");
+    d.className = "fr";
+    if (!it) {
+      d.innerHTML = `<div class="pic" style="opacity:.45;color:#fff;font-size:22px;font-weight:800">${pad2(i + 1)}</div>
+        <div class="bar"><b>${name}　尚未上傳</b></div>
+        <div class="acts"><span class="muted" style="font-size:12px;text-align:center">請上傳第 ${Math.floor(i / 8) + 1} 張大圖</span></div>`;
+      grid.appendChild(d);
+      return;
+    }
+    d.innerHTML = `<div class="pic"><img alt="${name}" src="${it.url}"></div>
+      <div class="bar"><b>${name}　${it.out.width}×${it.out.height}</b></div>
+      <div class="acts">
+        <button type="button" class="btn sm" data-a="dl">⬇ 下載貼圖圖片</button>
+        <button type="button" class="btn sm ${ST.main === it ? "sel" : ""}" data-a="main">設為主圖</button>
+        <button type="button" class="btn sm ${ST.tab === it ? "sel" : ""}" data-a="tab">設為標籤</button>
+        <button type="button" class="btn sm" data-a="pv">用於聊天室預覽</button>
+      </div>`;
+    d.querySelector('[data-a="dl"]').onclick = async () => saveBlob(await toBlob(it.out), name);
+    d.querySelector('[data-a="main"]').onclick = () => { ST.main = it; renderStickers(); };
+    d.querySelector('[data-a="tab"]').onclick = () => { ST.tab = it; renderStickers(); };
+    d.querySelector('[data-a="pv"]').onclick = () => { $("#phoneSticker").innerHTML = `<img alt="貼圖圖片" src="${it.url}">`; toast("已放進分頁 4 的聊天室預覽"); };
+    grid.appendChild(d);
+  });
+  $("#stMain").disabled = !ST.main; $("#stTab").disabled = !ST.tab;
+  renderSlots();   // 分頁 4 的格子會顯示同編號的貼圖圖片
+  // 上架一定要有主圖和標籤，兩個都設好才開放打包
+  const missing = [ST.main ? "" : "主圖", ST.tab ? "" : "標籤"].filter(Boolean);
+  $("#stZip").disabled = missing.length > 0;
+  const filled = stFilled().length, boards = P.count / 8;
+  const lack = ST.items.map((it, i) => it ? "" : pad2(i + 1)).filter(Boolean);
+  $("#stZipHint").textContent = `目前 ${filled} / ${P.count} 張貼圖圖片` +
+    (filled >= P.count ? "。" : `（還缺 ${lack.join("、")}` + (boards > 1 ? "：在上面選對應的大圖後再上傳）。" : "）。")) + (missing.length ? `⚠ 還沒設定${missing.join("和")}，請先在下面選一張按「設為${missing.join("」「設為")}」，才能下載 ZIP。` : "✅ 主圖和標籤都設定好了，可以下載 ZIP（內含全部貼圖圖片、main.png、tab.png）。");
+  $("#stZipHint").style.color = missing.length ? "var(--warn)" : "var(--good)";
+}
+function initStickerTab() {
+  $("#stBatchGroup").addEventListener("click", e => {
+    const b = e.target.closest("[data-stbatch]"); if (!b) return;
+    ST.batch = parseInt(b.dataset.stbatch);
+    renderStBatch();
+    toast(`接下來上傳的大圖會放到貼圖 ${pad2(ST.batch * 8 + 1)}～${pad2(ST.batch * 8 + 8)}`);
+  });
+  renderStBatch();
+  $("#stMain").onclick = async () => saveBlob(await toBlob(fixedCanvas(ST.main.src, 240, 240)), "main.png");
+  $("#stTab").onclick = async () => saveBlob(await toBlob(fixedCanvas(ST.tab.src, 96, 74)), "tab.png");
+  $("#stZip").onclick = async () => {
+    if (!ST.main || !ST.tab) { toast("請先設定主圖和標籤"); return; }
+    const files = [];
+    for (const i of stFilled()) files.push({ name: pad2(i + 1) + ".png", data: new Uint8Array(await (await toBlob(ST.items[i].out)).arrayBuffer()) });
+    if (ST.main) files.push({ name: "main.png", data: new Uint8Array(await (await toBlob(fixedCanvas(ST.main.src, 240, 240))).arrayBuffer()) });
+    if (ST.tab) files.push({ name: "tab.png", data: new Uint8Array(await (await toBlob(fixedCanvas(ST.tab.src, 96, 74))).arrayBuffer()) });
+    saveBlob(makeZip(files), "fullscreen_sticker_images.zip");
+  };
+}
+const stBoard = createBoard($("#stBoard"), {
+  cols: 4, rows: 2, trim: true, contiguous: true, hint: "用「提示詞 A」生成的靜態貼圖大圖（PNG / JPG）",
+  async onFrames(list) {
+    ST.srcs[ST.batch] = stBoard.getState();   // 記住這一段用的大圖，切回來時可以再看到
+    const fresh = list.map(c => { const out = stickerCanvas(c); return { src: c, out, url: out.toDataURL("image/png") }; });
+    // 放到這張大圖負責的編號；8 張時整套就是一張大圖
+    const boards = P.count / 8, from = ST.batch * 8, size = boards > 1 ? 8 : P.count;
+    const range = Array.from({ length: Math.min(size, P.count - from) }, (_, k) => from + k);
+    const have = range.filter(i => ST.items[i]), empty = range.filter(i => !ST.items[i]);
+    // 這一段只做了一部分（例如合併進來的半套）：可以只補空位，大圖的第 k 格對應第 from+k 張
+    let onlyEmpty = false;
+    if (have.length && empty.length) {
+      const v = await askChoice("這一段已經有部分貼圖",
+        `第 ${pad2(from + 1)}～${pad2(from + range.length)} 張裡，已經有 ${have.map(i => pad2(i + 1)).join("、")}。\n這張大圖的第 1 格對應第 ${pad2(from + 1)} 張，依此類推。`, [
+          { v: "empty", label: `🧩 只補空著的 ${empty.map(i => pad2(i + 1)).join("、")}`, primary: true },
+          { v: "all", label: `🔄 全部換成這張大圖（${pad2(from + 1)}～${pad2(from + range.length)}）` },
+          { v: "cancel", label: "取消" }
+        ]);
+      if (v === "cancel") return;
+      onlyEmpty = v === "empty";
+    }
+    range.forEach((i, k) => {
+      if (onlyEmpty && ST.items[i]) return;
+      setStickerAt(i, fresh[k] || null);
+    });
+    const msg = [onlyEmpty ? `已補上 ${empty.map(i => pad2(i + 1)).join("、")}` : `已放入貼圖 ${pad2(from + 1)}～${pad2(from + Math.min(size, fresh.length))}`];
+    if (fresh.length < size) msg.push(`這張大圖只切出 ${fresh.length} 張，少了 ${size - fresh.length} 張`);
+    if (fresh.length > size) msg.push(`多出的 ${fresh.length - size} 張沒有放入`);
+    // 自動跳到下一張還沒上傳的大圖
+    const next = Array.from({ length: boards }, (_, b) => b).find(b => !stBatchFull(b));
+    if (boards > 1 && next != null) { ST.batch = next; msg.push(`接著請上傳第 ${next + 1} 張大圖`); }
+    toast(msg.join("；"));
+    $("#stWork").hidden = false;
+    renderStickers();
+    $("#stWork").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+});
+
+/* ============================================================
+   分頁 5：合併成上架用 ZIP
+   檔名依 LINE Creators Market「登錄全螢幕貼圖圖片」頁面：
+   main.png、main_popup.png、tab.png、01.png＋01_popup.png、02.png＋02_popup.png…
+   ============================================================ */
+function packState() {
+  // 只打包已上傳的編號（16／24 張可能還有大圖沒上傳）
+  const idx = stFilled(), n = idx.length;
+  const lines = [], miss = [];
+  lines.push([n ? "" : "bad", n ? `貼圖圖片 ${n} 張（分頁 2）` : "還沒有貼圖圖片：請到分頁 2 上傳並切割"]);
+  for (const i of idx) if (!SLOTS[i] || !SLOTS[i].frames.length) miss.push(pad2(i + 1));
+  const bad = idx.filter(i => SLOTS[i] && SLOTS[i].frames.length && !slotOk(SLOTS[i])).map(i => pad2(i + 1));
+  if (!n) lines.push(["bad", "全螢幕圖片要和貼圖圖片一張配一張"]);
+  else if (miss.length) lines.push(["bad", `第 ${miss.join("、")} 張還沒有全螢幕圖片（分頁 4）`]);
+  else if (!bad.length) lines.push(["", `全螢幕圖片 ${n} 張都做好了，和貼圖圖片一張配一張`]);
+  if (bad.length) lines.push(["bad", `第 ${bad.join("、")} 張的全螢幕動畫不符規格（畫格數要 5～20、總時間最長 3 秒）`]);
+  lines.push([ST.main ? "" : "bad", ST.main ? "主要圖片 main.png 已設定" : "還沒設定主要圖片：到分頁 2 選一張按「設為主圖」"]);
+  lines.push([ST.tab ? "" : "bad", ST.tab ? "聊天室標籤 tab.png 已設定" : "還沒設定聊天室標籤：到分頁 2 選一張按「設為標籤」"]);
+  const mainOk = FX.mainSlot >= 0 && SLOTS[FX.mainSlot] && slotOk(SLOTS[FX.mainSlot]);
+  lines.push([mainOk ? "" : "bad", mainOk ? `全螢幕貼圖主要圖片 main_popup.png：使用第 ${FX.mainSlot + 1} 張的全螢幕動畫` : "還沒設定全螢幕貼圖主要圖片：到分頁 4 選一張按「⭐ 設為全螢幕貼圖主要圖片」"]);
+  const ok = lines.every(l => l[0] !== "bad");
+  if (n && n !== P.count) {
+    const lack = ST.items.map((it, i) => it ? "" : pad2(i + 1)).filter(Boolean);
+    lines.push(["warn", `目前只有 ${n} 張貼圖圖片，設定的是整套 ${P.count} 張（缺 ${lack.join("、")}）；湊滿之前可以先下載測試，但無法送審`]);
+  }
+  const names = ["main.png", `main_${SUF()}.png`, "tab.png"];
+  for (const i of idx) names.push(pad2(i + 1) + ".png", `${pad2(i + 1)}_${SUF()}.png`);
+  return { ok, lines, names, n, idx };
+}
+function renderPack() {
+  const s = packState();
+  $("#packChecks").innerHTML = s.lines.map(([c, t]) => `<li class="${c}">${esc(t)}</li>`).join("");
+  $("#packZip").disabled = !s.ok;
+  $("#packFiles").textContent = "ZIP 內的檔案：\n" + s.names.join("\n");
+  $("#packInfo").textContent = s.ok ? "" : "上面打 ✘ 的項目都完成後才能下載。";
+}
+async function packZip() {
+  const s = packState(); if (!s.ok) { renderPack(); return; }
+  const btn = $("#packZip"), info = $("#packInfo");
+  btn.disabled = true;
+  try {
+    const bytes = async blob => new Uint8Array(await blob.arrayBuffer());
+    const files = [], big = [];
+    const addFx = async (slot, name) => {
+      info.textContent = `編碼中：${name}…`;
+      const r = await fxEncode(slot);
+      if (r.blob.size >= 1048576) big.push(name);
+      files.push({ name, data: await bytes(r.blob) });
+    };
+    files.push({ name: "main.png", data: await bytes(await toBlob(fixedCanvas(ST.main.src, 240, 240))) });
+    await addFx(SLOTS[FX.mainSlot], `main_${SUF()}.png`);
+    files.push({ name: "tab.png", data: await bytes(await toBlob(fixedCanvas(ST.tab.src, 96, 74))) });
+    for (const i of s.idx) {
+      files.push({ name: pad2(i + 1) + ".png", data: await bytes(await toBlob(ST.items[i].out)) });
+      await addFx(SLOTS[i], `${pad2(i + 1)}_${SUF()}.png`);
+    }
+    const zip = makeZip(files);
+    info.textContent = `完成：${files.length} 個檔案，ZIP ${(zip.size / 1048576).toFixed(1)} MB` + (big.length ? `；⚠ ${big.join("、")} 超過 1 MB，請減少畫格數後重做` : "");
+    await saveBlob(zip, `line_${SUF()}_stickers.zip`);
+  } catch (e) { console.error(e); info.textContent = ""; toast("打包失敗：" + e.message); }
+  btn.disabled = false;
+}
+
+/* ============================================================
+   進度存檔：存成 ZIP（project.json ＋ 圖片），開啟時與目前的內容合併
+   - stickers/NN.png：貼圖圖片的來源（切割後的格子，最大 740 × 640）
+   - popup/NN/MM.png：全螢幕動畫的影格（最大 480 × 480，輸出本來就是 480）
+   也接受一般的 ZIP（例如分頁 2 下載的貼圖圖片 ZIP）：裡面的 01.png、02.png… 會放回對應編號
+   ============================================================ */
+const PROJECT_APP = "FullScreenStickerHelper";
+// 等比例縮小到指定範圍內（已經夠小就原樣回傳）
+function shrinkCanvas(src, W, H) {
+  const s = Math.min(1, W / src.width, H / src.height);
+  if (s >= 1) return src;
+  const c = mk(Math.round(src.width * s), Math.round(src.height * s)), x = ctx2d(c);
+  x.imageSmoothingQuality = "high";
+  x.drawImage(src, 0, 0, c.width, c.height);
+  return c;
+}
+// 讀 ZIP（支援不壓縮與一般的 deflate 壓縮），回傳 Map(路徑 → bytes)
+async function readZip(blob) {
+  const buf = new Uint8Array(await blob.arrayBuffer()), dv = new DataView(buf.buffer);
+  let e = buf.length - 22;
+  while (e >= 0 && dv.getUint32(e, true) !== 0x06054b50) e--;
+  if (e < 0) throw new Error("這不是 ZIP 檔，或檔案已損壞");
+  const count = dv.getUint16(e + 10, true), dec = new TextDecoder(), out = new Map();
+  let p = dv.getUint32(e + 16, true);
+  for (let k = 0; k < count; k++) {
+    if (dv.getUint32(p, true) !== 0x02014b50) throw new Error("ZIP 檔內容損壞");
+    const method = dv.getUint16(p + 10, true), size = dv.getUint32(p + 20, true);
+    const nlen = dv.getUint16(p + 28, true), xlen = dv.getUint16(p + 30, true), clen = dv.getUint16(p + 32, true), lho = dv.getUint32(p + 42, true);
+    const name = dec.decode(buf.subarray(p + 46, p + 46 + nlen));
+    p += 46 + nlen + xlen + clen;
+    if (name.endsWith("/") || name.includes("__MACOSX")) continue;
+    const start = lho + 30 + dv.getUint16(lho + 26, true) + dv.getUint16(lho + 28, true);
+    let data = buf.subarray(start, start + size);
+    if (method === 8) data = new Uint8Array(await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).arrayBuffer());
+    else if (method !== 0) continue;
+    out.set(name, data);
+  }
+  return out;
+}
+const bytesToCanvas = data => fileToCanvas(new Blob([data], { type: "image/png" }));
+// 是不是動畫 PNG（APNG）：在第一個 IDAT 之前有 acTL
+function isAnimatedPNG(buf) {
+  if (buf.length < 8) return false;
+  const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+  if (dv.getUint32(0) !== 0x89504E47) return false;
+  for (let p = 8; p + 8 <= buf.length;) {
+    const len = dv.getUint32(p), type = String.fromCharCode(...buf.subarray(p + 4, p + 8));
+    if (type === "acTL") return true;
+    if (type === "IDAT" || type === "IEND") return false;
+    p += 12 + len;
+  }
+  return false;
+}
+// 把 APNG（例如上架 ZIP 裡的 01_popup.png）拆回一格一格的完整畫面。不是動畫 PNG 時回傳 null
+async function decodeAPNG(buf) {
+  const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+  if (buf.length < 8 || dv.getUint32(0) !== 0x89504E47) return null;
+  let p = 8, ihdr = null, plays = 0, cur = null, seenData = false;
+  const shared = [], frames = [];
+  while (p + 8 <= buf.length) {
+    const len = dv.getUint32(p), type = String.fromCharCode(...buf.subarray(p + 4, p + 8)), data = buf.subarray(p + 8, p + 8 + len);
+    p += 12 + len;
+    if (type === "IHDR") ihdr = data;
+    else if (type === "acTL") plays = new DataView(data.buffer, data.byteOffset, data.byteLength).getUint32(4);
+    else if (type === "fcTL") {
+      const d = new DataView(data.buffer, data.byteOffset, data.byteLength);
+      cur = { w: d.getUint32(4), h: d.getUint32(8), x: d.getUint32(12), y: d.getUint32(16), num: d.getUint16(20), den: d.getUint16(22) || 100, dispose: data[24], blend: data[25], data: [] };
+      frames.push(cur);
+    }
+    else if (type === "IDAT") { seenData = true; if (cur) cur.data.push(data); }   // 沒有 fcTL 的 IDAT 是預設圖，不算動畫
+    else if (type === "fdAT") { seenData = true; if (cur) cur.data.push(data.subarray(4)); }
+    else if (type === "IEND") break;
+    else if (!seenData && ["PLTE", "tRNS", "gAMA", "sRGB", "iCCP", "cHRM"].includes(type)) shared.push(chunk(type, data));
+  }
+  if (!ihdr || !frames.length) return null;
+  const hd = new DataView(ihdr.buffer, ihdr.byteOffset, ihdr.byteLength), W = hd.getUint32(0), H = hd.getUint32(4);
+  const stage = mk(W, H), sx = ctx2d(stage), out = [], delays = [];
+  for (const f of frames) {
+    // 每一格做成獨立的 PNG 交給瀏覽器解碼
+    const head = new Uint8Array(ihdr); head.set(u32(f.w), 0); head.set(u32(f.h), 4);
+    const png = new Blob([new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]), chunk("IHDR", head), ...shared,
+      ...f.data.map(d => chunk("IDAT", d)), chunk("IEND", new Uint8Array(0))], { type: "image/png" });
+    const img = await fileToCanvas(png);
+    const keep = f.dispose === 2 ? sx.getImageData(f.x, f.y, f.w, f.h) : null;
+    if (f.blend === 0) sx.clearRect(f.x, f.y, f.w, f.h);
+    sx.drawImage(img, f.x, f.y);
+    const snap = mk(W, H); ctx2d(snap).drawImage(stage, 0, 0); out.push(snap);
+    delays.push(f.num * 1000 / f.den);
+    if (f.dispose === 1) sx.clearRect(f.x, f.y, f.w, f.h);
+    else if (keep) sx.putImageData(keep, f.x, f.y);
+  }
+  return { frames: out, delays, plays };
+}
+// APNG → 分頁 4 的一格（秒數取最接近的 1～3 秒）
+function slotFromAPNG(a) {
+  const sec = clamp(Math.round(a.delays.reduce((s, d) => s + d, 0) / 1000), 1, 3);
+  return { frames: a.frames.map(c => ({ canvas: c, url: c.toDataURL("image/png"), on: true })), sec, loop: clamp(Math.min(a.plays || 1, Math.floor(3 / sec)), 1, 3), name: "" };
+}
+function stickerItem(src) {
+  // 已經是貼圖圖片尺寸（例如從下載的 ZIP 匯入）就不再縮放，避免越存越小
+  const out = src.width <= 370 && src.height <= 320 ? src : stickerCanvas(src);
+  return { src, out, url: out.toDataURL("image/png") };
+}
+function setStickerAt(i, item) {
+  const old = ST.items[i];
+  if (old && ST.main === old) ST.main = null;
+  if (old && ST.tab === old) ST.tab = null;
+  ST.items[i] = item;
+}
+// 開啟或合併後，把所有分頁重畫一次
+function refreshAll() {
+  refreshPromptUI();
+  renderStickers();
+  $("#stWork").hidden = !stFilled().length;
+  selectFxSlot(FX.cur);
+  if (location.hash === "#pack") renderPack();
+}
+
+async function saveProject() {
+  const btn = $("#projSave");
+  btn.disabled = true; toast("存檔中，請稍候…");
+  try {
+    const files = [], bytes = async c => new Uint8Array(await (await toBlob(c)).arrayBuffer());
+    const stickers = [], slots = [];
+    for (const i of stFilled()) {
+      const file = `stickers/${pad2(i + 1)}.png`;
+      files.push({ name: file, data: await bytes(shrinkCanvas(ST.items[i].src, 740, 640)) });
+      stickers.push({ i, file });
+    }
+    for (let i = 0; i < SLOTS.length; i++) {
+      const s = SLOTS[i]; if (!s.frames.length) continue;
+      const frames = [];
+      for (let k = 0; k < s.frames.length; k++) {
+        const file = `popup/${pad2(i + 1)}/${pad2(k + 1)}.png`;
+        files.push({ name: file, data: await bytes(shrinkCanvas(s.frames[k].canvas, 480, 480)) });
+        frames.push({ file, on: s.frames[k].on });
+      }
+      slots.push({ i, sec: s.sec, loop: s.loop, name: s.name, frames });
+    }
+    // 另外附上做好的成品（貼圖圖片 01.png、全螢幕動畫 01_popup.png…），不必開網頁就能直接使用或查看
+    const OUT = "成品/";
+    for (const i of stFilled()) files.push({ name: `${OUT}${pad2(i + 1)}.png`, data: await bytes(ST.items[i].out) });
+    if (ST.main) files.push({ name: OUT + "main.png", data: await bytes(fixedCanvas(ST.main.src, 240, 240)) });
+    if (ST.tab) files.push({ name: OUT + "tab.png", data: await bytes(fixedCanvas(ST.tab.src, 96, 74)) });
+    const ready = SLOTS.map((s, i) => i).filter(i => SLOTS[i].frames.length && slotOk(SLOTS[i]));
+    let k = 0;
+    for (const i of ready) {
+      toast(`存檔中：把全螢幕動畫轉成動畫檔 ${++k} / ${ready.length}…`);
+      const apng = new Uint8Array(await (await fxEncode(SLOTS[i])).blob.arrayBuffer());
+      files.push({ name: `${OUT}${pad2(i + 1)}_${SUF()}.png`, data: apng });
+      if (FX.mainSlot === i) files.push({ name: `${OUT}main_${SUF()}.png`, data: apng });
+    }
+    const proj = {
+      app: PROJECT_APP, version: 1, savedAt: new Date().toISOString(), P,
+      main: ST.main ? ST.items.indexOf(ST.main) : -1, tab: ST.tab ? ST.items.indexOf(ST.tab) : -1,
+      mainSlot: FX.mainSlot, names: { en: $("#lsNameEn").value, zh: $("#lsNameZh").value }, stickers, slots
+    };
+    files.unshift({ name: "project.json", data: new TextEncoder().encode(JSON.stringify(proj)) });
+    // 給人看的清單（開啟存檔時用的是 project.json，這個檔案只是方便直接打開 ZIP 查看）
+    const list = Array.from({ length: P.count }, (_, i) => {
+      const t = P.picked[i];
+      return `${pad2(i + 1)}　${t ? t.label : "（未選主題）"}　貼圖圖片：${ST.items[i] ? "✔" : "—"}　全螢幕動畫：${SLOTS[i] && SLOTS[i].frames.length ? "✔" : "—"}`;
+    });
+    files.splice(1, 0, { name: "貼圖主題清單.txt", data: new TextEncoder().encode(`﻿整套 ${P.count} 張\r\n\r\n` + list.join("\r\n") + "\r\n") });
+    const d = new Date(), stamp = `${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}-${pad2(d.getHours())}${pad2(d.getMinutes())}`;
+    await saveBlob(makeZip(files), `${K().name}存檔_${stamp}.zip`);
+    toast(`已存檔：貼圖圖片 ${stickers.length} 張、全螢幕動畫 ${slots.length} 張` + (slots.length > ready.length ? `（其中 ${slots.length - ready.length} 張還不符合規格，只存影格，沒有轉成動畫檔）` : ""));
+  } catch (e) { console.error(e); toast("存檔失敗：" + e.message); }
+  btn.disabled = false;
+}
+
+async function openProject(file) {
+  let zip;
+  try { zip = await readZip(file); } catch (e) { toast(e.message); return; }
+  const pj = [...zip.keys()].find(n => n === "project.json" || n.endsWith("/project.json"));
+  try {
+    if (pj) await mergeProject(zip, pj.slice(0, pj.length - "project.json".length));
+    else await mergePlainZip(zip);
+  } catch (e) { console.error(e); toast("開啟失敗：" + e.message); }
+}
+
+// 有選項按鈕的對話框，回傳被按的選項 v（點外面＝"cancel"）
+function askChoice(title, text, options) {
+  return new Promise(res => {
+    const m = document.createElement("div");
+    m.className = "modal";
+    m.innerHTML = `<div class="box" style="text-align:left;max-width:480px"><h3 style="margin-bottom:8px">${esc(title)}</h3>
+      <p class="muted" style="margin:0 0 14px;line-height:1.7;white-space:pre-line">${esc(text)}</p><div style="display:grid;gap:8px"></div></div>`;
+    const list = m.querySelector(".box > div");
+    const done = v => { m.remove(); res(v); };
+    options.forEach(o => {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "btn" + (o.primary ? " primary" : ""); b.textContent = o.label; b.disabled = !!o.disabled;
+      b.style.justifyContent = "flex-start"; b.style.textAlign = "left";
+      b.onclick = () => done(o.v);
+      list.appendChild(b);
+    });
+    m.addEventListener("click", e => { if (e.target === m) done("cancel"); });
+    document.body.appendChild(m);
+  });
+}
+const roundCount = n => [8, 16, 24].find(c => c >= n) || 0;   // 0 表示超過 LINE 上限 24 張
+// 目前用到第幾張（貼圖主題、貼圖圖片、全螢幕動畫取最大的）
+function usedEnd() {
+  let end = P.picked.length;
+  stFilled().forEach(i => { end = Math.max(end, i + 1); });
+  SLOTS.forEach((s, i) => { if (s.frames.length) end = Math.max(end, i + 1); });
+  return end;
+}
+// 目前已有內容時，問匯入的東西要「接在後面」還是「放在原本的編號」。回傳位移量，取消回傳 null
+async function askPlacement(span, what) {
+  const off = usedEnd(), fits = off + span <= 24;
+  const v = await askChoice("要合併到哪裡？",
+    `目前已經用到第 ${pad2(off)} 張。\n${what}的內容是第 01～${pad2(span)} 張。` +
+    (fits ? "\n\n分批做的（每次都從 01 開始），請選「接在後面」。" : `\n\n接在後面會超過 LINE 上限 24 張，只能放在原本的編號。`), [
+      { v: "append", label: `➕ 接在後面：變成第 ${pad2(off + 1)}～${pad2(off + span)} 張`, primary: fits, disabled: !fits },
+      { v: "same", label: `📌 放在原本的編號（01～${pad2(span)}；同編號都有內容時會再問一次）`, primary: !fits },
+      { v: "cancel", label: "取消" }
+    ]);
+  return v === "append" ? off : v === "same" ? 0 : null;
+}
+// 同一個編號兩邊都有內容時，問要用哪一邊
+function askReplace(clash, what) {
+  return !clash.length || confirm(`${what}裡的第 ${clash.map(i => pad2(i + 1)).join("、")} 張，目前已經做好了。\n\n按「確定」：改用${what}裡的內容\n按「取消」：保留目前的，只加入其他張`);
+}
+
+async function mergeProject(zip, root) {
+  const get = p => zip.get(root + p);
+  const proj = JSON.parse(new TextDecoder().decode(get("project.json")));
+  if (proj.app !== PROJECT_APP) throw new Error("這不是本工具的存檔");
+  const picked = proj.P.picked || [];
+  const fresh = !stFilled().length && !SLOTS.some(s => s.frames.length);
+  // 存檔佔用的範圍：主題數與已做好的內容取最大（做到一半的存檔，沒做的編號保留給主題）
+  const span = Math.max(1, picked.length, ...proj.stickers.map(s => s.i + 1), ...proj.slots.map(s => s.i + 1));
+  let off = 0;
+  if (!fresh) { off = await askPlacement(span, "這個存檔"); if (off === null) return; }
+  const at = i => i + off;
+
+  const clash = off ? [] : [...new Set([
+    ...proj.stickers.filter(s => ST.items[s.i]).map(s => s.i),
+    ...proj.slots.filter(s => SLOTS[s.i] && SLOTS[s.i].frames.length).map(s => s.i)
+  ])].sort((a, b) => a - b);
+  const replace = askReplace(clash, "存檔");
+
+  // 張數只會變多，不會刪掉內容
+  const need = roundCount(Math.max(P.count, off ? off + span : (proj.P.count || 8)));
+  if (!need) { toast("合併後會超過 24 張（LINE 上限），無法合併"); return; }
+  if (need > P.count) setStickerCount(need);
+  if (fresh) {
+    // 目前是空的：連同角色、主題、畫風等設定全部沿用存檔
+    Object.assign(P, proj.P, { count: P.count });
+    if (proj.names) { $("#lsNameEn").value = proj.names.en || ""; $("#lsNameZh").value = proj.names.zh || ""; }
+  } else {
+    // 已有內容：角色、畫風等設定保留目前的；貼圖主題跟著內容一起搬到對應編號
+    for (let j = P.picked.length; j < off; j++) P.picked[j] = pickTheme(`第 ${j + 1} 張`, true);   // 中間不能有空號
+    picked.forEach((t, i) => {
+      const j = at(i);
+      if (j >= P.count) return;
+      if (off || !P.picked[j] || (replace && clash.includes(j))) P.picked[j] = t;
+    });
+  }
+
+  let nSt = 0, nFx = 0;
+  for (const s of proj.stickers) {
+    const j = at(s.i);
+    if (j >= P.count || (ST.items[j] && !replace)) continue;
+    setStickerAt(j, stickerItem(await bytesToCanvas(get(s.file))));
+    nSt++;
+  }
+  for (const s of proj.slots) {
+    const j = at(s.i);
+    if (j >= P.count || (SLOTS[j].frames.length && !replace)) continue;
+    const frames = [];
+    for (const f of s.frames) { const c = await bytesToCanvas(get(f.file)); frames.push({ canvas: c, url: c.toDataURL("image/png"), on: f.on }); }
+    SLOTS[j] = { frames, sec: s.sec, loop: s.loop, name: s.name || "" };
+    nFx++;
+  }
+  // 主圖、標籤、全螢幕主要圖片：目前沒設定時才沿用存檔的
+  if (!ST.main && proj.main >= 0 && ST.items[at(proj.main)]) ST.main = ST.items[at(proj.main)];
+  if (!ST.tab && proj.tab >= 0 && ST.items[at(proj.tab)]) ST.tab = ST.items[at(proj.tab)];
+  if (FX.mainSlot < 0 && proj.mainSlot >= 0 && SLOTS[at(proj.mainSlot)] && SLOTS[at(proj.mainSlot)].frames.length) FX.mainSlot = at(proj.mainSlot);
+  refreshAll();
+  toast((fresh ? "已開啟存檔" : "已合併存檔") + (off ? `（放在第 ${pad2(off + 1)}～${pad2(off + span)} 張）` : "") + `：貼圖圖片 ${nSt} 張（分頁 2）、全螢幕動畫 ${nFx} 張（分頁 4）`);
+}
+
+// 一般 ZIP（分頁 2 或分頁 5 下載的）：01.png～24.png 是貼圖圖片，01_popup.png～24_popup.png 是全螢幕動畫（APNG，會拆回影格）
+async function mergePlainZip(zip) {
+  const found = [], pops = [], animNamed = [], bigStatic = [];
+  let mainPop = null;
+  for (const [name, data] of zip) {
+    const base = name.split("/").pop();
+    let m = /^(\d{1,2})\.png$/i.exec(base);
+    if (m && +m[1] >= 1 && +m[1] <= 24) {
+      // 檔名是 01.png 但內容是動畫（例如全螢幕圖片沒加 _popup 就存檔）→ 當成全螢幕圖片
+      if (isAnimatedPNG(data)) { pops.push({ i: +m[1] - 1, data }); animNamed.push(base); }
+      else {
+        found.push({ i: +m[1] - 1, data });
+        // 超過貼圖圖片尺寸（370 × 320）的靜態圖，很可能是想當全螢幕圖片，但全螢幕圖片必須是動畫
+        const dv = new DataView(data.buffer, data.byteOffset, data.byteLength);
+        if (data.length > 24 && (dv.getUint32(16) > 370 || dv.getUint32(20) > 320)) bigStatic.push(base);
+      }
+      continue;
+    }
+    // 全螢幕圖片：01_popup.png；也接受特效貼圖工具的 01_effect.png、effect_01.png
+    m = /^(\d{1,2})_(?:popup|effect)\.png$/i.exec(base) || /^(?:popup|effect)_(\d{1,2})\.png$/i.exec(base);
+    if (m && +m[1] >= 1 && +m[1] <= 24) { pops.push({ i: +m[1] - 1, data }); continue; }
+    if (/^(?:main_popup|main_effect|effect_main)\.png$/i.test(base)) mainPop = data;
+  }
+  if (!found.length && !pops.length) { toast("找不到存檔、貼圖圖片（01.png…）或全螢幕圖片（01_popup.png…）；檔名要是編號"); return; }
+  const span = Math.max(...found.map(f => f.i + 1), ...pops.map(f => f.i + 1));
+  let off = 0;
+  if (stFilled().length || SLOTS.some(s => s.frames.length)) { off = await askPlacement(span, "這個 ZIP"); if (off === null) return; }
+  const clash = off ? [] : [...new Set([
+    ...found.filter(f => ST.items[f.i]).map(f => f.i),
+    ...pops.filter(f => SLOTS[f.i] && SLOTS[f.i].frames.length).map(f => f.i)
+  ])].sort((a, b) => a - b);
+  const replace = askReplace(clash, " ZIP ");
+  const need = roundCount(Math.max(P.count, off + span));
+  if (!need) { toast("合併後會超過 24 張（LINE 上限），無法合併"); return; }
+  if (need > P.count) setStickerCount(need);
+  let n = 0, nFx = 0;
+  const bad = [];
+  for (const f of found) {
+    const j = f.i + off;
+    if (ST.items[j] && !replace) continue;
+    setStickerAt(j, stickerItem(await bytesToCanvas(f.data)));
+    n++;
+  }
+  for (const f of pops) {
+    const j = f.i + off;
+    if (SLOTS[j].frames.length && !replace) continue;
+    const a = await decodeAPNG(f.data);
+    if (!a) { bad.push(pad2(f.i + 1)); continue; }
+    SLOTS[j] = slotFromAPNG(a);
+    // main_popup.png 通常就是其中一張的複本：內容相同就把那一張設為全螢幕主要圖片
+    if (FX.mainSlot < 0 && mainPop && mainPop.length === f.data.length && mainPop.every((b, k) => b === f.data[k])) FX.mainSlot = j;
+    nFx++;
+  }
+  refreshAll();
+  // 切到有匯入內容的分頁，讓使用者馬上看到結果
+  location.hash = n ? "sticker" : "effect";
+  toast(`已加入貼圖圖片 ${n} 張（分頁 2）、全螢幕動畫 ${nFx} 張（分頁 4）` + (off ? `，放在第 ${pad2(off + 1)}～${pad2(off + span)} 張` : "") +
+    (animNamed.length ? `；${animNamed.join("、")} 是動畫檔，已當成全螢幕圖片` : "") +
+    (bigStatic.length ? `；${bigStatic.join("、")} 不是動畫（只有 1 格），已當成貼圖圖片並縮小。全螢幕圖片必須是動畫，請到分頁 4 製作` : "") +
+    (bad.length ? `；第 ${bad.join("、")} 張的全螢幕圖片無法讀取，沒有匯入` : ""));
+}
+
+function initSaveBar() {
+  $("#projSave").onclick = saveProject;
+  $("#projOpen").onclick = () => $("#projFile").click();
+  $("#projFile").onchange = async e => {
+    const list = [...e.target.files]; e.target.value = "";
+    if (!list.length) return;
+    if (list.length === 1 && !/\.png$/i.test(list[0].name)) { await openProject(list[0]); return; }
+    // 一次選多個檔案（例如直接選 01.png～08.png）：當成一個 ZIP 的內容來合併
+    const files = new Map();
+    try {
+      for (const f of list) {
+        if (/\.png$/i.test(f.name)) files.set(f.name, new Uint8Array(await f.arrayBuffer()));
+        else for (const [n, d] of await readZip(f)) files.set(n, d);
+      }
+      await mergePlainZip(files);
+    } catch (err) { console.error(err); toast("開啟失敗：" + err.message); }
+  };
+  // 有做好的內容時，關閉或重新整理頁面前先提醒（瀏覽器會顯示「確定要離開嗎？」）
+  addEventListener("beforeunload", e => {
+    if (stFilled().length || SLOTS.some(s => s.frames.length)) { e.preventDefault(); e.returnValue = ""; }
+  });
+}
+
+/* ============================================================
+   啟動
+   ============================================================ */
+function showTab(id) {
+  if (!$("#panel-" + id)) id = "prompt";
+  $$(".tab-btn").forEach(b => b.classList.toggle("on", b.dataset.tab === id));
+  $$(".panel").forEach(p => p.classList.toggle("on", p.id === "panel-" + id));
+  if (id === "effect") { fxBoard.redraw(); renderSlots(); }
+  if (id === "pack") renderPack();
+}
+(function boot() {
+  // LINE 內建瀏覽器不能下載檔案：一開始就改用手機預設瀏覽器開啟
+  if (Env.isLine && Env.isHttp && !Env.tried) {
+    const u = new URL(location.href); u.searchParams.set("openExternalBrowser", "1"); location.replace(u.toString()); return;
+  }
+  if (Env.isInApp) {
+    const n = document.createElement("div");
+    n.className = "hint"; n.style.cssText = "margin-bottom:14px;background:var(--warn-soft);color:var(--warn)";
+    n.textContent = "⚠️ 目前是在 App 內建瀏覽器中開啟，可能無法下載檔案。請點選單改用 Safari／Chrome 開啟。";
+    $("#main").prepend(n);
+  }
+  const btn = $("#themeToggle"), root = document.documentElement;
+  const show = () => { btn.textContent = root.getAttribute("data-theme") === "dark" ? "☀️ 淺色" : "🌙 深色"; };
+  btn.onclick = () => { const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark"; root.setAttribute("data-theme", next); try { localStorage.setItem("fullScreenStickerTheme", next); } catch (e) {} show(); };
+  show();
+  $("#tabs").addEventListener("click", e => { const b = e.target.closest("[data-tab]"); if (b) location.hash = b.dataset.tab; });
+  addEventListener("hashchange", () => showTab(location.hash.slice(1)));
+  initPromptTab(); initEffectTab(); initStickerTab(); initSaveBar();
+  $("#packZip").onclick = packZip;
+  // 貼圖類型：換用語、提示詞 B、上架說明與檔名（已做好的內容不變）
+  $("#kindGroup").addEventListener("click", e => {
+    const b = e.target.closest("[data-kind]"); if (!b || b.dataset.kind === KIND) return;
+    KIND = b.dataset.kind;
+    try { localStorage.setItem("stickerHelperKind", KIND); } catch (err) {}
+    applyKind(); renderPrompts(); renderSlots(); fxChecks();
+    if ($("#panel-pack").classList.contains("on")) renderPack();
+    toast(`已切換為「${K().name}」：檔名會是 01_${SUF()}.png、main_${SUF()}.png`);
+  });
+  applyKind(); renderPrompts();
+  fxChecks();
+  showTab(location.hash.slice(1) || "prompt");
+})();
+</script>
+</body>
+</html>
