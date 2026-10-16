@@ -1621,7 +1621,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
               </div>
             </div>
           </div>
-          <div class="hint-box" style="margin-top:14px">✋ <b>拖曳</b>粉紅虛線可調整切割範圍；<b>雙擊線條</b>（手機請長按）可刪除，<b>雙擊格內空白處</b>（手機請長按）可新增分割線。先用滑桿粗調整體位置與縮放，再拖曳分割線精準對齊每張角色。</div>
+          <div class="hint-box" style="margin-top:14px">✋ <b>拖曳</b>粉紅虛線可調整切割範圍；要新增或減少分割線，請用上方的「＋ 加垂直線」「－ 減垂直線」等按鈕；電腦也可以<b>雙擊線條</b>刪除、<b>雙擊格內空白處</b>新增。先用滑桿粗調整體位置與縮放，再拖曳分割線精準對齊每張角色。</div>
           <div class="row" style="margin-top:14px;gap:8px">
             <span class="label" style="margin-bottom:0">切割方式</span>
             <select class="select" id="splitAlignMode" style="width:auto;max-width:100%">
@@ -3660,6 +3660,8 @@ function setupSplitCanvasInteraction() {
     if (hit) {
       removeSplitLine(hit.kind, hit.idx);
     } else {
+      // a double tap on a phone also fires dblclick: only a mouse double-click adds a line
+      if (Date.now() - (SplitInteract.lastTouchAt || 0) < 1000) return;
       // Add a line — decide vertical vs horizontal based on which axis has fewer lines
       // (so we help balance the grid), tiebreak by adding vertical
       const vCount = AppState.split.vLines.length;
@@ -3670,11 +3672,11 @@ function setupSplitCanvasInteraction() {
     }
   });
 
-  // Touch long-press = equivalent of double-click on touch devices
-  // (dblclick is unreliable on touch; long-press is the mobile convention for "context action")
+  // Touch long-press on a line deletes it. Long-pressing an empty area does nothing:
+  // on a phone that happened by accident while looking or panning, and new lines are added with the ＋ buttons.
   cv.addEventListener("pointerdown", e => {
     if (e.pointerType !== "touch") return;
-    SplitInteract.touchStartTime = Date.now();
+    SplitInteract.touchStartTime = SplitInteract.lastTouchAt = Date.now();
     SplitInteract.touchStartPos = getCanvasCoord(e);
     // Set a timer that fires after LONG_PRESS_MS if the user hasn't moved (i.e., not dragging a line)
     clearTimeout(SplitInteract._longPressTimer);
@@ -3683,15 +3685,7 @@ function setupSplitCanvasInteraction() {
       if (SplitInteract.drag) return;
       const { x, y } = SplitInteract.touchStartPos;
       const hit = findHit(x, y, 20);   // wider hit zone on touch
-      if (hit) {
-        removeSplitLine(hit.kind, hit.idx);
-      } else {
-        const vCount = AppState.split.vLines.length;
-        const hCount = AppState.split.hLines.length;
-        const kind = (hCount < vCount) ? "h" : "v";
-        const pos = kind === "v" ? (x / cv.width) : (y / cv.height);
-        insertSplitLineAt(kind, pos);
-      }
+      if (hit) removeSplitLine(hit.kind, hit.idx);
     }, SplitInteract.LONG_PRESS_MS);
   });
   cv.addEventListener("pointermove", e => {
@@ -4111,13 +4105,41 @@ function smartCutFrames(adjusted, xs, ys, mode, per) {
 }
 
 /* ----- Per-row animation preview: tick a row's「預覽動畫」to play its frames in a loop ----- */
-const SplitPreview = { rows: new Set(), players: [], timer: null, dlBtns: [] };
-// the download button says what it will save: the ticked frames of its row, or the whole row
+const SplitPreview = { rows: new Set(), players: [], timer: null, dlBtns: [], copyBtns: [] };
+// the download / copy buttons say what they will use: the ticked frames of their group, or the whole group
 function updateGroupDownloadLabels() {
   SplitPreview.dlBtns.forEach(({ btn, rowIdx }) => {
     const n = rowIdx.filter(i => AppState.split.selected.has(i)).length;
     btn.textContent = n ? `⬇ 下載勾選的 ${n} 張` : `⬇ 下載這組（${rowIdx.length} 張）`;
   });
+  SplitPreview.copyBtns.forEach(({ btn, rowIdx }) => {
+    const n = rowIdx.filter(i => AppState.split.selected.has(i)).length;
+    btn.textContent = n ? `📋 勾選的 ${n} 張複製到步驟 3` : `📋 複製到步驟 3（${rowIdx.length} 張）`;
+  });
+}
+// One group = one animated sticker: its frames (ticked ones, or the whole group) replace what is in step 3.
+async function copyGroupToCompose(rowIdx, groupNo) {
+  const ticked = rowIdx.filter(i => AppState.split.selected.has(i));
+  const pick = (ticked.length ? ticked : rowIdx).slice(0, AppConfig.stickerSpecs.maxFrames);
+  const filled = AppState.compose.frames.filter(f => f.img).length;
+  if (filled) {
+    const ok = await customConfirm(
+      `步驟 3 目前已有 <b>${filled}</b> 張影格（含上面的文字、裝飾編輯）。<br><br>要換成第 ${groupNo} 組的 <b>${pick.length}</b> 張嗎？原本的內容會被取代。`,
+      { title: "複製到步驟 3", icon: "📋", confirmText: "換成這一組", cancelText: "取消" }
+    );
+    if (!ok) return;
+  }
+  const frames = [];
+  for (const i of pick) {
+    const url = AppState.split.frames[i].canvas.toDataURL("image/png");
+    frames.push({ img: await dataURLToImage(url), dataURL: url });
+  }
+  AppState.compose.frames = frames.map(() => ({ img: null, dataURL: null, origImg: null, origDataURL: null, editorState: null, hidden: false }));
+  frames.forEach((f, k) => setFrameContent(k, f.img, f.dataURL));
+  AppState.compose.selectedIdx = -1;
+  composeRefreshAll();
+  toast(`✅ 已把第 ${groupNo} 組的 ${pick.length} 張複製到「3. 動態貼圖製作」`, "success");
+  setTimeout(() => { location.hash = "tab-compose"; }, 600);
 }
 function splitPreviewTick() {
   const all = AppState.split.frames, picked = AppState.split.selected;
@@ -4298,6 +4320,7 @@ function renderSplitFramesGrid() {
   root.innerHTML = "";
   SplitPreview.players = [];
   SplitPreview.dlBtns = [];
+  SplitPreview.copyBtns = [];
   const frames = AppState.split.frames;
   const ncol = AppState.split.ncol || 5;   // thumbnails per line, same as the cut image
   const per = seqFrames();                 // frames per animation group: 10 (2 groups) or 20 (1 group)
@@ -4316,7 +4339,7 @@ function renderSplitFramesGrid() {
           <b>第 ${row + start} 組</b>
           <button type="button" class="btn outline grp-sel">☑ 選取整組</button>
           <button type="button" class="btn outline grp-unsel">☐ 取消勾選</button>
-          <button type="button" class="btn line grp-dl">⬇ 下載這組</button>
+          <button type="button" class="btn primary grp-copy">📋 複製到步驟 3</button>
         </div>
         <div class="frame-group-body">
           <div class="frames-grid" style="grid-template-columns:repeat(${ncol},minmax(0,1fr))"></div>
@@ -4340,7 +4363,10 @@ function renderSplitFramesGrid() {
         if (e.target.checked) SplitPreview.rows.add(row); else SplitPreview.rows.delete(row);
         renderSplitFramesGrid();
       });
-      // the same download is offered in the row header and beside the preview
+      // header: send this group to step 3; download stays beside the preview
+      const copyBtn = group.querySelector(".grp-copy");
+      copyBtn.addEventListener("click", () => copyGroupToCompose(rowIdx, row + start));
+      SplitPreview.copyBtns.push({ btn: copyBtn, rowIdx });
       group.querySelectorAll(".grp-dl").forEach(btn => {
         btn.addEventListener("click", () => downloadSplitGroup(rowIdx, row + start));
         SplitPreview.dlBtns.push({ btn, rowIdx });
