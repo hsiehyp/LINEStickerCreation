@@ -192,15 +192,15 @@ input[type=checkbox]{accent-color:var(--accent);width:18px;height:18px;flex:none
   <div class="logo" aria-hidden="true">✨</div>
   <div class="grow">
     <h1 data-kind-fixed>LINE 特效／全螢幕貼圖小幫手</h1>
-    <p>提示詞 ・ 全螢幕圖片製作 ・ 貼圖圖片／主圖／標籤</p>
+    <p data-kind-fixed>提示詞 ・ 貼圖圖片（含主圖／標籤） ・ 全螢幕／特效圖片製作</p>
   </div>
   <button type="button" class="theme-toggle" id="themeToggle" aria-label="切換網站底色"></button>
 </header>
 <nav class="tabs" id="tabs">
   <button type="button" class="tab-btn on" data-tab="prompt">1. 貼圖主題提示詞</button>
-  <button type="button" class="tab-btn" data-tab="sticker">2. 貼圖圖片／主圖／標籤</button>
-  <button type="button" class="tab-btn" data-tab="fxprompt">3. 全螢幕圖片提示詞</button>
-  <button type="button" class="tab-btn" data-tab="effect">4. 全螢幕圖片製作</button>
+  <button type="button" class="tab-btn" data-tab="sticker">2. 貼圖圖片（含主圖／標籤）</button>
+  <button type="button" class="tab-btn" data-tab="fxprompt" data-kind-fixed>3. 全螢幕／特效圖片提示詞</button>
+  <button type="button" class="tab-btn" data-tab="effect" data-kind-fixed>4. 全螢幕／特效圖片製作</button>
   <button type="button" class="tab-btn" data-tab="pack">5. 打包上架</button>
 </nav>
 
@@ -314,7 +314,7 @@ input[type=checkbox]{accent-color:var(--accent);width:18px;height:18px;flex:none
             <a class="btn" href="https://gemini.google.com/app" target="_blank" rel="noopener">✨ Gemini</a>
             <a class="btn" href="https://chatgpt.com/" target="_blank" rel="noopener">🤖 ChatGPT</a>
           </div>
-          <p class="muted" style="margin:8px 0 0">生成後到分頁「2. 貼圖圖片／主圖／標籤」切割與輸出。</p>
+          <p class="muted" style="margin:8px 0 0">生成後到分頁「2. 貼圖圖片（含主圖／標籤）」切割與輸出。</p>
         </div>
       </div>
     </div>
@@ -324,7 +324,7 @@ input[type=checkbox]{accent-color:var(--accent);width:18px;height:18px;flex:none
   <section class="panel" id="panel-fxprompt">
     <div class="note purple">
       <b>🎇 一張貼圖配一個全螢幕動畫，每一張都要各生成一次</b>
-      選好要做哪一張貼圖的全螢幕動畫 → 複製提示詞 B 交給 AI 生圖 → 到分頁「4. 全螢幕圖片製作」做成動畫。做完一張再回來選下一張。角色與畫風沿用分頁 1 的設定。
+      選好要做哪一張貼圖的全螢幕動畫 → 複製提示詞 B 交給 AI 生圖 → 到分頁「<span data-kind-fixed>4. 全螢幕／特效圖片製作</span>」做成動畫。做完一張再回來選下一張。角色與畫風沿用分頁 1 的設定。
     </div>
     <div class="grid2">
       <div>
@@ -371,7 +371,7 @@ input[type=checkbox]{accent-color:var(--accent);width:18px;height:18px;flex:none
             <a class="btn" href="https://gemini.google.com/app" target="_blank" rel="noopener">✨ Gemini</a>
             <a class="btn" href="https://chatgpt.com/" target="_blank" rel="noopener">🤖 ChatGPT</a>
           </div>
-          <p class="muted" style="margin:8px 0 0">生成後到分頁「4. 全螢幕圖片製作」切割、預覽並輸出 480 × 480 的動畫檔。每一張貼圖的全螢幕動畫都要各做一次。</p>
+          <p class="muted" style="margin:8px 0 0">生成後到分頁「<span data-kind-fixed>4. 全螢幕／特效圖片製作</span>」切割、預覽並輸出 480 × 480 的動畫檔。每一張貼圖的全螢幕動畫都要各做一次。</p>
         </div>
       </div>
     </div>
