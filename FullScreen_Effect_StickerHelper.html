@@ -40,16 +40,26 @@ button,input,select,textarea{font:inherit;color:inherit}
 h1,h2,h3{margin:0}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-.top{display:flex;align-items:center;gap:12px;padding:14px 20px;background:var(--panel);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
+.top{display:flex;align-items:center;gap:12px;padding:14px 20px;background:var(--panel);border-bottom:1px solid var(--line)}
+/* 標題與步驟 1～5 一起固定在最上方 */
+.sticky-head{position:sticky;top:0;z-index:30;background:var(--bg);box-shadow:0 2px 8px rgba(0,0,0,.06)}
 .top .logo{flex:none;width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,#6D4AE0,#F95F8E);color:#fff;display:grid;place-items:center;font-size:20px}
 .top h1{font-size:19px;font-weight:900}
 .top p{margin:0;color:var(--muted);font-size:12.5px}
 .top .grow{flex:1;min-width:0}
 .theme-toggle{flex:none;border:1px solid var(--line-strong);background:var(--panel-2);border-radius:999px;padding:8px 14px;font-weight:700;cursor:pointer;white-space:nowrap}
-.tabs{max-width:1200px;margin:0 auto;display:flex;gap:8px;overflow-x:auto;padding:14px 20px 0;scrollbar-width:none}
+.tabs{max-width:1200px;margin:0 auto;display:flex;gap:8px;overflow-x:auto;padding:10px 20px;scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
 .tab-btn{flex:none;border:1px solid transparent;background:var(--well);color:var(--muted);border-radius:999px;padding:10px 18px;font-weight:700;cursor:pointer;white-space:nowrap}
 .tab-btn.on{background:var(--accent);color:var(--accent-ink)}
+/* 存檔、說明不是必要步驟：虛線外框，和 1～5 區分 */
+.tab-btn.optional{background:transparent;border:1.5px dashed var(--line-strong)}
+.tab-btn.optional.on{background:var(--accent);border-color:var(--accent)}
+.tab-btn[data-tab="save"]{margin-left:10px}
+/* 步驟 3：直接設定某一張的主題 */
+.fxpick{margin-top:10px;padding:12px;border-radius:10px;background:var(--accent-soft);border:1px solid var(--accent-line)}
+/* 自動捲動到某一區時，不要被固定在上方的步驟列擋住 */
+[id]{scroll-margin-top:140px}
 main{max-width:1200px;margin:0 auto;padding:16px 20px}
 .panel{display:none}
 .panel.on{display:block}
@@ -174,10 +184,12 @@ input[type=checkbox]{accent-color:var(--accent);width:18px;height:18px;flex:none
 }
 @media (max-width:820px){.grid2{grid-template-columns:1fr}}
 @media (max-width:560px){
-  .top{padding:12px 14px}
-  .top h1{font-size:16px}
-  .top p{font-size:11px}
-  .tabs{padding:12px 14px 0}
+  .top{padding:8px 14px}
+  .top .logo{width:32px;height:32px;font-size:16px}
+  .top h1{font-size:15px}
+  .top p{display:none}   /* 手機上固定區要省空間 */
+  .theme-toggle{padding:6px 10px}
+  .tabs{padding:8px 14px}
   .tab-btn{padding:8px 14px;font-size:13px}
   main{padding:14px}
   .card{padding:14px}
@@ -188,24 +200,28 @@ input[type=checkbox]{accent-color:var(--accent);width:18px;height:18px;flex:none
 </head>
 <body>
 
+<div class="sticky-head">
 <header class="top">
   <div class="logo" aria-hidden="true">✨</div>
   <div class="grow">
     <h1 data-kind-fixed>LINE 特效／全螢幕貼圖小幫手</h1>
-    <p data-kind-fixed>提示詞 ・ 貼圖圖片（含主圖／標籤） ・ 全螢幕／特效圖片製作</p>
+    <p data-kind-fixed>靜態貼圖 ・ 全螢幕／特效動態圖片 ・ 打包上架</p>
   </div>
   <button type="button" class="theme-toggle" id="themeToggle" aria-label="切換網站底色"></button>
 </header>
 <nav class="tabs" id="tabs">
-  <button type="button" class="tab-btn on" data-tab="prompt">1. 貼圖主題提示詞</button>
+  <button type="button" class="tab-btn on" data-tab="prompt">1. 靜態貼圖主題提示詞</button>
   <button type="button" class="tab-btn" data-tab="sticker">2. 貼圖圖片（含主圖／標籤）</button>
-  <button type="button" class="tab-btn" data-tab="fxprompt" data-kind-fixed>3. 全螢幕／特效圖片提示詞</button>
-  <button type="button" class="tab-btn" data-tab="effect" data-kind-fixed>4. 全螢幕／特效圖片製作</button>
+  <button type="button" class="tab-btn" data-tab="fxprompt" data-kind-fixed>3. 全螢幕／特效 動態圖片提示詞</button>
+  <button type="button" class="tab-btn" data-tab="effect" data-kind-fixed>4. 全螢幕／特效 動態圖片製作</button>
   <button type="button" class="tab-btn" data-tab="pack">5. 打包上架</button>
+  <button type="button" class="tab-btn optional" data-tab="save">💾 存檔／開啟（需要時再用）</button>
+  <button type="button" class="tab-btn optional" data-tab="notes">📘 規格與說明</button>
 </nav>
+</div>
 
 <main id="main">
-  <!-- 貼圖類型：兩種貼圖的設計方式一樣，這個網頁共用 -->
+  <!-- 貼圖類型：兩種貼圖共用這個網頁，差別寫在「規格與說明」 -->
   <div class="card kind-card" data-kind-fixed>
     <div class="row">
       <span class="label" style="margin:0;font-size:15px">🎯 要做哪一種貼圖？</span>
@@ -213,29 +229,25 @@ input[type=checkbox]{accent-color:var(--accent);width:18px;height:18px;flex:none
         <button type="button" class="btn" data-kind="effect">✨ 特效貼圖</button>
         <button type="button" class="btn sel" data-kind="popup">🎆 全螢幕貼圖</button>
       </div>
-    </div>
-    <p style="margin:10px 0 0;font-size:14px;line-height:1.7"><b>這兩種貼圖的設計方式完全一樣，所以這個網頁兩種共用。</b>規格（8／16／24 張、貼圖圖片 370 × 320、動畫 480 × 480、5～20 格、最長 3 秒）和 1 → 5 的製作步驟都相同，差別只有：</p>
-    <ul class="rules" style="font-size:13.5px">
-      <li><b>播放位置</b>：特效貼圖在聊天室的<b>背景</b>播放（在訊息後面，像佈景）；全螢幕貼圖<b>蓋在整個聊天畫面上</b>播放（在訊息前面，像跳出來）。</li>
-      <li><b>提示詞 B 的寫法</b>：特效貼圖要元素佈滿畫面；全螢幕貼圖要一個大大的主體、有衝擊感。選好類型，提示詞會自動換。</li>
-      <li><b>檔名</b>：特效貼圖是 01_effect.png、main_effect.png；全螢幕貼圖是 01_popup.png、main_popup.png。</li>
-    </ul>
-    <p class="muted" style="margin:8px 0 0">做到一半也可以切換，已做好的內容不會清掉；下載時才依目前選的類型命名。</p>
-  </div>
-  <!-- 進度存檔：一次做不完時先存檔，下次開啟接著做；兩個存檔也可以合併 -->
-  <div class="card" style="padding:12px 16px">
-    <div class="row">
-      <span style="flex:1;min-width:220px;font-size:14px;line-height:1.6"><b>💾 做不完沒關係</b>：先按「下載貼圖」下載存檔（ZIP，<b>貼圖圖片和全螢幕動畫都會一起存</b>，「成品」資料夾裡是可直接使用的 01.png、01_popup.png…），下次按「開啟存檔」就能接著做。在不同時間、不同電腦做的存檔，也能一個一個開啟合併在一起；也可以直接選多個編號檔名的圖片（01.png、01_popup.png…）加入。</span>
-      <button type="button" class="btn primary" id="projSave">💾 下載貼圖（含動畫）</button>
-      <button type="button" class="btn" id="projOpen">📂 開啟／合併存檔</button>
-      <input type="file" id="projFile" accept=".zip,application/zip,.png,image/png" multiple hidden>
+      <a href="#notes" class="muted" style="margin-left:auto">兩種有什麼不同？看「規格與說明」→</a>
     </div>
   </div>
-  <!-- ================= 1. 貼圖主題提示詞 ================= -->
-  <section class="panel on" id="panel-prompt">
-    <div class="note purple">
-      <b>✨ 全螢幕貼圖和動態貼圖哪裡不一樣？</b>
-      每一張全螢幕貼圖要準備兩張圖：一張不會動的「貼圖圖片」（顯示在訊息位置），以及一張會動的「全螢幕圖片」（送出後蓋在整個聊天畫面上播放）。請照上面 1 → 5 的順序做：先做好貼圖圖片（分頁 1、2），再做全螢幕圖片（分頁 3、4），最後打包（分頁 5）。
+
+  <!-- ================= 說明頁：規格與兩種貼圖的差別 ================= -->
+  <section class="panel" id="panel-notes">
+    <div class="card" data-kind-fixed>
+      <div class="card-title">🎯 特效貼圖和全螢幕貼圖</div>
+      <p style="margin:0 0 6px">兩種貼圖的設計方式完全一樣：規格（8／16／24 張、貼圖圖片 370 × 320、動畫 480 × 480、5～20 格、最長 3 秒）和 1 → 5 的製作步驟都相同，所以共用這個網頁。差別只有：</p>
+      <ul class="rules" style="font-size:13.5px">
+        <li><b>播放位置</b>：特效貼圖在聊天室的<b>背景</b>播放（在訊息後面，像佈景）；全螢幕貼圖<b>蓋在整個聊天畫面上</b>播放（在訊息前面，像跳出來）。</li>
+        <li><b>步驟 3 提示詞的寫法</b>：特效貼圖要元素佈滿畫面；全螢幕貼圖要一個大大的主體、有衝擊感。選好類型，提示詞會自動換。</li>
+        <li><b>檔名</b>：特效貼圖是 01_effect.png、main_effect.png；全螢幕貼圖是 01_popup.png、main_popup.png。</li>
+      </ul>
+      <p class="muted" style="margin:8px 0 0">做到一半也可以切換類型，已做好的內容不會清掉；下載時才依目前選的類型命名。</p>
+    </div>
+    <div class="card">
+      <div class="card-title">🧩 每一張要準備兩張圖</div>
+      <p style="margin:0">每一張全螢幕貼圖都要一張不會動的「貼圖圖片」（顯示在訊息位置），以及一張會動的「全螢幕圖片」（送出後蓋在整個聊天畫面上播放）。請照上方 1 → 5 的順序做：先做好靜態的貼圖圖片（步驟 1、2），再做全螢幕動態圖片（步驟 3、4），最後打包（步驟 5）。</p>
     </div>
     <div class="card">
       <div class="card-title">📋 全螢幕貼圖規格（LINE Creators Market）</div>
@@ -250,6 +262,28 @@ input[type=checkbox]{accent-color:var(--accent);width:18px;height:18px;flex:none
         <div><b>檔案大小</b>每張小於 1 MB</div>
       </div>
     </div>
+  </section>
+
+  <!-- ================= 存檔／開啟：一次做不完時才需要 ================= -->
+  <section class="panel" id="panel-save">
+    <div class="card">
+      <div class="card-title">💾 存檔與開啟存檔（需要時再用）</div>
+      <p style="margin:0 0 12px;line-height:1.7">做不完沒關係：先按「下載貼圖」下載存檔（ZIP，<b>貼圖圖片和全螢幕動畫都會一起存</b>，「成品」資料夾裡是可直接使用的 01.png、01_popup.png…），下次按「開啟存檔」就能接著做。在不同時間、不同電腦做的存檔，也能一個一個開啟合併在一起；也可以直接選多個編號檔名的圖片（01.png、01_popup.png…）加入。</p>
+      <div class="row">
+        <button type="button" class="btn primary" id="projSave">💾 下載貼圖（含動畫）</button>
+        <button type="button" class="btn" id="projOpen">📂 開啟／合併存檔</button>
+        <input type="file" id="projFile" accept=".zip,application/zip,.png,image/png" multiple hidden>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">🧠 自動記住的設定</div>
+      <p style="margin:0 0 10px;line-height:1.7">這台電腦的瀏覽器會自動記住<b>角色、貼圖主題、畫風、張數、上架名稱</b>等設定，下次打開網頁會自動還原，不用再回步驟 1 重選。<b>圖片不會記住</b>（檔案太大），做好的貼圖圖片和動畫請用上面的「下載貼圖」存檔。換電腦或換瀏覽器時，也請用存檔。</p>
+      <button type="button" class="btn" id="autoForget">🧹 忘記這台電腦記住的設定</button>
+    </div>
+  </section>
+
+  <!-- ================= 1. 靜態貼圖主題提示詞 ================= -->
+  <section class="panel on" id="panel-prompt">
     <div class="grid2">
       <div>
         <div class="card">
@@ -320,18 +354,40 @@ input[type=checkbox]{accent-color:var(--accent);width:18px;height:18px;flex:none
     </div>
   </section>
 
-  <!-- ================= 3. 全螢幕圖片提示詞 ================= -->
+  <!-- ================= 3. 全螢幕／特效 動態圖片提示詞 ================= -->
   <section class="panel" id="panel-fxprompt">
     <div class="note purple">
       <b>🎇 一張貼圖配一個全螢幕動畫，每一張都要各生成一次</b>
-      選好要做哪一張貼圖的全螢幕動畫 → 複製提示詞 B 交給 AI 生圖 → 到分頁「<span data-kind-fixed>4. 全螢幕／特效圖片製作</span>」做成動畫。做完一張再回來選下一張。角色與畫風沿用分頁 1 的設定。
+      選好要做哪一張貼圖的全螢幕動畫 → 複製提示詞 B 交給 AI 生圖 → 到分頁「<span data-kind-fixed>4. 全螢幕／特效 動態圖片製作</span>」做成動畫。做完一張再回來選下一張。角色與畫風沿用分頁 1 的設定。
     </div>
     <div class="grid2">
       <div>
         <div class="card">
           <div class="card-title"><span class="num">1</span>動畫內容（一次做一張）</div>
-          <label class="label" for="fxTheme">要做哪一張貼圖的全螢幕動畫（只列出分頁 1 已選的貼圖主題，數字是貼圖編號）</label>
-          <select class="select" id="fxTheme" style="width:100%"></select>
+          <label class="label" for="fxTheme">要做哪一張貼圖的全螢幕動畫（數字是貼圖編號；還沒有主題的，可以直接在這裡設定）</label>
+          <div class="row" style="align-items:flex-start;flex-wrap:nowrap">
+            <div class="grow" style="min-width:0">
+              <select class="select" id="fxTheme" style="width:100%"></select>
+              <div class="row" style="margin-top:6px">
+                <button type="button" class="btn sm" id="fxPickToggle">✏️ 換這一張的主題</button>
+                <span class="muted" id="fxThumbCap" hidden>右邊是步驟 2 同編號的貼圖圖片</span>
+              </div>
+            </div>
+            <img id="fxThumb" alt="步驟 2 同編號的貼圖圖片" hidden style="flex:none;width:76px;height:66px;object-fit:contain;border-radius:8px;background:#8CABD8">
+          </div>
+          <div class="fxpick" id="fxPick" hidden>
+            <div class="label" id="fxPickTitle" style="margin-bottom:6px">第 1 張的主題</div>
+            <div class="row">
+              <select class="select" id="fxPickSel" style="flex:1;min-width:150px"></select>
+              <span class="muted">或</span>
+              <input class="input" id="fxPickCustom" maxlength="10" placeholder="自己輸入（最多 10 個字）" style="flex:1;min-width:150px">
+            </div>
+            <div class="row" style="margin-top:8px">
+              <button type="button" class="btn primary" id="fxPickOk">設定為這一張的主題</button>
+              <button type="button" class="btn" id="fxPickCancel">取消</button>
+            </div>
+            <p class="muted" style="margin:6px 0 0">設定後會同步到步驟 1 的主題清單，提示詞 A、B 也會跟著更新，不用再回步驟 1 選。</p>
+          </div>
           <label class="label" for="fxText" id="fxTextLabel" style="margin-top:10px">動畫內容（可以自己改）</label>
           <textarea class="input" id="fxText"></textarea>
           <div class="row" style="margin-top:10px">
@@ -371,13 +427,13 @@ input[type=checkbox]{accent-color:var(--accent);width:18px;height:18px;flex:none
             <a class="btn" href="https://gemini.google.com/app" target="_blank" rel="noopener">✨ Gemini</a>
             <a class="btn" href="https://chatgpt.com/" target="_blank" rel="noopener">🤖 ChatGPT</a>
           </div>
-          <p class="muted" style="margin:8px 0 0">生成後到分頁「<span data-kind-fixed>4. 全螢幕／特效圖片製作</span>」切割、預覽並輸出 480 × 480 的動畫檔。每一張貼圖的全螢幕動畫都要各做一次。</p>
+          <p class="muted" style="margin:8px 0 0">生成後到分頁「<span data-kind-fixed>4. 全螢幕／特效 動態圖片製作</span>」切割、預覽並輸出 480 × 480 的動畫檔。每一張貼圖的全螢幕動畫都要各做一次。</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ================= 4. 全螢幕圖片製作 ================= -->
+  <!-- ================= 4. 全螢幕／特效 動態圖片製作 ================= -->
   <section class="panel" id="panel-effect">
     <div class="note blue">
       <b>🎬 把 AI 生成的動畫影格大圖，做成 480 × 480 的全螢幕圖片</b>
@@ -431,6 +487,9 @@ input[type=checkbox]{accent-color:var(--accent);width:18px;height:18px;flex:none
             <button type="button" class="btn" id="fxExportMain">⭐ 設為全螢幕貼圖主要圖片（main_popup）</button>
           </div>
           <p class="muted" id="fxSizeInfo" style="margin:8px 0 0"></p>
+          <div class="row" style="margin-top:12px">
+            <button type="button" class="btn primary grow" id="fxNext">➡ 做下一張（回到步驟 3 複製提示詞）</button>
+          </div>
         </div>
         <div>
           <div class="phone" id="phone">
@@ -1181,7 +1240,7 @@ function detectBoardLines(src, cols, rows) {
 }
 
 /* ============================================================
-   分頁 1、3：提示詞（1 貼圖主題、3 全螢幕圖片）
+   分頁 1、3：提示詞（1 靜態貼圖主題、3 全螢幕／特效動態圖片）
    ============================================================ */
 // 貼圖主題目錄。「熱門特效」每個主題有自己的姿勢與特效；其他分類的主題寫成「中文|English」，共用該分類的動畫內容
 const THEME_CATS = [
@@ -1233,10 +1292,13 @@ const STYLES = [
   { id: "us",    label: "美式卡通風",  zh: "美式卡通風格，粗黑外框線、誇張的比例、鮮豔飽和的扁平上色" }
 ];
 const GRIDS = { "3x3": [3, 3, "2880 × 2880", "1:1"], "4x3": [4, 3, "3840 × 2880", "4:3"], "4x4": [4, 4, "3840 × 3840", "1:1"], "5x4": [5, 4, "4800 × 3840", "5:4"] };
-const P = { src: "ref", charText: "", picked: ["愛你", "恭喜", "謝謝", "加油"].map(l => pickTheme(l)), fxTheme: "愛你", fxText: findTheme("愛你").fx, fxChar: true, grid: "4x3", fxBg: "green", stBg: "green", style: "q", text: true, count: 8, batch: 0 };
+// 貼圖主題一開始是空的，由使用者自己選
+const P = { src: "ref", charText: "", picked: [], fxTheme: "", fxText: "", fxChar: true, grid: "4x3", fxBg: "green", stBg: "green", style: "q", text: true, count: 8, batch: 0 };
 // 整套貼圖的張數（LINE 只接受 8／16／24）。一張大圖固定畫 8 張，所以 16／24 張要分 2／3 張大圖生成（P.batch 是第幾張大圖）
 let afterCountChange = () => {};
 let refreshPromptUI = () => {};   // 開啟存檔後，依 P 重畫分頁 1、3 的所有選項
+let refreshFxOptions = () => {};  // 步驟 2 的貼圖圖片變了：步驟 3 的編號選單要標出哪幾張已有圖
+let gotoFxSlot = () => {};        // 步驟 3 切到某一個編號
 function setStickerCount(n) {
   n = [8, 16, 24].includes(n) ? n : 8;
   const lostTh = P.picked.length > n, lostFx = SLOTS.slice(n).some(s => s.frames.length), lostSt = ST.items.slice(n).some(Boolean);
@@ -1306,7 +1368,8 @@ const fxCharOnly = () => P.fxChar === "char";
 const defaultMotion = t => `${t.pose || `做出最能表達「${t.label}」的表情與姿勢`}；從自然的姿勢開始，動作逐格加大到最明顯，再慢慢回到原本的姿勢`;
 const fxTextOf = t => !t ? "" : fxCharOnly() ? (t.motion ?? (t.motion = defaultMotion(t))) : t.fx;
 function buildPromptB() {
-  const st = STYLES.find(s => s.id === P.style), th = curFxTheme() || { label: "自訂" }, no = P.picked.indexOf(th) + 1;
+  if (!curFxTheme()) return `（⚠ 第 ${(P.fxSlot ?? 0) + 1} 張還沒有主題：請在左邊選一個主題或自己輸入，設定好就會產生提示詞。）`;
+  const st = STYLES.find(s => s.id === P.style), th = curFxTheme(), no = P.picked.indexOf(th) + 1;
   const [cols, rows, size, ratio] = GRIDS[P.grid], N = cols * rows, per = N / 4;
   const span = k => { const a = Math.round(k * per) + 1, b = Math.round((k + 1) * per); return a === b ? `第 ${a} 格` : `第 ${a}～${b} 格`; };
   const only = fxCharOnly();
@@ -1422,7 +1485,29 @@ function renderListing() {
   }
   LISTING.forEach(f => { const ta = $(`[data-field="${f.key}"]`, box); ta.value = v[f.key]; ta.oninput(); });
 }
-function renderPrompts() { $("#promptA").textContent = buildPromptA(); $("#promptB").textContent = buildPromptB(); renderListing(); }
+function renderPrompts() { $("#promptA").textContent = buildPromptA(); $("#promptB").textContent = buildPromptB(); renderListing(); scheduleAutoSave(); }
+/* ---------- 自動記住設定（存在這台電腦的瀏覽器，不含圖片）----------
+   角色、貼圖主題、畫風、張數等一改就記下來，下次打開自動還原；換電腦還是要用「存檔／開啟」。 */
+const AUTO_KEY = "fsHelperAutoSave";
+let autoT = 0, autoReady = false;
+function scheduleAutoSave() {
+  if (!autoReady) return;
+  clearTimeout(autoT);
+  autoT = setTimeout(() => {
+    try { localStorage.setItem(AUTO_KEY, JSON.stringify({ v: 1, at: Date.now(), P, names: { en: $("#lsNameEn").value, zh: $("#lsNameZh").value } })); } catch (e) {}
+  }, 400);
+}
+function restoreAutoSave() {
+  let s = null;
+  try { s = JSON.parse(localStorage.getItem(AUTO_KEY) || "null"); } catch (e) {}
+  if (!s || !s.P || !Array.isArray(s.P.picked)) return false;
+  const n = [8, 16, 24].includes(s.P.count) ? s.P.count : 8;
+  if (n !== P.count) setStickerCount(n);
+  Object.assign(P, s.P, { count: P.count });
+  if (s.names) { $("#lsNameEn").value = s.names.en || ""; $("#lsNameZh").value = s.names.zh || ""; }
+  refreshPromptUI();
+  return true;
+}
 function initPromptTab() {
   const cats = $("#themeCats"), bars = $$(".picked"), fxSel = $("#fxTheme"), styles = $("#styleChips");
   const pickedAt = label => P.picked.findIndex(t => t.label === label);
@@ -1432,27 +1517,75 @@ function initPromptTab() {
     P.fxText = fxTextOf(t); $("#fxText").value = P.fxText;
     $("#fxTextLabel").textContent = fxCharOnly() ? "角色動作（可以自己改）" : "動畫內容（可以自己改）";
   };
-  const setFxTheme = label => {
-    P.fxTheme = label;
-    const t = curFxTheme();
+  // 步驟 3 的下拉選單列出全部編號（1～整套張數）。已有主題的直接選；下一個還沒主題的，可以在這裡直接設定，
+  // 不用回步驟 1。主題清單是連續的（編號 = 順序），所以只開放「下一個」空的編號，後面的要等前面設定好。
+  let pickOpen = false;
+  const setFxSlot = i => {
+    P.fxSlot = i;
+    const t = P.picked[i] || null;
+    P.fxTheme = t ? t.label : "";
     syncFxText(t);   // 每個主題各自記住改過的動畫內容
-    const no = P.picked.indexOf(t) + 1;
-    if (no > 0 && no <= SLOTS.length) selectFxSlot(no - 1);   // 分頁 4 跟著切到同編號的那一張
+    renderFxPick();
+    if (i < SLOTS.length && i !== FX.cur) selectFxSlot(i);   // 步驟 4 跟著切到同編號的那一張
   };
   const syncFxOptions = () => {
-    fxSel.innerHTML = "";
-    if (!P.picked.length) {
-      const o = document.createElement("option"); o.value = ""; o.textContent = "請先在分頁 1 選擇貼圖主題"; fxSel.appendChild(o);
-      fxSel.disabled = true; P.fxTheme = ""; P.fxText = ""; $("#fxText").value = "";
-      return;
-    }
+    const n = P.picked.length;
+    fxSel.innerHTML = Array.from({ length: P.count }, (_, i) => {
+      const t = P.picked[i], later = !t && i > n, stk = ST.items[i] ? " 🖼" : "";
+      const text = t ? `${i + 1}. ${t.label}${t.custom ? "（自行輸入）" : ""}` : later ? `${i + 1}. （請先設定第 ${n + 1} 張的主題）` : `${i + 1}. （還沒有主題，請在下面設定）`;
+      return `<option value="${i}"${later ? " disabled" : ""}>${esc(text + stk)}</option>`;
+    }).join("");
     fxSel.disabled = false;
-    P.picked.forEach((t, i) => {
-      const o = document.createElement("option"); o.value = t.label; o.textContent = `${i + 1}. ${t.label}` + (t.custom ? "（自行輸入）" : ""); fxSel.appendChild(o);
-    });
-    setFxTheme(curFxTheme() ? P.fxTheme : P.picked[0].label);   // 原本選的被取消時，改用第一個
-    fxSel.value = P.fxTheme;
+    // 優先跟著原本選的主題（主題被移除、編號往前遞補時才不會跑掉），其次是原本的編號
+    let i = curFxTheme() ? P.picked.indexOf(curFxTheme()) : (P.fxSlot ?? 0);
+    if (!(i >= 0 && i < P.count && i <= n)) i = 0;
+    fxSel.value = String(i);
+    setFxSlot(i);
   };
+  const setFxTheme = label => { const i = pickedAt(label); if (i >= 0) { fxSel.value = String(i); setFxSlot(i); } };
+  // 切到某一個編號（步驟 4 的「做下一張」、從步驟 4 回到步驟 3 時用）
+  gotoFxSlot = i => {
+    if (i < 0 || i >= P.count) return;
+    if (i > P.picked.length) i = P.picked.length;   // 前面還有沒主題的，先做那一張
+    fxSel.value = String(i); setFxSlot(i); renderPrompts();
+  };
+  // 這一張的主題設定區：沒有主題時一定顯示；有主題時按「換這一張的主題」才顯示
+  const renderFxPick = () => {
+    const i = P.fxSlot ?? 0, t = P.picked[i], stk = ST.items[i];
+    $("#fxPick").hidden = !(!t || pickOpen);
+    $("#fxPickToggle").hidden = !t || pickOpen;
+    $("#fxPickCancel").hidden = !t;
+    $("#fxPickTitle").textContent = t ? `把第 ${i + 1} 張的主題「${t.label}」換成：` : `第 ${i + 1} 張還沒有主題，請選一個或自己輸入：`;
+    $("#fxPickOk").textContent = `設定為第 ${i + 1} 張的主題`;
+    $("#fxThumb").hidden = $("#fxThumbCap").hidden = !stk;
+    if (stk) $("#fxThumb").src = stk.url;
+    // 選單：依分類列出全部主題，已經用在別張的標出編號、不能重複選
+    const used = new Map(P.picked.map((x, k) => [x.label, k]));
+    $("#fxPickSel").innerHTML = `<option value="">— 從主題清單選 —</option>` + THEME_CATS.map(c => `<optgroup label="${esc(c.label)}">` + c.items.map(x => {
+      const k = used.get(x.label), taken = k !== undefined && k !== i;
+      return `<option value="${esc(x.label)}"${taken ? " disabled" : ""}>${esc(x.label)}${taken ? `（第 ${k + 1} 張已用）` : ""}</option>`;
+    }).join("") + "</optgroup>").join("");
+  };
+  const applyFxPick = () => {
+    const i = P.fxSlot ?? 0, custom = $("#fxPickCustom").value.trim(), label = custom || $("#fxPickSel").value;
+    if (!label) { toast("請從清單選一個主題，或自己輸入"); return; }
+    if ([...label].length > MAX_THEME_LEN) { toast(`主題最多 ${MAX_THEME_LEN} 個字，請縮短`); return; }
+    const dup = pickedAt(label);
+    if (dup >= 0 && dup !== i) { toast(`「${label}」已經是第 ${dup + 1} 張的主題`); return; }
+    if (i > P.picked.length) { toast(`請先設定第 ${P.picked.length + 1} 張的主題`); return; }
+    const t = pickTheme(label, !!custom);
+    if (i === P.picked.length) P.picked.push(t); else P.picked[i] = t;
+    P.fxTheme = label; pickOpen = false;
+    $("#fxPickCustom").value = "";
+    syncChips(); renderPrompts();
+    toast(`第 ${i + 1} 張的主題設為「${label}」，已同步到步驟 1`);
+  };
+  $("#fxPickToggle").onclick = () => { pickOpen = true; renderFxPick(); };
+  $("#fxPickCancel").onclick = () => { pickOpen = false; renderFxPick(); };
+  $("#fxPickOk").onclick = applyFxPick;
+  $("#fxPickCustom").addEventListener("keydown", e => { if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); applyFxPick(); } });
+  $("#fxPickSel").onchange = () => { if ($("#fxPickSel").value) $("#fxPickCustom").value = ""; };
+  refreshFxOptions = syncFxOptions;
   // 已選清單：點選的和自行輸入的排在一起，號碼就是貼圖編號；分類上方和輸入框下方各顯示一份
   const renderPicked = () => {
     const n = P.picked.length;
@@ -1547,7 +1680,7 @@ function initPromptTab() {
     styles.appendChild(c);
   });
   $("#fxText").value = P.fxText;
-  fxSel.onchange = () => { setFxTheme(fxSel.value); renderPrompts(); };
+  fxSel.onchange = () => { pickOpen = false; setFxSlot(parseInt(fxSel.value) || 0); renderPrompts(); };
   $("#fxText").oninput = e => {
     P.fxText = e.target.value;
     const t = curFxTheme();
@@ -1580,8 +1713,8 @@ function initPromptTab() {
   };
   $("#charText").oninput = e => { P.charText = e.target.value; renderPrompts(); };
   $("#stickerText").onchange = e => { P.text = e.target.checked; renderPrompts(); };
-  $("#lsNameEn").oninput = renderListing;
-  $("#lsNameZh").oninput = renderListing;
+  $("#lsNameEn").oninput = () => { renderListing(); scheduleAutoSave(); };
+  $("#lsNameZh").oninput = () => { renderListing(); scheduleAutoSave(); };
   $$("[data-copy]").forEach(b => b.onclick = () => toast(copyText($("#" + b.dataset.copy).textContent) ? "✅ 提示詞已複製" : "複製失敗，請手動選取文字"));
   syncChips(); renderPrompts();
 }
@@ -1630,6 +1763,8 @@ function renderSlots() {
   $("#fxNameLabel").textContent = `第 ${FX.cur + 1} 張的名稱`;
   nm.placeholder = (P.picked[FX.cur] ? P.picked[FX.cur].label : "") || "例：拜託";
   if (document.activeElement !== nm) nm.value = SLOTS[FX.cur].name;
+  const nb = $("#fxNext"), nx = FX.cur + 1;
+  if (nb) { nb.hidden = nx >= P.count; nb.textContent = `➡ 做第 ${nx + 1} 張${P.picked[nx] ? `「${P.picked[nx].label}」` : ""}（回到步驟 3 複製提示詞）`; }
 }
 // 做好的全螢幕動畫，格子裡的縮圖直接循環播放（依各自設定的單次播放時間）
 setInterval(() => {
@@ -1843,6 +1978,7 @@ function renderStickers() {
   });
   $("#stMain").disabled = !ST.main; $("#stTab").disabled = !ST.tab;
   renderSlots();   // 分頁 4 的格子會顯示同編號的貼圖圖片
+  refreshFxOptions();   // 步驟 3 的編號選單標出哪幾張已有貼圖圖片
   // 上架一定要有主圖和標籤，兩個都設好才開放打包
   const missing = [ST.main ? "" : "主圖", ST.tab ? "" : "標籤"].filter(Boolean);
   $("#stZip").disabled = missing.length > 0;
@@ -2347,6 +2483,8 @@ function initSaveBar() {
    ============================================================ */
 function showTab(id) {
   if (!$("#panel-" + id)) id = "prompt";
+  // 從步驟 4 回到步驟 3：跟著選到步驟 4 正在做的那一張
+  if (id === "fxprompt" && FX.cur !== P.fxSlot && FX.cur <= P.picked.length) gotoFxSlot(FX.cur);
   $$(".tab-btn").forEach(b => b.classList.toggle("on", b.dataset.tab === id));
   $$(".panel").forEach(p => p.classList.toggle("on", p.id === "panel-" + id));
   if (id === "effect") { fxBoard.redraw(); renderSlots(); }
@@ -2371,6 +2509,14 @@ function showTab(id) {
   addEventListener("hashchange", () => showTab(location.hash.slice(1)));
   initPromptTab(); initEffectTab(); initStickerTab(); initSaveBar();
   $("#packZip").onclick = packZip;
+  // 步驟 4 做完一張：直接回步驟 3，並選好下一個編號
+  $("#fxNext").onclick = () => {
+    const next = FX.cur + 1;
+    if (next >= P.count) { toast(`第 ${P.count} 張是最後一張了，可以到「5. 打包上架」`); return; }
+    gotoFxSlot(next);
+    location.hash = "fxprompt";
+    scrollTo({ top: 0, behavior: "smooth" });
+  };
   // 貼圖類型：換用語、提示詞 B、上架說明與檔名（已做好的內容不變）
   $("#kindGroup").addEventListener("click", e => {
     const b = e.target.closest("[data-kind]"); if (!b || b.dataset.kind === KIND) return;
@@ -2380,9 +2526,14 @@ function showTab(id) {
     if ($("#panel-pack").classList.contains("on")) renderPack();
     toast(`已切換為「${K().name}」：檔名會是 01_${SUF()}.png、main_${SUF()}.png`);
   });
-  applyKind(); renderPrompts();
+  applyKind();
+  const restored = restoreAutoSave();
+  autoReady = true;
+  renderPrompts();
   fxChecks();
   showTab(location.hash.slice(1) || "prompt");
+  if (restored) toast(`已還原上次的設定：${P.picked.length} 個貼圖主題、整套 ${P.count} 張（圖片要用「存檔／開啟」）`);
+  $("#autoForget").onclick = () => { try { localStorage.removeItem(AUTO_KEY); } catch (e) {} autoReady = false; toast("已忘記這台電腦記住的設定；重新整理網頁就會回到預設值"); };
 })();
 </script>
 </body>
