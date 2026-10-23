@@ -377,13 +377,11 @@ input[type=checkbox]{accent-color:var(--accent);width:18px;height:18px;flex:none
           </div>
           <div class="fxpick" id="fxPick" hidden>
             <div class="label" id="fxPickTitle" style="margin-bottom:6px">第 1 張的主題</div>
+            <div id="fxPickCats"></div>
+            <label class="label" for="fxPickCustom" style="margin-top:10px">✏️ 自行輸入主題（清單裡沒有的才需要輸入）</label>
             <div class="row">
-              <select class="select" id="fxPickSel" style="flex:1;min-width:150px"></select>
-              <span class="muted">或</span>
-              <input class="input" id="fxPickCustom" maxlength="10" placeholder="自己輸入（最多 10 個字）" style="flex:1;min-width:150px">
-            </div>
-            <div class="row" style="margin-top:8px">
-              <button type="button" class="btn primary" id="fxPickOk">設定為這一張的主題</button>
+              <input class="input grow" id="fxPickCustom" maxlength="10" placeholder="例：阿彌陀佛（最多 10 個字）" style="min-width:150px">
+              <button type="button" class="btn primary" id="fxPickOk">＋ 設定</button>
               <button type="button" class="btn" id="fxPickCancel">取消</button>
             </div>
             <p class="muted" style="margin:6px 0 0">設定後會同步到步驟 1 的主題清單，提示詞 A、B 也會跟著更新，不用再回步驟 1 選。</p>
@@ -429,6 +427,20 @@ input[type=checkbox]{accent-color:var(--accent);width:18px;height:18px;flex:none
           </div>
           <p class="muted" style="margin:8px 0 0">生成後到分頁「<span data-kind-fixed>4. 全螢幕／特效 動態圖片製作</span>」切割、預覽並輸出 480 × 480 的動畫檔。每一張貼圖的全螢幕動畫都要各做一次。</p>
         </div>
+        <div class="card">
+          <div class="card-title">📚 一次複製全部主題的提示詞</div>
+          <p class="muted" style="margin:0 0 10px">把每一個貼圖主題的提示詞 B 合成一份，並要求 AI <b>依序一張一張生成</b>、每張開始前先寫「目前生成第幾個」；一次回覆做不完時，AI 會停下來等你回覆「繼續」。</p>
+          <div class="row" style="margin-bottom:8px">
+            <select class="select" id="fxAllFrom" style="flex:1;min-width:200px"></select>
+          </div>
+          <label class="row" style="gap:8px;cursor:pointer;margin-bottom:10px"><input type="checkbox" id="fxAllTodo"><span>只包含步驟 4 還沒做好動畫的主題</span></label>
+          <div class="hint" style="margin-bottom:10px">🔁 <b>AI 做到一半不能再生成、要換其他工具時：</b>上面選「從還沒生成的那一張開始」（或勾選「只包含還沒做好的」），再複製貼到新的 AI 工具；記得一起附上<b>你的照片</b>和<b>一張之前生成好的圖</b>，角色才會一樣。AI 停下來時會寫出「已完成到第幾張」，照著選就不會重複。</div>
+          <div class="row">
+            <button type="button" class="btn primary grow" id="fxCopyAll">📚 一次複製全部提示詞</button>
+          </div>
+          <p class="muted" id="fxAllInfo" style="margin:8px 0 0"></p>
+          <details style="margin-top:8px"><summary class="muted" style="cursor:pointer">預覽合成的提示詞</summary><div class="prompt" id="promptAll" style="margin-top:8px"></div></details>
+        </div>
       </div>
     </div>
   </section>
@@ -467,8 +479,8 @@ input[type=checkbox]{accent-color:var(--accent);width:18px;height:18px;flex:none
           <div class="row" style="margin-top:14px">
             <span class="label" style="margin:0">單次播放時間</span>
             <div class="btn-group" id="fxSecGroup">
-              <button type="button" class="btn sel" data-sec="1">1 秒</button>
-              <button type="button" class="btn" data-sec="2">2 秒</button>
+              <button type="button" class="btn" data-sec="1">1 秒</button>
+              <button type="button" class="btn sel" data-sec="2">2 秒</button>
               <button type="button" class="btn" data-sec="3">3 秒</button>
             </div>
           </div>
@@ -555,13 +567,19 @@ input[type=checkbox]{accent-color:var(--accent);width:18px;height:18px;flex:none
       <pre class="prompt" id="packFiles" style="margin-top:12px;max-height:220px"></pre>
     </div>
     <div class="card" id="listingCard">
-      <div class="card-title">🏷 上架用：貼圖標題與貼圖說明</div>
-      <p class="muted" style="margin:0 0 10px">依分頁 1 選的貼圖主題與畫風自動產生，可直接貼到 LINE Creators Market。英文是必填；中文要在上架頁面的「新增語言」選「Chinese (Traditional)」後再貼上。內容可以自己修改。</p>
+      <div class="card-title">🏷 上架用：請 AI 寫貼圖標題與說明</div>
+      <p class="muted" style="margin:0 0 10px">LINE Creators Market 上架時，<b>英文標題（40 字元內）和英文說明（160 字元內）是必填</b>；字元是用英文的算法，<b>中文一個字算 2 個字元</b>，所以中文標題約 20 字、說明約 80 字。下面的提示詞會依步驟 1 選的貼圖主題、畫風和張數產生，複製貼到 AI，就會寫出 3 組英文＋中文的標題與說明，並附上字數。中文要在上架頁面的「新增語言」選「Chinese (Traditional)」後再貼上。</p>
       <div class="grid2" style="gap:10px;margin-bottom:10px">
         <label><span class="label">角色／系列名稱（英文，可不填）</span><input class="input" id="lsNameEn" maxlength="20" placeholder="例：Pei"></label>
         <label><span class="label">角色／系列名稱（中文，可不填）</span><input class="input" id="lsNameZh" maxlength="12" placeholder="例：小佩"></label>
       </div>
-      <div id="listingFields"></div>
+      <div class="prompt" id="listingPrompt"></div>
+      <div class="row" style="margin-top:10px">
+        <button type="button" class="btn primary grow" data-copy="listingPrompt">📑 複製標題與說明的提示詞</button>
+        <a class="btn" href="https://gemini.google.com/app" target="_blank" rel="noopener">✨ Gemini</a>
+        <a class="btn" href="https://chatgpt.com/" target="_blank" rel="noopener">🤖 ChatGPT</a>
+      </div>
+      <p class="muted" style="margin:8px 0 0">AI 給的字數偶爾會算錯，貼到上架頁面時，請看頁面右邊的字數（例如 15/40）確認沒有超過。</p>
     </div>
   </section>
 </main>
@@ -1016,8 +1034,8 @@ function createBoard(root, opt) {
         <span class="muted" data-e="count"></span>
       </div>
       <div class="row" style="margin-bottom:10px">
-        <button type="button" class="btn primary" data-e="auto">🔍 自動偵測分割線</button>
-        <button type="button" class="btn" data-e="even">📐 還原分割線等分</button>
+        <button type="button" class="btn primary" data-e="even">📐 還原分割線等分（預設）</button>
+        <button type="button" class="btn" data-e="auto">🔍 自動偵測分割線</button>
         <span class="muted">粉紅虛線可以直接拖曳調整。</span>
       </div>
       <div class="board-wrap" data-e="wrap"><canvas data-e="cv" style="touch-action:none"></canvas></div>
@@ -1078,7 +1096,8 @@ function createBoard(root, opt) {
     el.info.textContent = `來源尺寸：${B.src.width} × ${B.src.height} px`;
     setEven();
     draw();
-    detect(true);   // 找得到間隔就自動對好，找不到就維持等分
+    // 預設等分：每格一樣大（自動偵測容易切得大小不一，動畫播放時角色會跳動）；需要時再按「自動偵測分割線」
+    toast(`已依 ${B.cols} 欄 × ${B.rows} 列等分切割，每格一樣大；格線不對時可以拖曳或按「自動偵測分割線」`);
     if (opt.onLoad) opt.onLoad();
   };
   const setMode = m => {
@@ -1425,7 +1444,11 @@ ${KIND === "effect" ? `## 二、這是「在聊天室背景上播放的特效」
 
 ## 三、角色與鏡頭
 - ${P.fxChar ? charLine() : "（本特效沒有角色）"}
-- 固定鏡頭：${N} 格的視角、比例完全相同${P.fxChar ? "；角色的大小與位置每一格都相同，只有姿勢與表情小幅改變" : ""}。
+- 固定鏡頭：${N} 格的視角、比例完全相同${P.fxChar ? "；角色的大小與位置每一格都相同，只有姿勢與表情小幅改變" : ""}。${P.fxChar ? `
+- **角色位置完全固定（最重要）**：把第 1 格當作基準，其餘每一格的角色都畫在完全相同的位置與大小，像用腳架固定的同一台相機連拍；分割成一格一格播放時，角色才不會上下跳動。
+- 角色的頭頂距離格子上緣固定約 15%，下半身被格子下緣切齊（或腳底固定在格子下緣上方約 5%），每一格都一樣。
+- 只有表情、手勢${only ? "" : "和特效"}在變化；角色的身體、頭的位置不可上下或左右移動，不可放大縮小，不可跳起來。
+- 如果動作需要彈跳的感覺，請用姿勢（蹲低、伸展手臂）${only ? "" : "或特效（光芒、速度線）"}表現，不要移動整個角色。` : ""}
 
 ${motion}
 
@@ -1438,54 +1461,114 @@ ${st.zh}
 **${N} 個正方形影格、排列整齊、固定鏡頭、${only ? "只有角色、動作由開始到結束連續變化、沒有任何特效元素" : "特效由出現到消失連續變化"}、無文字；不可生成方框的格線。**
 `;
 }
-/* ---------- 上架用的標題與說明（LINE Creators Market：標題 40 字、說明 160 字以內） ---------- */
+/* ---------- 上架用：請 AI 寫標題與說明的提示詞 ----------
+   LINE Creators Market 的英文標題、說明是必填，字數限制：標題 40、說明 160（空格與標點都算）。 */
 const STYLE_EN = { q: "Cute Chibi", anime: "Anime", "3d": "3D Figure", flat: "Flat Illustration", book: "Storybook", water: "Watercolor", us: "Cartoon" };
-const LISTING = [
-  { key: "enTitle", label: "標題（English）", max: 40, rows: 1 },
-  { key: "enDesc",  label: "貼圖說明（English）", max: 160, rows: 3 },
-  { key: "zhTitle", label: "標題（中文繁體）", max: 40, rows: 1 },
-  { key: "zhDesc",  label: "貼圖說明（中文繁體）", max: 160, rows: 3 }
-];
-// 把項目一個一個接上去，接到快超過字數上限為止
-function joinWithin(head, items, sep, tail, max) {
-  let used = [];
-  for (const it of items) { const next = head + [...used, it].join(sep) + tail; if (next.length > max) break; used.push(it); }
-  return used.length ? head + used.join(sep) + tail : "";
-}
-function buildListing() {
-  const st = STYLES.find(s => s.id === P.style), stEn = STYLE_EN[P.style] || "Cute";
+function buildListingPrompt() {
+  const st = STYLES.find(s => s.id === P.style), fx = KIND === "effect";
   const nEn = $("#lsNameEn").value.trim(), nZh = $("#lsNameZh").value.trim();
-  const picks = P.picked;   // 自行輸入的主題沒有英文，只列在中文說明裡
-  const fx = KIND === "effect";
-  const enTitle = ((nEn ? nEn + " - " : "") + stEn + (fx ? " Effect Stickers" : " Full Screen Stickers")).slice(0, 40);
-  const zhTitle = ((nZh ? nZh + "的" : "") + st.label.replace(/\s+/g, "") + K().name).slice(0, 40);
-  const enBase = `${nEn ? nEn + "'s " + stEn.toLowerCase() : stEn} ` + (fx ? "effect stickers that fill your chat room with animated effects." : "full screen stickers that play big animations across your whole chat screen.");
-  const enDesc = (joinWithin(enBase + " Includes ", picks.filter(t => t.en).map(t => t.en), ", ", " and more.", 160) || enBase).slice(0, 160);
-  const zhBase = `${nZh || "原創角色"}的${st.label.replace(/\s+/g, "")}${K().name}，` + (fx ? "送出後會在聊天室背景播放動態特效" : "送出後會在整個聊天畫面播放動畫") + "，讓聊天更熱鬧！";
-  const zhDesc = (joinWithin(zhBase + "內容包含：", picks.map(t => t.label), "、", "等。", 160) || zhBase).slice(0, 160);
-  return { enTitle, enDesc, zhTitle, zhDesc };
+  const themes = P.picked.length
+    ? P.picked.map((t, i) => `${i + 1}. ${t.label}${t.en ? `（${t.en}）` : ""}`).join("\n")
+    : "（還沒選貼圖主題：請依角色與畫風，寫成適合日常聊天使用的貼圖）";
+  const name = nEn || nZh ? `${nEn || "（請依中文名稱取一個英文名稱）"}／${nZh || "（請依英文名稱取一個中文名稱）"}` : "（還沒取名：請幫我取一個簡短好記的系列名稱，英文、中文各一個）";
+  return `你是熟悉 LINE Creators Market 上架規範的貼圖文案編輯。請幫我的 LINE 貼圖寫上架用的「標題」和「貼圖說明」。
+
+## 貼圖資料
+- 種類：${fx ? "特效貼圖（送出後，會在聊天室的背景播放動態特效）" : "全螢幕貼圖（送出後，會在整個聊天畫面上播放大大的動畫）"}
+- 張數：${P.count} 張
+- 角色／系列名稱：${name}
+- 畫風：${st.label}（${STYLE_EN[P.style] || st.label}）
+- 貼圖主題：
+${themes}
+
+## 字數限制（一定要遵守）
+上架頁面是用「字元」計算：英文字母、數字、空格、半形標點各算 1 個字元；**中文字和全形標點（，。！、「」）各算 2 個字元**，所以中文能寫的字數只有英文的一半。
+- 英文標題（Title）：40 個字元以內
+- 英文說明（Description）：160 個字元以內
+- 中文標題：40 個字元以內，也就是**約 20 個中文字**（含標點）
+- 中文說明：160 個字元以內，也就是**約 80 個中文字**（含標點）
+
+## 撰寫規範
+- 只用一般文字：不要表情符號、特殊符號、網址、hashtag、全形與半形混雜的怪符號。
+- 不要出現「LINE」或其他品牌、名人、卡通、作品名稱；不要「免費」「最便宜」「第一名」等誇大或促銷字眼。
+- 標題要簡短好記，最好包含角色或系列名稱，並看得出是${fx ? "特效" : "全螢幕"}貼圖。
+- 說明要寫出這套貼圖的特色與使用情境，可以舉幾個主題，讓人一看就想買。
+- 英文要自然、文法正確，用英文母語者的說法，不要逐字翻譯中文。
+- 中文用繁體中文，語氣親切。
+
+## 輸出格式
+請提供 3 組方案。每一組照下面的格式，每個欄位的內容放在單獨的程式碼區塊裡（方便我直接複製），並在後面標出用上面規則算出的字元數，例如英文（35/40）、中文（18 字＝36/40）：
+
+方案 1
+- 英文標題：
+- 英文說明：
+- 中文標題：
+- 中文說明：
+
+最後推薦你覺得最好的一組，用一句話說明原因。送出前請自己再數一次字元數（中文一個字算 2），超過上限的請改短。
+`;
 }
 function renderListing() {
-  const box = $("#listingFields"); if (!box) return;
-  const v = buildListing();
-  if (!box.children.length) {
-    box.innerHTML = LISTING.map(f => `
-      <div style="margin-bottom:10px">
-        <div class="row" style="justify-content:space-between"><span class="label" style="margin:0">${f.label}</span><span class="muted" data-count="${f.key}"></span></div>
-        <div class="row" style="align-items:flex-start;margin-top:4px">
-          <textarea class="input grow" rows="${f.rows}" maxlength="${f.max}" data-field="${f.key}" style="min-height:0"></textarea>
-          <button type="button" class="btn sm" data-copyfield="${f.key}">複製</button>
-        </div>
-      </div>`).join("");
-    LISTING.forEach(f => {
-      const ta = $(`[data-field="${f.key}"]`, box);
-      ta.oninput = () => { $(`[data-count="${f.key}"]`, box).textContent = `${ta.value.length}/${f.max}`; };
-      $(`[data-copyfield="${f.key}"]`, box).onclick = () => toast(copyText(ta.value) ? "✅ 已複製" : "複製失敗，請手動選取文字");
-    });
-  }
-  LISTING.forEach(f => { const ta = $(`[data-field="${f.key}"]`, box); ta.value = v[f.key]; ta.oninput(); });
+  const box = $("#listingPrompt"); if (!box) return;
+  box.textContent = buildListingPrompt();
 }
-function renderPrompts() { $("#promptA").textContent = buildPromptA(); $("#promptB").textContent = buildPromptB(); renderListing(); scheduleAutoSave(); }
+function renderPrompts() { $("#promptA").textContent = buildPromptA(); $("#promptB").textContent = buildPromptB(); renderPromptAll(); renderListing(); scheduleAutoSave(); }
+/* ---------- 一次複製全部主題的提示詞 B：依序生成，每張先寫「目前生成第幾個」 ---------- */
+// AI 工具可能做到一半就不能再生成，要換別的工具接著做：
+// 可以選「從第幾張開始」只複製剩下的；每一份提示詞都是完整的，新工具不需要知道前面的對話。
+const slotDone = i => !!(SLOTS[i] && SLOTS[i].frames.length && slotOk(SLOTS[i]));
+function promptAllFrom() { const s = $("#fxAllFrom"); return s ? (parseInt(s.value) || 0) : 0; }
+function promptAllTargets() {
+  const todo = $("#fxAllTodo") && $("#fxAllTodo").checked, from = promptAllFrom();
+  return P.picked.map((t, i) => ({ t, i })).filter(({ i }) => i >= from && !(todo && slotDone(i)));
+}
+function buildPromptAll() {
+  const list = promptAllTargets(), N = list.length;
+  if (!N) return P.picked.length ? "（選的範圍裡，全部主題的動畫都做好了，沒有需要生成的。）" : "（⚠ 還沒有貼圖主題：請先在步驟 1 或上面設定主題。）";
+  // 逐一用各主題的設定產生提示詞 B，產生完再換回目前選的主題
+  const keep = { fxTheme: P.fxTheme, fxText: P.fxText };
+  const parts = list.map(({ t, i }, k) => {
+    P.fxTheme = t.label; P.fxText = fxTextOf(t);
+    const body = buildPromptB().replace(/^你是一位專業的 LINE 貼圖角色設計師。\s*/, "");
+    return `==================== 第 ${k + 1} / ${N} 個：第 ${i + 1} 張「${t.label}」 ====================\n\n${body.trim()}`;
+  });
+  Object.assign(P, keep);
+  const names = list.map(({ t, i }, k) => `${k + 1}. 第 ${i + 1} 張「${t.label}」`).join("\n");
+  // 不在這次清單裡的主題（已經做好、或從後面開始）：告訴 AI 這是接續生成
+  const skipped = P.picked.map((t, i) => i).filter(i => !list.some(x => x.i === i));
+  const resume = skipped.length
+    ? `\n> 這是**接續生成**：第 ${skipped.map(i => i + 1).join("、")} 張已經在其他地方完成，這次只生成下面這 ${N} 張。如果有附上之前生成的圖片，請把它當成角色與畫風的標準。\n`
+    : "";
+  return `你是一位專業的 LINE 貼圖角色設計師。
+
+# 生成 ${N} 張「全螢幕圖片」（請依序生成）
+${resume}
+下面有 ${N} 份提示詞，每一份是一張貼圖的全螢幕圖片（連續動畫影格大圖），每一份都是完整、獨立的。請依照順序，一次只生成一張：
+
+${names}
+
+## 生成規則（很重要）
+1. **一次只生成一張圖**，從清單的第 1 個開始，依序往下，不可跳過、不可調換順序。
+2. 每一張開始前，先寫一行：「**目前生成第 X / ${N} 個：第 ? 張「主題」**」，再生成那一張。
+3. 每一張都各自是一張獨立的大圖，**不可把不同主題合併在同一張圖裡**。
+4. 所有圖片的角色、畫風、格數、畫布比例、背景都要一致，只有主題與動作不同。**如果有附上照片或之前生成的圖片，角色的長相、髮型、服裝、配色、線條粗細都要和附圖完全一致。**
+5. 如果一次回覆無法全部完成，請在回覆最後寫清楚：「**已完成到第 ? 張「主題」（第 X / ${N} 個）；還沒生成：第 ?、? 張**」，並請我回覆「繼續」。我可能會改用其他 AI 工具接著做，所以一定要寫出已完成到第幾張。
+6. 收到「繼續」時，從還沒生成的下一張接著做，不要重畫已經完成的。
+
+${parts.join("\n\n")}
+`;
+}
+function renderPromptAll() {
+  const box = $("#promptAll"); if (!box) return;
+  // 「從第幾張開始」的選單跟著主題清單更新；已做好的標出來，方便選還沒做的
+  const sel = $("#fxAllFrom"), cur = promptAllFrom();
+  sel.innerHTML = P.picked.map((t, i) => `<option value="${i}">從第 ${i + 1} 張「${esc(t.label)}」開始${slotDone(i) ? "（動畫已做好）" : ""}</option>`).join("") || `<option value="0">（還沒有主題）</option>`;
+  sel.value = String(Math.min(cur, Math.max(0, P.picked.length - 1)));
+  box.textContent = buildPromptAll();
+  const list = promptAllTargets(), n = list.length;
+  $("#fxAllInfo").textContent = n ? `這次會依序生成 ${n} 張：第 ${list.map(x => x.i + 1).join("、")} 張。` : "";
+  $("#fxCopyAll").disabled = !n;
+}
 /* ---------- 自動記住設定（存在這台電腦的瀏覽器，不含圖片）----------
    角色、貼圖主題、畫風、張數等一改就記下來，下次打開自動還原；換電腦還是要用「存檔／開啟」。 */
 const AUTO_KEY = "fsHelperAutoSave";
@@ -1555,20 +1638,22 @@ function initPromptTab() {
     $("#fxPick").hidden = !(!t || pickOpen);
     $("#fxPickToggle").hidden = !t || pickOpen;
     $("#fxPickCancel").hidden = !t;
-    $("#fxPickTitle").textContent = t ? `把第 ${i + 1} 張的主題「${t.label}」換成：` : `第 ${i + 1} 張還沒有主題，請選一個或自己輸入：`;
-    $("#fxPickOk").textContent = `設定為第 ${i + 1} 張的主題`;
+    $("#fxPickTitle").textContent = t ? `把第 ${i + 1} 張的主題「${t.label}」換成（點一下就設定）：` : `第 ${i + 1} 張還沒有主題，請點一個主題，或自己輸入：`;
     $("#fxThumb").hidden = $("#fxThumbCap").hidden = !stk;
     if (stk) $("#fxThumb").src = stk.url;
-    // 選單：依分類列出全部主題，已經用在別張的標出編號、不能重複選
+    // 和步驟 1 一樣：依分類收合的主題按鈕。這一張目前的主題反白；已經用在別張的變淡、不能重複選
+    if ($("#fxPick").hidden) return;
     const used = new Map(P.picked.map((x, k) => [x.label, k]));
-    $("#fxPickSel").innerHTML = `<option value="">— 從主題清單選 —</option>` + THEME_CATS.map(c => `<optgroup label="${esc(c.label)}">` + c.items.map(x => {
-      const k = used.get(x.label), taken = k !== undefined && k !== i;
-      return `<option value="${esc(x.label)}"${taken ? " disabled" : ""}>${esc(x.label)}${taken ? `（第 ${k + 1} 張已用）` : ""}</option>`;
-    }).join("") + "</optgroup>").join("");
+    const open = new Set($$("#fxPickCats details[open]").map(d => d.dataset.cat));
+    $("#fxPickCats").innerHTML = THEME_CATS.map((c, ci) => `<details class="cat" data-cat="${ci}"${(open.size ? open.has(String(ci)) : ci === 0) ? " open" : ""}><summary><b>${esc(c.label)}</b> · ${c.items.length} 個</summary><div class="btn-group">` +
+      c.items.map(x => {
+        const k = used.get(x.label), mine = k === i, taken = k !== undefined && !mine;
+        return `<button type="button" class="chip${mine ? " sel" : ""}${taken ? " off" : ""}" data-pick="${esc(x.label)}"${taken ? ` title="第 ${k + 1} 張已用"` : ""}>${esc(x.label)}${taken ? ` <small>(${k + 1})</small>` : ""}</button>`;
+      }).join("") + "</div></details>").join("");
   };
-  const applyFxPick = () => {
-    const i = P.fxSlot ?? 0, custom = $("#fxPickCustom").value.trim(), label = custom || $("#fxPickSel").value;
-    if (!label) { toast("請從清單選一個主題，或自己輸入"); return; }
+  const applyFxPick = (picked) => {
+    const i = P.fxSlot ?? 0, custom = picked ? "" : $("#fxPickCustom").value.trim(), label = picked || custom;
+    if (!label) { toast("請點一個主題，或自己輸入"); return; }
     if ([...label].length > MAX_THEME_LEN) { toast(`主題最多 ${MAX_THEME_LEN} 個字，請縮短`); return; }
     const dup = pickedAt(label);
     if (dup >= 0 && dup !== i) { toast(`「${label}」已經是第 ${dup + 1} 張的主題`); return; }
@@ -1582,9 +1667,13 @@ function initPromptTab() {
   };
   $("#fxPickToggle").onclick = () => { pickOpen = true; renderFxPick(); };
   $("#fxPickCancel").onclick = () => { pickOpen = false; renderFxPick(); };
-  $("#fxPickOk").onclick = applyFxPick;
+  $("#fxPickOk").onclick = () => applyFxPick();
   $("#fxPickCustom").addEventListener("keydown", e => { if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); applyFxPick(); } });
-  $("#fxPickSel").onchange = () => { if ($("#fxPickSel").value) $("#fxPickCustom").value = ""; };
+  $("#fxPickCats").addEventListener("click", e => {
+    const c = e.target.closest("[data-pick]"); if (!c) return;
+    if (c.classList.contains("off")) { toast(`「${c.dataset.pick}」已經是別張的主題`); return; }
+    applyFxPick(c.dataset.pick);
+  });
   refreshFxOptions = syncFxOptions;
   // 已選清單：點選的和自行輸入的排在一起，號碼就是貼圖編號；分類上方和輸入框下方各顯示一份
   const renderPicked = () => {
@@ -1723,7 +1812,7 @@ function initPromptTab() {
    分頁 4：全螢幕圖片
    ============================================================ */
 // 一張貼圖一個特效：SLOTS[i] 對應檔名 (i+1)_popup.png；FX 是「目前正在編輯的那一張」的視窗
-const newSlot = () => ({ frames: [], sec: 1, loop: 1, name: "" });   // name：使用者自己取的名稱，空白就顯示貼圖主題
+const newSlot = () => ({ frames: [], sec: 2, loop: 1, name: "" });   // 單次播放預設 2 秒；name：使用者自己取的名稱，空白就顯示貼圖主題
 const SLOTS = Array.from({ length: 8 }, newSlot);
 const FX = {
   cur: 0, raf: 0, timer: 0, mainSlot: -1, shown: null,   // shown：切割區目前顯示的是哪一張（SLOTS 的物件）
@@ -2485,6 +2574,7 @@ function showTab(id) {
   if (!$("#panel-" + id)) id = "prompt";
   // 從步驟 4 回到步驟 3：跟著選到步驟 4 正在做的那一張
   if (id === "fxprompt" && FX.cur !== P.fxSlot && FX.cur <= P.picked.length) gotoFxSlot(FX.cur);
+  if (id === "fxprompt") renderPromptAll();   // 步驟 4 做好的動畫變多了，「只包含還沒做好的」要更新
   $$(".tab-btn").forEach(b => b.classList.toggle("on", b.dataset.tab === id));
   $$(".panel").forEach(p => p.classList.toggle("on", p.id === "panel-" + id));
   if (id === "effect") { fxBoard.redraw(); renderSlots(); }
@@ -2509,6 +2599,13 @@ function showTab(id) {
   addEventListener("hashchange", () => showTab(location.hash.slice(1)));
   initPromptTab(); initEffectTab(); initStickerTab(); initSaveBar();
   $("#packZip").onclick = packZip;
+  // 一次複製全部主題的提示詞（選特效貼圖時，用語一起換成特效）
+  $("#fxCopyAll").onclick = () => {
+    const n = promptAllTargets().length;
+    toast(copyText(kt(buildPromptAll())) ? `✅ 已複製 ${n} 個主題的提示詞，貼到 AI 後會依序一張一張生成` : "複製失敗，請打開下面的預覽手動選取");
+  };
+  $("#fxAllTodo").onchange = renderPromptAll;
+  $("#fxAllFrom").onchange = renderPromptAll;
   // 步驟 4 做完一張：直接回步驟 3，並選好下一個編號
   $("#fxNext").onclick = () => {
     const next = FX.cur + 1;
