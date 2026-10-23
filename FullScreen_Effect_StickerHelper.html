@@ -143,6 +143,9 @@ input[type=checkbox]{accent-color:var(--accent);width:18px;height:18px;flex:none
 .slot .star{position:absolute;top:2px;right:4px;font-size:14px}
 .slot .redo{position:absolute;top:4px;left:4px;font-size:11px;font-weight:700;padding:2px 6px;border-radius:6px;background:rgba(0,0,0,.6);color:#fff}
 .slot .redo:hover{background:var(--accent)}
+.slot .setmain{display:block;margin:0 6px 6px;padding:4px 0;border:1px solid var(--line-strong);border-radius:8px;background:var(--panel);font-size:12px;font-weight:600;color:var(--ink)}
+.slot .setmain:hover{border-color:var(--accent);color:var(--accent)}
+.slot .setmain.sel{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent)}
 @media (max-width:820px){.slots{grid-template-columns:repeat(4,minmax(0,1fr))}}
 .stk{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
 .stk .fr .pic{aspect-ratio:370/320}
@@ -496,7 +499,6 @@ input[type=checkbox]{accent-color:var(--accent);width:18px;height:18px;flex:none
           <ul class="checks" id="fxChecks"></ul>
           <div class="row" style="margin-top:14px">
             <button type="button" class="btn green grow" id="fxExport">⬇ 單獨下載這一張</button>
-            <button type="button" class="btn" id="fxExportMain">⭐ 設為全螢幕貼圖主要圖片（main_popup）</button>
           </div>
           <p class="muted" id="fxSizeInfo" style="margin:8px 0 0"></p>
           <div class="row" style="margin-top:12px">
@@ -575,9 +577,10 @@ input[type=checkbox]{accent-color:var(--accent);width:18px;height:18px;flex:none
       </div>
       <div class="prompt" id="listingPrompt"></div>
       <div class="row" style="margin-top:10px">
-        <button type="button" class="btn primary grow" data-copy="listingPrompt">📑 複製標題與說明的提示詞</button>
+        <button type="button" class="btn primary grow" data-copy="listingPrompt">📑 複製提示詞</button>
         <a class="btn" href="https://gemini.google.com/app" target="_blank" rel="noopener">✨ Gemini</a>
         <a class="btn" href="https://chatgpt.com/" target="_blank" rel="noopener">🤖 ChatGPT</a>
+        <a class="btn green" href="https://creator.line.me/zh-hant/" target="_blank" rel="noopener">🟩 LINE Creators Market</a>
       </div>
       <p class="muted" style="margin:8px 0 0">AI 給的字數偶爾會算錯，貼到上架頁面時，請看頁面右邊的字數（例如 15/40）確認沒有超過。</p>
     </div>
@@ -1838,9 +1841,18 @@ function renderSlots() {
       : stk ? `<span style="font-size:13px;line-height:1.5;font-weight:700">📂<br>點這裡選大圖</span><img alt="同編號的貼圖圖片" src="${stk.url}" style="inset:auto;left:5px;bottom:5px;width:36%;height:36%;border-radius:6px;background:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.7)">` : "＋";
     b.innerHTML = `<div class="pic">${pic}</div>
       <div class="cap"><b>${pad2(i + 1)}</b> ${esc(slotTheme(i))}${has ? `<br>${on.length} 格${slotOk(s) ? " ✔" : " ✘"}` : stk ? "<br>動畫未製作" : "<br>未製作"}</div>${FX.mainSlot === i ? `<span class="star" title="全螢幕貼圖主要圖片">⭐</span>` : ""}` +
-      (has ? `<span class="redo" data-redo title="換一張影格大圖重做">📂 換圖</span>` : "");
+      (has ? `<span class="redo" data-redo title="換一張影格大圖重做">📂 換圖</span>` : "") +
+      // 和步驟 2 選主圖一樣：做好的每一格下面都有「設為主圖」，選中的反白
+      (has ? `<span class="setmain${FX.mainSlot === i ? " sel" : ""}" data-main>${FX.mainSlot === i ? "⭐ 主圖（已選）" : "設為主圖"}</span>` : "");
     // 還沒做的格子：點一下就選這一張並直接開啟選擇檔案。已做好的：點一下只切換（看影格與預覽），要重做按左上角「換圖」
     b.onclick = e => {
+      if (e.target.closest("[data-main]")) {
+        if (!slotOk(s)) { toast(`第 ${i + 1} 張的動畫還不符規格（畫格數要 5～20、總時間最長 3 秒），先調整好再設為主圖`); return; }
+        FX.mainSlot = FX.mainSlot === i ? -1 : i;
+        renderSlots(); fxChecks();
+        toast(FX.mainSlot === i ? `第 ${i + 1} 張的全螢幕動畫會存成 main_popup.png` : "已取消全螢幕貼圖主要圖片");
+        return;
+      }
       selectFxSlot(i);
       if (!has || e.target.closest("[data-redo]")) fxBoard.pick();
     };
@@ -1915,9 +1927,7 @@ function fxChecks(sizeBytes) {
   if (sizeBytes != null) li.push([sizeBytes < 1048576 ? "" : "bad", `檔案大小 ${(sizeBytes / 1024).toFixed(0)} KB（規定小於 1 MB）`]);
   $("#fxChecks").innerHTML = li.map(([c, t]) => `<li class="${c}">${esc(t)}</li>`).join("");
   const ok = n >= 5 && n <= 20 && total <= 3;
-  $("#fxExport").disabled = $("#fxExportMain").disabled = !ok;
-  $("#fxExportMain").classList.toggle("sel", FX.mainSlot === FX.cur);
-  $("#fxExportMain").textContent = FX.mainSlot === FX.cur ? "⭐ 已設為全螢幕貼圖主要圖片（main_popup）" : "⭐ 設為全螢幕貼圖主要圖片（main_popup）";
+  $("#fxExport").disabled = !ok;
   return ok;
 }
 function fxDrawFrame(i) {
@@ -1966,7 +1976,7 @@ async function fxEncode(slot) {
 }
 async function fxExport(name) {
   if (!fxChecks()) return;
-  const btns = [$("#fxExport"), $("#fxExportMain")];
+  const btns = [$("#fxExport")];
   btns.forEach(b => { b.disabled = true; });
   $("#fxSizeInfo").textContent = "編碼中…";
   try {
@@ -1982,7 +1992,6 @@ function initEffectTab() {
   $("#fxLoopGroup").addEventListener("click", e => { const b = e.target.closest("[data-loop]"); if (!b || b.disabled) return; FX.loop = parseInt(b.dataset.loop); fxChecks(); fxStop(); });
   $("#fxPlay").onclick = fxPlay;
   $("#fxExport").onclick = () => fxExport(`${pad2(FX.cur + 1)}_${SUF()}.png`);
-  $("#fxExportMain").onclick = () => { FX.mainSlot = FX.mainSlot === FX.cur ? -1 : FX.cur; fxChecks(); renderSlots(); toast(FX.mainSlot >= 0 ? `第 ${FX.cur + 1} 張的全螢幕動畫會存成 main_popup.png` : "已取消全螢幕貼圖主要圖片"); };
   $("#fxName").oninput = e => { SLOTS[FX.cur].name = e.target.value.trim(); renderSlots(); };
   $("#fxCount").onchange = e => setStickerCount(parseInt(e.target.value));   // 和分頁 1 的「整套貼圖張數」同一個設定
   renderSlots();
@@ -2153,7 +2162,7 @@ function packState() {
   lines.push([ST.main ? "" : "bad", ST.main ? "主要圖片 main.png 已設定" : "還沒設定主要圖片：到分頁 2 選一張按「設為主圖」"]);
   lines.push([ST.tab ? "" : "bad", ST.tab ? "聊天室標籤 tab.png 已設定" : "還沒設定聊天室標籤：到分頁 2 選一張按「設為標籤」"]);
   const mainOk = FX.mainSlot >= 0 && SLOTS[FX.mainSlot] && slotOk(SLOTS[FX.mainSlot]);
-  lines.push([mainOk ? "" : "bad", mainOk ? `全螢幕貼圖主要圖片 main_popup.png：使用第 ${FX.mainSlot + 1} 張的全螢幕動畫` : "還沒設定全螢幕貼圖主要圖片：到分頁 4 選一張按「⭐ 設為全螢幕貼圖主要圖片」"]);
+  lines.push([mainOk ? "" : "bad", mainOk ? `全螢幕貼圖主要圖片 main_popup.png：使用第 ${FX.mainSlot + 1} 張的全螢幕動畫` : "還沒設定全螢幕貼圖主要圖片：到分頁 4，在做好的那一格下面按「設為主圖」"]);
   const ok = lines.every(l => l[0] !== "bad");
   if (n && n !== P.count) {
     const lack = ST.items.map((it, i) => it ? "" : pad2(i + 1)).filter(Boolean);
