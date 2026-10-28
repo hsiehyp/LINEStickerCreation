@@ -1847,10 +1847,7 @@ function renderSlots() {
     // 還沒做的格子：點一下就選這一張並直接開啟選擇檔案。已做好的：點一下只切換（看影格與預覽），要重做按左上角「換圖」
     b.onclick = e => {
       if (e.target.closest("[data-main]")) {
-        if (!slotOk(s)) { toast(`第 ${i + 1} 張的動畫還不符規格（畫格數要 5～20、總時間最長 3 秒），先調整好再設為主圖`); return; }
-        FX.mainSlot = FX.mainSlot === i ? -1 : i;
-        renderSlots(); fxChecks();
-        toast(FX.mainSlot === i ? `第 ${i + 1} 張的全螢幕動畫會存成 main_popup.png` : "已取消全螢幕貼圖主要圖片");
+        setMainPair(FX.mainSlot === i ? -1 : i);
         return;
       }
       selectFxSlot(i);
@@ -2045,7 +2042,25 @@ function renderStBatch() {
     ? `第 ${ST.batch + 1} 張大圖（貼圖 ${pad2(ST.batch * 8 + 1)}～${pad2(ST.batch * 8 + 8)}）：用「提示詞 A」生成的靜態貼圖大圖（PNG / JPG）`
     : "用「提示詞 A」生成的靜態貼圖大圖（PNG / JPG）");
 }
+/* ---------- 主圖：步驟 2（靜態 main.png）與步驟 4（動態 main_popup.png）用同一個編號 ----------
+   在任何一邊選了第 N 張，另一邊也自動變成第 N 張；步驟 4 取消時兩邊一起取消。 */
+function setMainPair(i) {
+  FX.mainSlot = i;
+  ST.main = i >= 0 ? (ST.items[i] || null) : null;
+  renderStickers(); fxChecks();
+  if (i < 0) { toast("已取消主圖（靜態與動態一起取消）"); return; }
+  const s = SLOTS[i], fxReady = s && s.frames.length && slotOk(s);
+  toast(`第 ${i + 1} 張設為主圖：靜態 main.png 和動態 main_popup.png 都用第 ${i + 1} 張` +
+    (!ST.items[i] ? "（靜態貼圖圖片還沒上傳，上傳後就會用它）" : !fxReady ? "（動畫還沒做好，做好後就會用它）" : ""));
+}
+// 只選了其中一邊時（例如另一邊的圖後來才做好、或開啟舊存檔），補上另一邊
+function syncMainPair() {
+  const si = ST.main ? ST.items.indexOf(ST.main) : -1;
+  if (si >= 0 && FX.mainSlot !== si) FX.mainSlot = si;
+  else if (si < 0 && FX.mainSlot >= 0 && ST.items[FX.mainSlot]) ST.main = ST.items[FX.mainSlot];
+}
 function renderStickers() {
+  syncMainPair();
   renderStBatch();
   const grid = $("#stGrid");
   grid.innerHTML = "";
@@ -2064,12 +2079,12 @@ function renderStickers() {
       <div class="bar"><b>${name}　${it.out.width}×${it.out.height}</b></div>
       <div class="acts">
         <button type="button" class="btn sm" data-a="dl">⬇ 下載貼圖圖片</button>
-        <button type="button" class="btn sm ${ST.main === it ? "sel" : ""}" data-a="main">設為主圖</button>
+        <button type="button" class="btn sm ${ST.main === it ? "sel" : ""}" data-a="main">${ST.main === it ? "⭐ 主圖（已選）" : "設為主圖"}</button>
         <button type="button" class="btn sm ${ST.tab === it ? "sel" : ""}" data-a="tab">設為標籤</button>
         <button type="button" class="btn sm" data-a="pv">用於聊天室預覽</button>
       </div>`;
     d.querySelector('[data-a="dl"]').onclick = async () => saveBlob(await toBlob(it.out), name);
-    d.querySelector('[data-a="main"]').onclick = () => { ST.main = it; renderStickers(); };
+    d.querySelector('[data-a="main"]').onclick = () => setMainPair(i);
     d.querySelector('[data-a="tab"]').onclick = () => { ST.tab = it; renderStickers(); };
     d.querySelector('[data-a="pv"]').onclick = () => { $("#phoneSticker").innerHTML = `<img alt="貼圖圖片" src="${it.url}">`; toast("已放進分頁 4 的聊天室預覽"); };
     grid.appendChild(d);
